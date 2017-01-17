@@ -266,18 +266,3 @@ void CameraCalibrator::OptimizeOneStep()
     mvCalibImgs[n].mse3CamFromWorld = SE3<>::exp(vUpdate.slice(n * 6, 6)) * mvCalibImgs[n].mse3CamFromWorld;
   mCamera.UpdateParams(vUpdate.slice(nCamParamBase, NUMTRACKERCAMPARAMETERS));
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

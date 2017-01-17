@@ -6,6 +6,8 @@
 #include <cvd/image.h>
 #include <cvd/byte.h>
 #include <cvd/rgb.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 struct VideoSourceData;
 

@@ -5,6 +5,7 @@
 #define __CAMERACALIBRATOR_H
 #include "CalibImage.h"
 #include "VideoSource.h"
+#include "VideoSourceOpenCV.h"
 #include <gvars3/gvars3.h>
 #include <vector>
 #include "GLWindow2.h"

@@ -318,9 +318,3 @@ bool GLWindowMenu::HandleClick(int nMouseButton, int state, int x, int y)
   return true;
   
 };
-
-
-
-
-
-

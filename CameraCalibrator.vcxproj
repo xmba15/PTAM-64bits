@@ -144,7 +144,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories);C:\workSpace\environment\TooN\include;C:\workSpace\environment\glew\include;C:\workSpace\environment\libcvd\include;C:\workSpace\environment\1394camera646\include;C:\workSpace\environment\gvars3\include;C:\workSpace\environment\ewclib;C:\workSpace\environment\qedit;C:\workSpace\environment\lapack\include\blas;C:\workSpace\environment\lapack\include\lapack;C:\workSpace\environment\pthreads\include;C:\Mylib\OpenCV3.1.0\2501build\install\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories);C:\workSpace\environment\TooN\include;C:\workSpace\environment\glew\include;C:\workSpace\environment\libcvd\include;C:\workSpace\environment\1394camera646\include;C:\workSpace\environment\gvars3\include;C:\workSpace\environment\ewclib;C:\workSpace\environment\qedit;C:\workSpace\environment\lapack\include\blas;C:\workSpace\environment\lapack\include\lapack;C:\workSpace\environment\pthreads\include;C:\Mylib\OpenCV3.1.0\2501build\install\include;C:\Mylib\opencv3.1.0_cuda\2501build\install\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
@@ -155,7 +155,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>libcvd.lib;gvars3.lib;glew32.lib;opengl32.lib;1394camera.lib;blas_win32.lib;lapack_win32.lib;pthreadVCE2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirector;es);C:\workSpace\environment\glew\lib;C:\workSpace\environment\libcvd\lib;C:\workSpace\environment\1394camera646\lib;C:\workSpace\environment\gvars3\lib;C:\workSpace\environment\lapack\lib;C:\workSpace\environment\pthreads\lib;C:\Mylib\OpenCV3.1.0\2501build\install\x64\vc14\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirector;es);C:\workSpace\environment\glew\lib;C:\workSpace\environment\libcvd\lib;C:\workSpace\environment\1394camera646\lib;C:\workSpace\environment\gvars3\lib;C:\workSpace\environment\lapack\lib;C:\workSpace\environment\pthreads\lib;C:\Mylib\OpenCV3.1.0\2501build\install\x64\vc14\lib;</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

@@ -628,10 +628,3 @@ vector<CalibImage::ErrorAndJacobians> CalibImage::Project(ATANCamera &Camera)
     }
   return vResult;
 };
-
-
-
-
-
-
-

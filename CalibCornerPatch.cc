@@ -214,13 +214,3 @@ Matrix<2> CalibCornerPatch::Params::m2Warp()
     };
   return m2Warp;
 }
-
-
-
-
-
-
-
-
-
-

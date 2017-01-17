@@ -325,4 +325,3 @@ void GLWindow2::on_key_down(GLWindow&, int k)
     GUI.ParseLine("try KeyPress "+s);
 }
 #endif
-
