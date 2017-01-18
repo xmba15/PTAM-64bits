@@ -1,13 +1,13 @@
 // Copyright 2008 Isis Innovation Limited
 #include "ATANCamera.h"
 #include <TooN/helpers.h>
-#include <cvd/vector_image_ref.h>
+//#include <cvd/vector_image_ref.h>
 #include <iostream>
 #include <gvars3/instances.h>
 #include <algorithm>
 
 using namespace std;
-using namespace CVD;
+//using namespace CVD;
 using namespace GVars3;
 using namespace TooN;
 using namespace cv;
@@ -16,7 +16,7 @@ ATANCamera::ATANCamera(string sName)
 {
   // The camera name is used to find the camera's parameters in a GVar.
   msName = sName;
-  GV2.Register(mgvvCameraParams, sName+".Parameters", mvDefaultParams, HIDDEN | FATAL_IF_NOT_DEFINED);
+  GV2.Register(mgvvCameraParams, sName + ".Parameters", mvDefaultParams, HIDDEN | FATAL_IF_NOT_DEFINED);
   mvImageSize[0] = 640.0;
   mvImageSize[1] = 480.0;
   RefreshParams();
@@ -73,8 +73,9 @@ void ATANCamera::RefreshParams()
   // (This only really makes sense for square-ish pixels)
   {
     TooN::Vector<2> v2Center = UnProject(mvImageSize / 2);
-    TooN::Vector<2> v2RootTwoAway = UnProject(mvImageSize / 2 + vec(ImageRef(1,1)));
-    TooN::Vector<2> v2Diff = v2Center - v2RootTwoAway;
+    //TooN::Vector<2> v2RootTwoAway = UnProject(mvImageSize / 2 + vec(ImageRef(1,1)));
+	TooN::Vector<2> v2RootTwoAway = UnProject(mvImageSize / 2 + size2Vec(cv::Size(1, 1)));
+	TooN::Vector<2> v2Diff = v2Center - v2RootTwoAway;
     mdOnePixelDist = sqrt(v2Diff * v2Diff) / sqrt(2.0);
   }
   

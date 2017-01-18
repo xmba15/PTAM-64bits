@@ -36,6 +36,9 @@
     <ClCompile Include="VideoSource_Win32_EWCLIB.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VideoSourceOpenCV.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ATANCamera.h">
@@ -57,6 +60,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VideoSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoSourceOpenCV.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

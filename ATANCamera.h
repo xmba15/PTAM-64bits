@@ -46,12 +46,13 @@
 
 #include <TooN/TooN.h>
 #include <cmath>
-#include <cvd/vector_image_ref.h>
+//#include <cvd/vector_image_ref.h>
 #include <gvars3/gvars3.h>
 #include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 using namespace TooN;
-using namespace CVD;
+//using namespace CVD;
 using namespace cv;
 #define NUMTRACKERCAMPARAMETERS 5
 
@@ -71,14 +72,25 @@ class ATANCamera {
 
   // Image size get/set: updates the internal projection params to that target image size.
   void SetImageSize(TooN::Vector<2> v2ImageSize);
+  inline TooN::Vector<2> size2Vec(const cv::Size &imagesize)
+  {
+	  TooN::Vector<2> r;
+	  r[0] = imagesize.width;
+	  r[1] = imagesize.height;
+	  return r;
+  }
+  inline void SetImageSize(cv::Size imagesize) { SetImageSize(size2Vec(imagesize)); }
   /* inline void SetImageSize(CVD::ImageRef irImageSize) {SetImageSize(CVD::vec(irImageSize));}; */
   inline TooN::Vector<2> GetImageSize() {return mvImageSize;};
   void RefreshParams();
   
   // Various projection functions
   TooN::Vector<2> Project(const Vector<2>& camframe); // Projects from camera z=1 plane to pixel coordinates, with radial distortion
+  inline TooN::Vector<2> Project(cv::Size imagesize) { return Project(size2Vec(imagesize); }
   /* inline TooN::Vector<2> Project(CVD::ImageRef ir) { return Project(vec(ir)); } */
+
   TooN::Vector<2> UnProject(const TooN::Vector<2>& imframe); // Inverse operation
+  inline TooN::Vector<2> UnProject(cv::Size imagesize) { return UnProject(size2Vec(imagesize)); }
   /* inline TooN::Vector<2> UnProject(CVD::ImageRef ir)  { return UnProject(vec(ir)); } */
   
   TooN::Vector<2> UFBProject(const TooN::Vector<2>& camframe);

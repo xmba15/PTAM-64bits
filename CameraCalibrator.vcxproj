@@ -169,6 +169,7 @@
     <ClCompile Include="CameraCalibrator.cc" />
     <ClCompile Include="GLWindow2.cc" />
     <ClCompile Include="GLWindowMenu.cc" />
+    <ClCompile Include="VideoSourceOpenCV.cc" />
     <ClCompile Include="VideoSource_Win32_EWCLIB.cc" />
   </ItemGroup>
   <ItemGroup>
@@ -179,6 +180,7 @@
     <ClInclude Include="GLWindow2.h" />
     <ClInclude Include="GLWindowMenu.h" />
     <ClInclude Include="VideoSource.h" />
+    <ClInclude Include="VideoSourceOpenCV.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
