@@ -9,6 +9,7 @@ using namespace TooN;
 #include <cvd/byte.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 class CalibCornerPatch
 {
@@ -31,20 +32,22 @@ public:
  protected:
   void MakeTemplateWithCurrentParams();
   //void FillTemplate(CVD::Image<float> &im, Params params);
+  void FillTemplate(cv::Mat &im, Params params);
   double Iterate(CVD::Image<CVD::byte> &im);
   double Iterate(cv::Mat &im);
   Params mParams;
-  CVD::Image<float> mimTemplate;
+  CVD::Image<float> mimTemplate; //Same as mimSmall but with the mean image intensity subtracted, used in all image operations
   CVD::Image<Vector<2> > mimGradients;
-  CVD::Image<Vector<2> > mimAngleJacs;
+  CVD::Image<Vector<2> > mimAngleJacs; 
   
-  void MakeSharedTemplate();
-  static CVD::Image<float> mimSharedSourceTemplate;
+  cv::Mat mimTemplate;
+  cv::Mat mimGradients;
+  cv::Mat mimAngleJacs;
 
+  void MakeSharedTemplate();
+  //static CVD::Image<float> mimSharedSourceTemplate; 
+  static cv::Mat mimSharedSourceTemplate;
   double mdLastError;
 };
-
-
-
 
 #endif

@@ -33,10 +33,7 @@
     <ClCompile Include="GLWindowMenu.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VideoSource_Win32_EWCLIB.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VideoSourceOpenCV.cc">
+    <ClCompile Include="VideoSource_Win32_CMU1394.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -60,9 +57,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VideoSource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VideoSourceOpenCV.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

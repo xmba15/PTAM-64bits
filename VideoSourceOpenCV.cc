@@ -12,11 +12,6 @@ using namespace std;
 
 VideoSource::VideoSource()
 {
-	//EWC_Open(MEDIASUBTYPE_RGB24, CAPTURE_SIZE_X, CAPTURE_SIZE_Y, FPS);
- //   m_buffer = new unsigned char[EWC_GetBufferSize(0)];
-
-	//mirSize.x = CAPTURE_SIZE_X;
-	//mirSize.y = CAPTURE_SIZE_Y;
 	std::cout << "Opening Video Source" << std::endl;
 	mptr = new cv::VideoCapture(0);
 	//cv::VideoCapture cap(0);
@@ -25,7 +20,7 @@ VideoSource::VideoSource()
 		std::cerr << "Unable to get the camera!" << std::endl;
 		exit(-1);
 	}
-	VideoSource::imagesize = cv::Size(CAPTURE_SIZE_X, CAPTURE_SIZE_Y);
+	VideoSource::size = cv::Size(CAPTURE_SIZE_X, CAPTURE_SIZE_Y);
 };
 
 
@@ -59,15 +54,10 @@ void VideoSource::GetAndFillFrameBWandRGB(cv::Mat &imBW, cv::Mat &imRGB) {
 	cv::Mat frame;
 	cv::VideoCapture *cap = (cv::VideoCapture*) mptr;
 	*cap >> frame;
-	cv::resize(frame, imRGB, imagesize);
+	cv::resize(frame, imRGB, VideoSource::size);
 	cv::cvtColor(imRGB, imBW, CV_BGR2GRAY);
 }
 
-//ImageRef VideoSource::Size()
-//{
-//	return mirSize;
-//}
-
-cv::Size VideoSource::imageSize() {
-	return VideoSource::imagesize;
+cv::Size VideoSource::imgSize() {
+	return VideoSource::size;
 }

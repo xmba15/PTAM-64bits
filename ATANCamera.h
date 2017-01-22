@@ -86,7 +86,7 @@ class ATANCamera {
   
   // Various projection functions
   TooN::Vector<2> Project(const Vector<2>& camframe); // Projects from camera z=1 plane to pixel coordinates, with radial distortion
-  inline TooN::Vector<2> Project(cv::Size imagesize) { return Project(size2Vec(imagesize); }
+  inline TooN::Vector<2> Project(cv::Size imagesize) { return Project(size2Vec(imagesize)); }
   /* inline TooN::Vector<2> Project(CVD::ImageRef ir) { return Project(vec(ir)); } */
 
   TooN::Vector<2> UnProject(const TooN::Vector<2>& imframe); // Inverse operation
