@@ -50,6 +50,7 @@
 #include <gvars3/gvars3.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include "additionalUtility.h"
 
 using namespace TooN;
 //using namespace CVD;
@@ -72,13 +73,7 @@ class ATANCamera {
 
   // Image size get/set: updates the internal projection params to that target image size.
   void SetImageSize(TooN::Vector<2> v2ImageSize);
-  inline TooN::Vector<2> size2Vec(const cv::Size &imagesize)
-  {
-	  TooN::Vector<2> r;
-	  r[0] = imagesize.width;
-	  r[1] = imagesize.height;
-	  return r;
-  }
+
   inline void SetImageSize(cv::Size imagesize) { SetImageSize(size2Vec(imagesize)); }
   /* inline void SetImageSize(CVD::ImageRef irImageSize) {SetImageSize(CVD::vec(irImageSize));}; */
   inline TooN::Vector<2> GetImageSize() {return mvImageSize;};

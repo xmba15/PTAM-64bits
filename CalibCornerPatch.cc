@@ -9,6 +9,7 @@
 #include <cvd/image_interpolate.h>
 #include <TooN/Cholesky.h>
 #include "SmallMatrixOpts.h"
+#include <math.h>
 
 
 using namespace std;
@@ -17,106 +18,16 @@ using namespace CVD;
 //Image<float> CalibCornerPatch::mimSharedSourceTemplate;
 cv::Mat CalibCornerPatch::mimSharedSourceTemplate;
 
-inline void cv_sample(const BasicImage<float>& im, double x, double y, float& result)
-{
-	int lx = (int)x;
-	int ly = (int)y;
-	int w = im.size().x;
-	const float* base = im[ly] + lx;
-	float a = base[0];
-	float b = base[1];
-	float c = base[w];
-	float d = base[w + 1];
-	float e = a - b;
-	x -= lx;
-	y -= ly;
-	result = (float)(x*(y*(e - c + d) - e) + y*(c - a) + a);
-}
-int cv_transform(cv::Mat& in, cv::Mat& out, const TooN::Matrix<2>& M, const TooN::Vector<2>& inOrig, const TooN::Vector<2>& outOrig, const TooN::Vector<2>& defaultValue)
-{
-	const int w = out.size().width, h = out.size().height, iw = in.size().width, ih = in.size().height;
-	const TooN::Vector<2> across = M.T()[0];
-	const TooN::Vector<2> down = M.T()[1];
-
-	const TooN::Vector<2> p0 = inOrig - M*outOrig;
-	const TooN::Vector<2> p1 = p0 + w*across;
-	const TooN::Vector<2> p2 = p0 + h*down;
-	const TooN::Vector<2> p3 = p0 + w*across + h*down;
-
-	// ul --> p0
-	// ur --> w*across + p0
-	// ll --> h*down + p0
-	// lr --> w*across + h*down + p0
-	double min_x = p0[0], min_y = p0[1];
-	double max_x = min_x, max_y = min_y;
-
-	// Minimal comparisons needed to determine bounds
-	if (across[0] < 0)
-		min_x += w*across[0];
-	else
-		max_x += w*across[0];
-	if (down[0] < 0)
-		min_x += h*down[0];
-	else
-		max_x += h*down[0];
-	if (across[1] < 0)
-		min_y += w*across[1];
-	else
-		max_y += w*across[1];
-	if (down[1] < 0)
-		min_y += h*down[1];
-	else
-		max_y += h*down[1];
-
-	// This gets from the end of one row to the beginning of the next
-	const TooN::Vector<2> carriage_return = down - w*across;
-
-	//If the patch being extracted is completely in the image then no 
-	//check is needed with each point.
-	if (min_x >= 0 && min_y >= 0 && max_x < iw - 1 && max_y < ih - 1)
-	{
-		TooN::Vector<2> p = p0;
-		for (int i = 0; i<h; ++i, p += carriage_return)
-			for (int j = 0; j<w; ++j, p += across)
-				sample(in, p[0], p[1], out[i][j]);
-		return 0;
-	}
-	else // Check each source location
-	{
-		// Store as doubles to avoid conversion cost for comparison
-		const double x_bound = iw - 1;
-		const double y_bound = ih - 1;
-		int count = 0;
-		TooN::Vector<2> p = p0;
-		for (int i = 0; i<h; ++i, p += carriage_return) {
-			for (int j = 0; j<w; ++j, p += across) {
-				//Make sure that we are extracting pixels in the image
-				if (0 <= p[0] && 0 <= p[1] && p[0] < x_bound && p[1] < y_bound)
-					sample(in, p[0], p[1], out[i][j]);
-				else {
-					out[i][j] = defaultValue;
-					++count;
-				}
-			}
-		}
-		return count;
-	}
-}
-
 CalibCornerPatch::CalibCornerPatch(int nSideSize)
 {
   /*mimTemplate.resize(ImageRef(nSideSize, nSideSize));
   mimGradients.resize(ImageRef(nSideSize, nSideSize));
   mimAngleJacs.resize(ImageRef(nSideSize, nSideSize));
   */
-	cv::resize(mimTemplate, mimTemplate, cv::Size(nSideSize, nSideSize));
+	cv::resize(mimTemplate, mimTemplate, cv::Size(, nSideSize));
 	cv::resize(mimGradients, mimGradients, cv::Size(nSideSize, nSideSize));
 	cv::resize(mimAngleJacs, mimAngleJacs, cv::Size(nSideSize, nSideSize));
 
-  //if(mimSharedSourceTemplate.size().x == 0)
-  //  {
-  //    MakeSharedTemplate();
-  //  }
 	if (mimSharedSourceTemplate.size().width == 0)
 	{
 		MakeSharedTemplate();
@@ -138,15 +49,26 @@ void CalibCornerPatch::MakeTemplateWithCurrentParams()
   int nOffset;
   {
     Matrix<2> m2Warp = mParams.m2Warp();
-    CVD::transform(mimSharedSourceTemplate, imTwiceToBlur,
-		   M2Inverse(m2Warp),
-		   vec(mimSharedSourceTemplate.size() - ImageRef(1,1)) * 0.5,
-		   vec(imTwiceToBlur.size() - ImageRef(1,1)) * 0.5);
-    halfSample(imTwiceToBlur, imToBlur);
-    convolveGaussian(imToBlur, dBlurSigma);
-    
-    nOffset = (imToBlur.size().x - mimTemplate.size().x) / 2;
+    //CVD::transform(mimSharedSourceTemplate, imTwiceToBlur,
+		  // M2Inverse(m2Warp),
+		  // vec(mimSharedSourceTemplate.size() - ImageRef(1,1)) * 0.5,
+		  // vec(imTwiceToBlur.size() - ImageRef(1,1)) * 0.5);
+    //halfSample(imTwiceToBlur, imToBlur);
+    //convolveGaussian(imToBlur, dBlurSigma);
+	//nOffset = (imToBlur.size().x - mimTemplate.size().x) / 2;
+	
+	cv_transform(mimSharedSourceTemplate, imTwiceToBlur,
+		M2Inverse(m2Warp),
+		size2Vec(mimSharedSourceTemplate.size() - cv::Size(1, 1))* 0.5,
+		size2Vec(imTwiceToBlur.size() - cv::Size(1, 1)) * 0.5);
+	cv::pyrDown(imTwiceToBlur, imToBlur, imToBlur.size());
+	int ksize = (int)ceil(dBlurSigma * 3.0);
+	cv::GaussianBlur(imToBlur, imToBlur, cv::Size(ksize, ksize), dBlurSigma, 3.0);
+	nOffset = (imToBlur.size().width - mimTemplate.size().width) / 2;
+
+
     copy(imToBlur, mimTemplate, mimTemplate.size(), ImageRef(nOffset, nOffset));
+	
   };
   
   // Make numerical angle jac images:
