@@ -3,20 +3,35 @@
 #include "CalibImage.h"
 #include <stdlib.h>
 #include <gvars3/instances.h>
+
+#if _WIN64
+#include "additionalUtility.h"
+#else
 #include <cvd/utility.h>
 #include <cvd/convolution.h>
 #include <cvd/fast_corner.h>
 #include <cvd/vector_image_ref.h>
 #include <cvd/image_interpolate.h>
-
+using namespace CVD;
+#endif
 #include <TooN/se3.h>
 #include <TooN/SVD.h>
 #include <TooN/wls.h>
 
 using namespace std;
-using namespace CVD;
 using namespace GVars3;
 
+#if _WIN64
+inline bool isCorner(cv::Mat &im, cv::Point ir, int nGate)
+{
+	int nSum = 0;
+	static uchar abPixels[16];
+	for (int i = 0; i < 16; i++)
+	{
+		abPixels[i] = 
+	}
+}
+#else
 inline bool IsCorner(Image<byte> &im, ImageRef ir, int nGate)
 { // Does a quick check to see if a point in an image could be a grid corner.
   // Does this by going around a 16-pixel ring, and checking that there's four
@@ -28,7 +43,7 @@ inline bool IsCorner(Image<byte> &im, ImageRef ir, int nGate)
   static byte abPixels[16];
   for(int i=0; i<16; i++)
     {
-      abPixels[i] = im[ir + fast_pixel_ring[i]];
+      abPixels[i] = im[ir + [i]];
       nSum += abPixels[i];
     };
   int nMean = nSum / 16;
@@ -63,7 +78,11 @@ inline bool IsCorner(Image<byte> &im, ImageRef ir, int nGate)
     }
   return (nSwaps == 4);
 };
+#endif
 
+#if _WIN64
+
+#else
 Vector<2> GuessInitialAngles(Image<byte> &im, ImageRef irCenter)
 {
   // The iterative patch-finder works better if the initial guess
@@ -104,7 +123,11 @@ Vector<2> GuessInitialAngles(Image<byte> &im, ImageRef irCenter)
     {   v2Ret[1] = dBestAngle; v2Ret[0] = dBestAngle - M_PI / 2.0;    }
   return v2Ret;
 }
+#endif
 
+#if _WIN64
+
+#else
 bool CalibImage::MakeFromImage(Image<byte> &im)
 {
   static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
@@ -197,7 +220,11 @@ bool CalibImage::MakeFromImage(Image<byte> &im)
   DrawImageGrid();
   return true;
 }
+#endif
 
+#if _WIN64
+
+#else
 bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
 {
   static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
@@ -247,7 +274,7 @@ bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
   mvGridCorners.back().Draw();
   return true;
 }
-
+#endif
 
 void CalibGridCorner::Draw()
 {
@@ -485,13 +512,21 @@ void CalibImage::Draw3DGrid(ATANCamera &Camera, bool bDrawErrors)
     }
 };
 
+#if _WIN64
+cv::Size IR_from_dirn(int nDirn)
+{
+	int ir[2] = { 0,0 };
+	ir[nDirn % 2] = (nDirn < 2) ? 1 : -1;
+	return cv::Size(ir[0], ir[1]);
+}
+#else
 ImageRef CalibImage::IR_from_dirn(int nDirn)
 {
   ImageRef ir;
   ir[nDirn%2] = (nDirn < 2) ? 1: -1;
   return ir;
 }
-
+#endif
 
 void CalibImage::GuessInitialPose(ATANCamera &Camera)
 {
