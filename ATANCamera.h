@@ -48,8 +48,8 @@
 #include <cmath>
 //#include <cvd/vector_image_ref.h>
 #include <gvars3/gvars3.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
 #include "additionalUtility.h"
 
 using namespace TooN;

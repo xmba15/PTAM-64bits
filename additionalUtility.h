@@ -1,9 +1,9 @@
 #pragma once
 
 #include <TooN/TooN.h>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
 
 inline TooN::Vector<2> size2Vec(const cv::Size &imagesize);
 inline void cv_sample(const cv::Mat &im, double x, double y, float& result);
