@@ -5,6 +5,7 @@
 #define __CALIB_CORNER_PATCH_H
 #include <TooN/TooN.h>
 using namespace TooN;
+#include <vector>
 
 #if _WIN64
 #include <opencv2/core/core.hpp>
