@@ -24,7 +24,7 @@ CalibCornerPatch::CalibCornerPatch(int nSideSize)
   mimGradients.resize(ImageRef(nSideSize, nSideSize));
   mimAngleJacs.resize(ImageRef(nSideSize, nSideSize));
   */
-	cv::resize(mimTemplate, mimTemplate, cv::Size(, nSideSize));
+	cv::resize(mimTemplate, mimTemplate, cv::Size(nSideSize, nSideSize));
 	cv::resize(mimGradients, mimGradients, cv::Size(nSideSize, nSideSize));
 	cv::resize(mimAngleJacs, mimAngleJacs, cv::Size(nSideSize, nSideSize));
 
