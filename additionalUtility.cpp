@@ -97,3 +97,10 @@ int cv_transform(cv::Mat& in, cv::Mat& out, const TooN::Matrix<2>& M, const TooN
 		return count;
 	}
 }
+
+double getSubpix(const cv::Mat &img, cv::Point2d pt)
+{
+	cv::Mat patch;
+	cv::getRectSubPix(img, cv::Size(1, 1), pt, patch);
+	return (double)patch.ptr<float>(0)[0];
+}

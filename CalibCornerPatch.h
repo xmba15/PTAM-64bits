@@ -5,12 +5,16 @@
 #define __CALIB_CORNER_PATCH_H
 #include <TooN/TooN.h>
 using namespace TooN;
-#include <cvd/image.h>
-#include <cvd/byte.h>
+
+#if _WIN64
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "additionalUtility.h"
+#else
+#include <cvd/image.h>
+#include <cvd/byte.h>
+#endif
 
 class CalibCornerPatch
 {
@@ -26,28 +30,29 @@ public:
   };
   
   CalibCornerPatch(int nSideSize = 8);
-  bool IterateOnImage(Params &params, CVD::Image<CVD::byte> &im);
 #if _WIN64
   bool IterateOnImage(Params &params, cv::Mat &im);
-  bool IterateOnIMageWithDrawing(Params &params, cv::Mat &im);
-#elif
+  bool IterateOnImageWithDrawing(Params &params, cv::Mat &im);
+#else
+  bool IterateOnImage(Params &params, CVD::Image<CVD::byte> &im);
   bool IterateOnImageWithDrawing(Params &params, CVD::Image<CVD::byte> &im);
+#endif
  protected:
   void MakeTemplateWithCurrentParams();
-  //void FillTemplate(CVD::Image<float> &im, Params params);
 #if _WIN64
-  void FillTemplate(cv::Mat &im, Params params);
+  //void FillTemplate(cv::Mat &im, Params params);
   double Iterate(cv::Mat &im);
-#endif
+#else
   double Iterate(CVD::Image<CVD::byte> &im);
-  Params mParams;
   CVD::Image<float> mimTemplate; //Same as mimSmall but with the mean image intensity subtracted, used in all image operations
   CVD::Image<Vector<2> > mimGradients;
   CVD::Image<Vector<2> > mimAngleJacs; 
-  
+#endif
+
+  Params mParams;
   cv::Mat mimTemplate;
-  cv::Mat mimGradients;
-  cv::Mat mimAngleJacs;
+  std::vector<cv::Mat> mimGradients;
+  std::vector<cv::Mat> mimAngleJacs;
 
   void MakeSharedTemplate();
   //static CVD::Image<float> mimSharedSourceTemplate; 
