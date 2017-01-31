@@ -78,7 +78,7 @@ protected:
   void ExpandByStep(int n);
 
 #if _WIN64
-  cv::Size IR_from_dirn(int nDirn);
+  cv::Point IR_from_dirn(int nDirn);
 #else
   CVD::ImageRef IR_from_dirn(int nDirn);
 #endif

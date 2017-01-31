@@ -8,7 +8,9 @@
 //  caption line for text display. Also provides some handy GL helpers
 //  and a wrapper for CVD's text display routines.
 
+#if !_WIN64
 #include <cvd/glwindow.h>
+#endif
 #include <TooN/TooN.h>
 
 class GLWindowMenu;

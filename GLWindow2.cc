@@ -6,7 +6,9 @@
 #include <gvars3/instances.h>
 #include <TooN/helpers.h>
 
+#if !_WIN64
 using namespace CVD;
+#endif
 using namespace std;
 using namespace GVars3;
 using namespace TooN;

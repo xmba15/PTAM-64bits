@@ -8,6 +8,14 @@ inline TooN::Vector<2> size2Vec(const cv::Size &imagesize)
 	return r;
 }
 
+inline TooN::Vector<2> size2Vec(const cv::Point &pt)
+{
+	TooN::Vector<2> r;
+	r[0] = pt.x;
+	r[1] = pt.y;
+	return r;
+}
+
 inline void cv_sample(const cv::Mat &im, double x, double y, float& result)
 {
 	int lx = (int)x;
@@ -103,4 +111,26 @@ double getSubpix(const cv::Mat &img, cv::Point2d pt)
 	cv::Mat patch;
 	cv::getRectSubPix(img, cv::Size(1, 1), pt, patch);
 	return (double)patch.ptr<float>(0)[0];
+}
+
+double getSubpix(const cv::Mat &img, TooN::Vector<2> vec)
+{
+	cv::Point2d pt(vec[0], vec[1]);
+	return getSubpix(img, pt);
+}
+
+
+inline void glVertex(const cv::Point &i)
+{
+	glVertex2i(i.x, i.y);
+}
+
+inline void glVertex(const TooN::Vector<2>& v)
+{
+	glVertex2d(v[0], v[1]);
+}
+
+inline unsigned int mag_squared(const cv::Point &pt)
+{
+	return (pt.x * pt.x + pt.y * pt.y);
 }

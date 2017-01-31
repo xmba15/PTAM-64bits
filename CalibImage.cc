@@ -26,10 +26,42 @@ inline bool isCorner(cv::Mat &im, cv::Point ir, int nGate)
 {
 	int nSum = 0;
 	static uchar abPixels[16];
+	static int x_shift[16] = { 0, 1, 2, 3, 3, 3, 2, 1, 0, -1, -2, -3, -3, -3, -2, -1};
+	static int y_shift[16] = { -3, -3, -2, -1, 0, 1, 2, 3, 3, 3, 2, 1, 0, -1, -2, -3 };
 	for (int i = 0; i < 16; i++)
 	{
-		abPixels[i] = 
+		abPixels[i] = im.ptr<uchar>(ir.y + y_shift[i])[ir.x + x_shift[i]];
 	}
+	int nMean = nSum / 16;
+	int nHiThresh = nMean + nGate;
+	int nLoThresh = nMean - nGate;
+
+	int nCenter = im.at<uchar>(ir);
+	if (nCenter <= nLoThresh || nCenter >= nHiThresh)
+		return false;
+
+	bool bState = (abPixels[15] > nMean);
+	int nSwaps = 0;
+
+	for (int i = 0; i<16; i++)
+	{
+		uchar bValNow = abPixels[i];
+		if (bState)
+		{
+			if (bValNow < nLoThresh)
+			{
+				bState = false;
+				nSwaps++;
+			}
+		}
+		else
+			if (bValNow > nHiThresh)
+			{
+				bState = true;
+				nSwaps++;
+			};
+	}
+	return (nSwaps == 4);
 }
 #else
 inline bool IsCorner(Image<byte> &im, ImageRef ir, int nGate)
@@ -81,6 +113,44 @@ inline bool IsCorner(Image<byte> &im, ImageRef ir, int nGate)
 #endif
 
 #if _WIN64
+Vector<2> GuessInitialAngles(cv::Mat &im, cv::Point irCenter)
+{
+	//image_interpolate<Interpolate::Bilinear, byte> imInterp(im);
+
+	double dBestAngle = 0;
+	double dBestGradMag = 0;
+	double dGradAtBest = 0;
+	for (double dAngle = 0.0; dAngle < M_PI; dAngle += 0.1)
+	{
+		Vector<2> v2Dirn;
+		v2Dirn[0] = cos(dAngle);      v2Dirn[1] = sin(dAngle);
+		Vector<2> v2Perp;
+		v2Perp[1] = -v2Dirn[0];      v2Perp[0] = v2Dirn[1];
+
+		double dG = getSubpix(im, size2Vec(irCenter) + v2Dirn * 3.0 + v2Perp * 0.1) -
+			getSubpix(im, size2Vec(irCenter) + v2Dirn * 3.0 - v2Perp * 0.1)
+			+ getSubpix(im, size2Vec(irCenter) - v2Dirn * 3.0 - v2Perp * 0.1) -
+			getSubpix(im, size2Vec(irCenter) - v2Dirn * 3.0 + v2Perp * 0.1);
+
+		if (fabs(dG) > dBestGradMag)
+		{
+			dBestGradMag = fabs(dG);
+			dGradAtBest = dG;
+			dBestAngle = dAngle;
+		};
+	}
+
+	Vector<2> v2Ret;
+	if (dGradAtBest < 0)
+	{
+		v2Ret[0] = dBestAngle; v2Ret[1] = dBestAngle + M_PI / 2.0;
+	}
+	else
+	{
+		v2Ret[1] = dBestAngle; v2Ret[0] = dBestAngle - M_PI / 2.0;
+	}
+	return v2Ret;
+}
 
 #else
 Vector<2> GuessInitialAngles(Image<byte> &im, ImageRef irCenter)
@@ -126,7 +196,100 @@ Vector<2> GuessInitialAngles(Image<byte> &im, ImageRef irCenter)
 #endif
 
 #if _WIN64
+bool CalibImage::MakeFromImage(cv::Mat &im)
+{
+	static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
+	mvCorners.clear();
+	mvGridCorners.clear();
 
+	cv::Mat mim = im.clone();
+
+	{
+		cv::Mat imBlurred = mim.clone();
+		//convolveGaussian(imBlurred, GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, SILENT));
+		int ksize = (int)ceil(GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, SILENT) * 3.0);
+		cv::GaussianBlur(imBlurred, imBlurred, cv::Size(ksize, ksize), GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, SILENT), 3.0);
+
+		cv::Point irTopLeft(5, 5);
+		cv::Point irBotRight = cv::Point(mim.size()) - irTopLeft;
+		cv::Point ir = irTopLeft;
+		glPointSize(1);
+		glColor3f(1, 0, 1);
+		glBegin(GL_POINTS);
+		int nGate = GV2.GetInt("CameraCalibrator.MeanGate", 10, SILENT);
+
+		for (int i = irTopLeft.y; i < irBotRight.y; i++) {
+			for (int j = irTopLeft.x; j < irBotRight.x; j++) {
+				if (isCorner(imBlurred, cv::Point(j, i), nGate))
+				{
+					mvCorners.push_back(cv::Point(j, i));
+					glVertex(cv::Point(j, i));
+				}
+			}
+		}
+		glEnd();
+	}
+
+	if ((int)mvCorners.size() < GV2.GetInt("CameraCalibrator.MinCornersForGrabbedImage", 20, SILENT))
+		return false;
+
+	// Pick a central corner point...
+	
+	cv::Point irCenterOfImage(mim.size() / 2);
+	cv::Point irBestCenterPos;
+	unsigned int nBestDistSquared = 99999999;
+	for (unsigned int i = 0; i < mvCorners.size(); i++)
+	{
+		unsigned int nDist = mag_squared(mvCorners[i] - irCenterOfImage);
+		if (nDist < nBestDistSquared)
+		{
+			nBestDistSquared = nDist;
+			irBestCenterPos = mvCorners[i];
+		}
+	}
+
+	// ... and try to fit a corner-patch to that.
+	CalibCornerPatch Patch(*gvnCornerPatchSize);
+	CalibCornerPatch::Params Params;
+	Params.v2Pos = size2Vec(irBestCenterPos);
+	Params.v2Angles = GuessInitialAngles(mim, irBestCenterPos);
+	Params.dGain = 80.0;
+	Params.dMean = 120.0;
+
+	if (!Patch.IterateOnImageWithDrawing(Params, mim))
+		return false;
+
+	// The first found corner patch becomes the origin of the detected grid.
+	CalibGridCorner cFirst;
+	cFirst.Params = Params;
+	mvGridCorners.push_back(cFirst);
+	cFirst.Draw();
+
+	// Next, go in two compass directions from the origin patch, and see if 
+	// neighbors can be found.
+	if (!(ExpandByAngle(0, 0) || ExpandByAngle(0, 2)))
+		return false;
+	if (!(ExpandByAngle(0, 1) || ExpandByAngle(0, 3)))
+		return false;
+
+	mvGridCorners[1].mInheritedSteps = mvGridCorners[2].mInheritedSteps = mvGridCorners[0].GetSteps(mvGridCorners);
+
+	// The three initial grid elements are enough to find the rest of the grid.
+	int nNext;
+	int nSanityCounter = 0; // Stop it getting stuck in an infinite loop...
+	const int nSanityCounterLimit = 500;
+	while ((nNext = NextToExpand()) >= 0 && nSanityCounter < nSanityCounterLimit)
+	{
+		ExpandByStep(nNext);
+		nSanityCounter++;
+	}
+	if (nSanityCounter == nSanityCounterLimit)
+		return false;
+
+	DrawImageGrid();
+	return true;
+
+}
 #else
 bool CalibImage::MakeFromImage(Image<byte> &im)
 {
@@ -223,7 +386,59 @@ bool CalibImage::MakeFromImage(Image<byte> &im)
 #endif
 
 #if _WIN64
+bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
+{
+	static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
+	CalibGridCorner &gSrc = mvGridCorners[nSrc];
 
+	cv::Point irBest;
+	double dBestDist = 99999;
+	TooN::Vector<2> v2TargetDirn = gSrc.Params.m2Warp().T()[nDirn % 2];
+	if (nDirn >= 2)
+		v2TargetDirn *= -1;
+	for (unsigned int i = 0; i < mvCorners.size(); i++)
+	{
+		TooN::Vector<2> v2Diff = size2Vec(mvCorners[i]) - gSrc.Params.v2Pos;
+		if (v2Diff * v2Diff < 100)
+			continue;
+		if (v2Diff * v2Diff > dBestDist * dBestDist)
+			continue;
+		TooN::Vector<2> v2Dirn = v2Diff;
+		TooN::normalize(v2Dirn);
+		if (v2Dirn * v2TargetDirn < cos(M_PI / 18.0))
+			continue;
+		dBestDist = sqrt(v2Diff * v2Diff);
+		irBest = mvCorners[i];
+	}
+
+	CalibGridCorner gTarget;
+	gTarget.Params = gSrc.Params;
+	gTarget.Params.v2Pos = size2Vec(irBest);
+	gTarget.Params.dGain *= -1;
+
+	CalibCornerPatch Patch(*gvnCornerPatchSize);
+	if (!Patch.IterateOnImageWithDrawing(gTarget.Params, mim))
+	{
+		gSrc.aNeighborStates[nDirn].val = N_FAILED;
+		return false;
+	}
+
+	//gTarget.irGridPos = gSrc.irGridPos;
+	int tmpIrGridPos[2] = { gSrc.irGridPos.x, gSrc.irGridPos.y };
+	if (nDirn < 2)
+		//gTarget.irGridPos[nDirn]++;
+		tmpIrGridPos[nDirn]++;
+	//else gTarget.irGridPos[nDirn % 2]--;
+	else tmpIrGridPos[nDirn % 2] --;
+	gTarget.irGridPos = cv::Point(tmpIrGridPos[0], tmpIrGridPos[1]);
+	// Update connection states:
+	mvGridCorners.push_back(gTarget); // n.b. This invalidates gSrc!
+	mvGridCorners.back().aNeighborStates[(nDirn + 2) % 4].val = nSrc;
+	mvGridCorners[nSrc].aNeighborStates[nDirn].val = mvGridCorners.size() - 1;
+
+	mvGridCorners.back().Draw();
+	return true;
+}
 #else
 bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
 {
@@ -278,18 +493,17 @@ bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
 
 void CalibGridCorner::Draw()
 {
-  glColor3f(0,1,0);
-  glEnable(GL_LINE_SMOOTH);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glBegin(GL_LINES);
-  glVertex(Params.v2Pos + Params.m2Warp() * vec(ImageRef( 10,0)));
-  glVertex(Params.v2Pos + Params.m2Warp() * vec(ImageRef(-10,0)));
-  glVertex(Params.v2Pos + Params.m2Warp() * vec(ImageRef( 0, 10)));
-  glVertex(Params.v2Pos + Params.m2Warp() * vec(ImageRef( 0,-10)));
-  glEnd();
-}
-
+	glColor3f(0, 1, 0);
+	glEnable(GL_LINE_SMOOTH);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBegin(GL_LINES);
+	glVertex(Params.v2Pos + Params.m2Warp() * size2Vec(cv::Point(10, 0)));
+	glVertex(Params.v2Pos + Params.m2Warp() * size2Vec(cv::Point(-10, 0)));
+	glVertex(Params.v2Pos + Params.m2Warp() * size2Vec(cv::Point(0, 10)));
+	glVertex(Params.v2Pos + Params.m2Warp() * size2Vec(cv::Point(0, -10)));
+	glEnd();
+};
 
 double CalibGridCorner::ExpansionPotential()
 {
@@ -394,20 +608,22 @@ void CalibImage::ExpandByStep(int n)
   assert(nDirn != -10);
 
   Vector<2> v2Step;
-  ImageRef irGridStep = IR_from_dirn(nDirn);
+  //ImageRef irGridStep = IR_from_dirn(nDirn);
   
-  v2Step = gSrc.GetSteps(mvGridCorners).T() * vec(irGridStep);
+  cv::Point irGridStep = IR_from_dirn(nDirn);
+  v2Step = gSrc.GetSteps(mvGridCorners).T() * size2Vec(irGridStep);
   
   Vector<2> v2SearchPos = gSrc.Params.v2Pos + v2Step;
   
   // Before the search: pre-fill the failure result for easy returns.
   gSrc.aNeighborStates[nDirn].val = N_FAILED;
   
-  ImageRef irBest;
+  //ImageRef irBest;
+  cv::Point irBest;
   double dBestDist = 99999;
   for(unsigned int i=0; i<mvCorners.size(); i++)
     {
-      Vector<2> v2Diff = vec(mvCorners[i]) - v2SearchPos;
+      Vector<2> v2Diff = size2Vec(mvCorners[i]) - v2SearchPos;
       if(v2Diff * v2Diff > dBestDist * dBestDist)
 	continue;
       dBestDist = sqrt(v2Diff * v2Diff);
@@ -420,7 +636,7 @@ void CalibImage::ExpandByStep(int n)
   
   CalibGridCorner gTarget;
   gTarget.Params = gSrc.Params;
-  gTarget.Params.v2Pos = vec(irBest);
+  gTarget.Params.v2Pos = size2Vec(irBest);
   gTarget.Params.dGain *= -1;
   gTarget.irGridPos = gSrc.irGridPos + irGridStep;
   gTarget.mInheritedSteps = gSrc.GetSteps(mvGridCorners);
@@ -432,8 +648,10 @@ void CalibImage::ExpandByStep(int n)
   int nTargetNum = mvGridCorners.size();
   for(int dirn = 0; dirn<4; dirn++)
     {
-      ImageRef irSearch = gTarget.irGridPos + IR_from_dirn(dirn);
-      for(unsigned int i=0; i<mvGridCorners.size(); i++)
+      //ImageRef irSearch = gTarget.irGridPos + IR_from_dirn(dirn);
+	  cv::Point irSearch = gTarget.irGridPos + IR_from_dirn(dirn);
+
+      for (unsigned int i=0; i < mvGridCorners.size(); i++)
 	if(mvGridCorners[i].irGridPos == irSearch)
 	  {
 	    gTarget.aNeighborStates[dirn].val = i;
@@ -486,9 +704,9 @@ void CalibImage::Draw3DGrid(ATANCamera &Camera, bool bDrawErrors)
 	if(mvGridCorners[i].aNeighborStates[dirn].val > i)
 	  {
 	    Vector<3> v3; v3[2] = 0.0;
-	    v3.slice<0,2>() = vec(mvGridCorners[i].irGridPos);
+	    v3.slice<0,2>() = size2Vec(mvGridCorners[i].irGridPos);
 	    glVertex(Camera.Project(project(mse3CamFromWorld * v3)));
-	    v3.slice<0,2>() = vec(mvGridCorners[mvGridCorners[i].aNeighborStates[dirn].val].irGridPos);
+	    v3.slice<0,2>() = size2Vec(mvGridCorners[mvGridCorners[i].aNeighborStates[dirn].val].irGridPos);
 	    glVertex(Camera.Project(project(mse3CamFromWorld * v3)));
 	  }
     }
@@ -502,7 +720,7 @@ void CalibImage::Draw3DGrid(ATANCamera &Camera, bool bDrawErrors)
       for(int i=0; i< (int) mvGridCorners.size(); i++)
 	{
 	  Vector<3> v3; v3[2] = 0.0;
-	  v3.slice<0,2>() = vec(mvGridCorners[i].irGridPos);
+	  v3.slice<0,2>() = size2Vec(mvGridCorners[i].irGridPos);
 	  Vector<2> v2Pixels_Projected = Camera.Project(project(mse3CamFromWorld * v3));
 	  Vector<2> v2Error = mvGridCorners[i].Params.v2Pos - v2Pixels_Projected;
 	  glVertex(v2Pixels_Projected);
@@ -513,11 +731,11 @@ void CalibImage::Draw3DGrid(ATANCamera &Camera, bool bDrawErrors)
 };
 
 #if _WIN64
-cv::Size IR_from_dirn(int nDirn)
+cv::Point IR_from_dirn(int nDirn)
 {
 	int ir[2] = { 0,0 };
 	ir[nDirn % 2] = (nDirn < 2) ? 1 : -1;
-	return cv::Size(ir[0], ir[1]);
+	return cv::Point(ir[0], ir[1]);
 }
 #else
 ImageRef CalibImage::IR_from_dirn(int nDirn)
@@ -568,7 +786,7 @@ void CalibImage::GuessInitialPose(ATANCamera &Camera)
     }
 
   // The right null-space (should only be one) of the matrix gives the homography...
-  SVD<> svdHomography(m2Nx9);
+  TooN::SVD<> svdHomography(m2Nx9);
   Vector<9> vH = svdHomography.get_VT()[8];
   Matrix<3> m3Homography;
   m3Homography[0] = vH.slice<0,3>();
@@ -578,7 +796,7 @@ void CalibImage::GuessInitialPose(ATANCamera &Camera)
   
   // Fix up possibly poorly conditioned bits of the homography
   {
-    SVD<2> svdTopLeftBit(m3Homography.slice<0,0,2,2>());
+    TooN::SVD<2> svdTopLeftBit(m3Homography.slice<0,0,2,2>());
     Vector<2> v2Diagonal = svdTopLeftBit.get_diagonal();
     m3Homography = m3Homography / v2Diagonal[0];
     v2Diagonal = v2Diagonal / v2Diagonal[0];
@@ -632,7 +850,7 @@ vector<CalibImage::ErrorAndJacobians> CalibImage::Project(ATANCamera &Camera)
       // First, project into image...
       Vector<3> v3World;
       v3World[2] = 0.0;
-      v3World.slice<0,2>() = vec(mvGridCorners[n].irGridPos);
+      v3World.slice<0,2>() = size2Vec(mvGridCorners[n].irGridPos);
       
       Vector<3> v3Cam = mse3CamFromWorld * v3World;
       if(v3Cam[2] <= 0.001)
