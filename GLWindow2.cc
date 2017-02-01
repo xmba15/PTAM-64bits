@@ -35,11 +35,10 @@ GLWindow2::GLWindow2(cv::Size irSize, string sTitle)
 
   mirVideoSize = irSize;
   GUI.RegisterCommand("GLWindow.AddMenu", GUICommandCallBack, this);
-  //glSetFont("sans");
+  glSetFont("sans");
   mvMCPoseUpdate=Zeros;
   mvLeftPoseUpdate=Zeros;
 };
-
 
 void GLWindow2::AddMenu(string sName, string sTitle)
 {
@@ -191,7 +190,6 @@ void GLWindow2::DrawCaption(string s)
   PrintString(cv::Point(10,nTopOfBox + 13), s);
 }
 
-
 void GLWindow2::HandlePendingEvents()
 {
   handle_events(*this);
@@ -242,8 +240,6 @@ pair<Vector<6>, Vector<6> > GLWindow2::GetMousePoseUpdate()
   mvMCPoseUpdate = Zeros;
   return result;
 }
-
-
 
 #ifndef WIN32
 #include <X11/keysym.h>

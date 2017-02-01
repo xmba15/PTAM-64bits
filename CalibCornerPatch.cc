@@ -6,14 +6,6 @@
 #include "SmallMatrixOpts.h"
 #include <math.h>
 
-#if !_WIN64
-#include <cvd/vector_image_ref.h>
-#include <cvd/vision.h>
-#include <cvd/utility.h>
-#include <cvd/convolution.h>
-#include <cvd/image_interpolate.h>
-#endif
-
 using namespace std;
 
 //Image<float> CalibCornerPatch::mimSharedSourceTemplate;
@@ -53,14 +45,6 @@ void CalibCornerPatch::MakeTemplateWithCurrentParams()
   int nOffset;
   {
     Matrix<2> m2Warp = mParams.m2Warp();
-    //CVD::transform(mimSharedSourceTemplate, imTwiceToBlur,
-		  // M2Inverse(m2Warp),
-		  // vec(mimSharedSourceTemplate.size() - ImageRef(1,1)) * 0.5,
-		  // vec(imTwiceToBlur.size() - ImageRef(1,1)) * 0.5);
-    //halfSample(imTwiceToBlur, imToBlur);
-    //convolveGaussian(imToBlur, dBlurSigma);
-	//nOffset = (imToBlur.size().x - mimTemplate.size().x) / 2;
-	//cvd::copy(imToBlur, mimTemplate, mimTemplate.size(), ImageRef(nOffset, nOffset));
 
 	cv_transform(mimSharedSourceTemplate, imTwiceToBlur,
 		M2Inverse(m2Warp),
@@ -85,23 +69,12 @@ void CalibCornerPatch::MakeTemplateWithCurrentParams()
 	  m2Warp[1][i] = sin(dAngle);
 	};
       
-      //CVD::transform(mimSharedSourceTemplate, imTwiceToBlur,
-		    // M2Inverse(m2Warp),
-		    // vec(mimSharedSourceTemplate.size() - ImageRef(1,1)) * 0.5,
-		    // vec(imTwiceToBlur.size() - ImageRef(1,1)) * 0.5);
-      //halfSample(imTwiceToBlur, imToBlur);
-      //convolveGaussian(imToBlur, dBlurSigma);
 	  cv_transform(mimSharedSourceTemplate, imToBlur,
 		  M2Inverse(m2Warp),
 		  size2Vec(mimSharedSourceTemplate.size() - cv::Size(1, 1))* 0.5,
 		  size2Vec(imTwiceToBlur.size() - cv::Size(1, 1)) * 0.5);
 	  cv::pyrDown(imTwiceToBlur, imToBlur, imToBlur.size());
 	  cv::GaussianBlur(imToBlur, imToBlur, cv::Size(ksize, ksize), dBlurSigma, 3.0);
-
-	  //     ImageRef ir;
-	  //     do
-	  //mimAngleJacs[ir][dof] = (imToBlur[ir + ImageRef(nOffset, nOffset)] - mimTemplate[ir]) / 0.01;
-	  //     while(ir.next(mimTemplate.size()));
 
 	  for (int i = 0; i < mimTemplate.rows; i++) {
 		  for (int j = 0; j < mimTemplate.cols; j++) {
@@ -111,19 +84,6 @@ void CalibCornerPatch::MakeTemplateWithCurrentParams()
 
     };
   
-  // Make the image of image gradients here too (while we have the bigger template to work from)
- // ImageRef ir;
- // do
- //   {
- //     mimGradients[ir][0] = 0.5 * 
-	//(imToBlur[ir + ImageRef(nOffset + 1, nOffset)] - 
-	// imToBlur[ir + ImageRef(nOffset - 1, nOffset)]);
- //     mimGradients[ir][1] = 0.5 * 
-	//(imToBlur[ir + ImageRef(nOffset, nOffset + 1 )] - 
-	// imToBlur[ir + ImageRef(nOffset, nOffset - 1 )]);
- //   }
- // while(ir.next(mimGradients.size()));
-
   for (int i = 0; i < mimTemplate.rows; i++) {
 	  for (int j = 0; j < mimTemplate.cols; j++) {
 		  mimGradients[0].ptr<float>(i)[j] = 0.5 * (imToBlur.ptr<float>(i + nOffset + 1)[j + nOffset] -
