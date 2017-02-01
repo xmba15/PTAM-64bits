@@ -7,15 +7,10 @@
 using namespace TooN;
 #include <vector>
 
-#if _WIN64
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include "additionalUtility.h"
-#else
-#include <cvd/image.h>
-#include <cvd/byte.h>
-#endif
 
 using namespace additionalUtility;
 
@@ -33,24 +28,13 @@ public:
   };
   
   CalibCornerPatch(int nSideSize = 8);
-#if _WIN64
   bool IterateOnImage(Params &params, cv::Mat &im);
   bool IterateOnImageWithDrawing(Params &params, cv::Mat &im);
-#else
-  bool IterateOnImage(Params &params, CVD::Image<CVD::byte> &im);
-  bool IterateOnImageWithDrawing(Params &params, CVD::Image<CVD::byte> &im);
-#endif
+
  protected:
+
   void MakeTemplateWithCurrentParams();
-#if _WIN64
-  //void FillTemplate(cv::Mat &im, Params params);
   double Iterate(cv::Mat &im);
-#else
-  double Iterate(CVD::Image<CVD::byte> &im);
-  CVD::Image<float> mimTemplate; //Same as mimSmall but with the mean image intensity subtracted, used in all image operations
-  CVD::Image<Vector<2> > mimGradients;
-  CVD::Image<Vector<2> > mimAngleJacs; 
-#endif
 
   Params mParams;
   cv::Mat mimTemplate;
@@ -58,9 +42,8 @@ public:
   std::vector<cv::Mat> mimAngleJacs;
 
   void MakeSharedTemplate();
-  //static CVD::Image<float> mimSharedSourceTemplate; 
   static cv::Mat mimSharedSourceTemplate;
   double mdLastError;
 };
-
 #endif
+

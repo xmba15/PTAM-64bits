@@ -39,8 +39,6 @@ int main()
     }
 }
 
-
-
 CameraCalibrator::CameraCalibrator()
   :mGLWindow(mVideoSource.imgSize(), "Camera Calibrator"), mCamera("Camera")
 {
@@ -75,13 +73,10 @@ void CameraCalibrator::Run()
       // We use two versions of each video frame:
       // One black and white (for processing by the tracker etc)
       // and one RGB, for drawing.
-#if _WIN64
+
 	  cv::Mat imFrameRGB;
 	  cv::Mat imFrameBW;
-#else
-      Image<Rgb<byte> > imFrameRGB(mVideoSource.imgSize());
-      Image<byte>  imFrameBW(mVideoSource.Size());
-#endif 
+
       // Grab new video frame...
       mVideoSource.GetAndFillFrameBWandRGB(imFrameBW, imFrameRGB);  
       

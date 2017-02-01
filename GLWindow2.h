@@ -8,9 +8,6 @@
 //  caption line for text display. Also provides some handy GL helpers
 //  and a wrapper for CVD's text display routines.
 
-#if !_WIN64
-#include <cvd/glwindow.h>
-#endif
 #include <TooN/TooN.h>
 #include "additionalUtility.h"
 
@@ -54,7 +51,6 @@ protected:
 
   cv::Size mirVideoSize;   // The size of the source video material.
   
-
   // Event handling routines:
   virtual void on_key_down(GLWindow&, int key);
   virtual void on_mouse_move(GLWindow& win, cv::Point where, int state);
@@ -65,9 +61,7 @@ protected:
   // Storage for map viewer updates:
   TooN::Vector<6> mvMCPoseUpdate;
   TooN::Vector<6> mvLeftPoseUpdate;
-  
 
 };
-
-
 #endif
+
