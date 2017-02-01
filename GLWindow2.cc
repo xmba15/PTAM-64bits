@@ -13,7 +13,7 @@ using namespace std;
 using namespace GVars3;
 using namespace TooN;
 
-GLWindow2::GLWindow2(ImageRef irSize, string sTitle)
+GLWindow2::GLWindow2(cv::Size irSize, string sTitle)
   : GLWindow(irSize, sTitle)
 {
 
@@ -35,7 +35,7 @@ GLWindow2::GLWindow2(ImageRef irSize, string sTitle)
 
   mirVideoSize = irSize;
   GUI.RegisterCommand("GLWindow.AddMenu", GUICommandCallBack, this);
-  glSetFont("sans");
+  //glSetFont("sans");
   mvMCPoseUpdate=Zeros;
   mvLeftPoseUpdate=Zeros;
 };
@@ -99,7 +99,7 @@ void GLWindow2::DrawMenus()
       i!= mvpGLWindowMenus.end();
       i++)
     {
-      (*i)->Render(nTop, nHeight, size()[0], *this);
+      (*i)->Render(nTop, nHeight, size().width, *this);
       nTop+=nHeight+1;
     }
   
@@ -123,24 +123,24 @@ void GLWindow2::SetupVideoOrtho()
 {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(-0.5,(double)mirVideoSize.x - 0.5, (double) mirVideoSize.y - 0.5, -0.5, -1.0, 1.0);
+  glOrtho(-0.5,(double)mirVideoSize.width - 0.5, (double) mirVideoSize.height - 0.5, -0.5, -1.0, 1.0);
 }
 
 void GLWindow2::SetupVideoRasterPosAndZoom()
 { 
   glRasterPos2d(-0.5,-0.5);
   double adZoom[2];
-  adZoom[0] = (double) size()[0] / (double) mirVideoSize[0];
-  adZoom[1] = (double) size()[1] / (double) mirVideoSize[1];
+  adZoom[0] = (double) size().width / (double) mirVideoSize.width;
+  adZoom[1] = (double) size().height / (double) mirVideoSize.height;
   glPixelZoom(adZoom[0], -adZoom[1]);
 }
 
 void GLWindow2::SetupViewport()
 {
-  glViewport(0, 0, size()[0], size()[1]);
+  glViewport(0, 0, size().width, size().height);
 }
 
-void GLWindow2::PrintString(CVD::ImageRef irPos, std::string s)
+void GLWindow2::PrintString(cv::Point irPos, std::string s)
 {
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
@@ -173,7 +173,7 @@ void GLWindow2::DrawCaption(string s)
       }
   }
   
-  int nTopOfBox = size().y - nLines * 17;
+  int nTopOfBox = size().height - nLines * 17;
   
   // Draw a grey background box for the text
   glColor4f(0,0,0,0.4);
@@ -181,14 +181,14 @@ void GLWindow2::DrawCaption(string s)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glBegin(GL_QUADS);
   glVertex2d(-0.5, nTopOfBox);
-  glVertex2d(size().x, nTopOfBox);
-  glVertex2d(size().x, size().y);
-  glVertex2d(-0.5, size().y);
+  glVertex2d(size().width, nTopOfBox);
+  glVertex2d(size().width, size().height);
+  glVertex2d(-0.5, size().height);
   glEnd();
   
   // Draw the caption text in yellow
   glColor3f(1,1,0);      
-  PrintString(ImageRef(10,nTopOfBox + 13), s);
+  PrintString(cv::Point(10,nTopOfBox + 13), s);
 }
 
 
@@ -197,31 +197,31 @@ void GLWindow2::HandlePendingEvents()
   handle_events(*this);
 }
 
-void GLWindow2::on_mouse_move(GLWindow& win, CVD::ImageRef where, int state)
+void GLWindow2::on_mouse_move(GLWindow& win, cv::Point where, int state)
 {
-  ImageRef irMotion = where - mirLastMousePos;
+  cv::Point irMotion = where - mirLastMousePos;
   mirLastMousePos = where;
   
   double dSensitivity = 0.01;
   if(state & BUTTON_LEFT && ! (state & BUTTON_RIGHT))
     {
-      mvMCPoseUpdate[3] -= irMotion[1] * dSensitivity;
-      mvMCPoseUpdate[4] += irMotion[0] * dSensitivity;
+      mvMCPoseUpdate[3] -= irMotion.y * dSensitivity;
+      mvMCPoseUpdate[4] += irMotion.x * dSensitivity;
     }
   else if(!(state & BUTTON_LEFT) && state & BUTTON_RIGHT)
     {
-      mvLeftPoseUpdate[4] -= irMotion[0] * dSensitivity;
-      mvLeftPoseUpdate[3] += irMotion[1] * dSensitivity;
+      mvLeftPoseUpdate[4] -= irMotion.x * dSensitivity;
+      mvLeftPoseUpdate[3] += irMotion.y * dSensitivity;
     }
   else if(state & BUTTON_MIDDLE  || (state & BUTTON_LEFT && state & BUTTON_RIGHT))
     {
-      mvLeftPoseUpdate[5] -= irMotion[0] * dSensitivity;
-      mvLeftPoseUpdate[2] += irMotion[1] * dSensitivity;
+      mvLeftPoseUpdate[5] -= irMotion.x * dSensitivity;
+      mvLeftPoseUpdate[2] += irMotion.y * dSensitivity;
     }
   
 }
 
-void GLWindow2::on_mouse_down(GLWindow& win, CVD::ImageRef where, int state, int button)
+void GLWindow2::on_mouse_down(GLWindow& win, cv::Point where, int state, int button)
 {
   bool bHandled = false;
   for(unsigned int i=0; !bHandled && i<mvpGLWindowMenus.size(); i++)

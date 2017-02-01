@@ -1,6 +1,3 @@
-//#include <cvd/image.h>
-//#include <cvd/byte.h>
-//#include <cvd/rgb.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -13,14 +10,11 @@ class VideoSource
 public:
 	VideoSource();
 	~VideoSource();
-	//void GetAndFillFrameBWandRGB(CVD::Image<CVD::byte> &imBW, CVD::Image<CVD::Rgb<CVD::byte> > &imRGB);
 	void GetAndFillFrameBWandRGB(cv::Mat &imBW, cv::Mat &imRGB);
-	//CVD::ImageRef Size();
 	cv::Size imgSize();
 
 private:
 	unsigned char *m_buffer;
-	//CVD::ImageRef mirSize;
 	void *mptr;
 	cv::Size size;
 };

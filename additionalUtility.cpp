@@ -31,7 +31,7 @@ inline void cv_sample(const cv::Mat &im, double x, double y, float& result)
 	result = (float)(x*(y*(e - c + d) - e) + y*(c - a) + a);
 }
 
-int cv_transform(cv::Mat& in, cv::Mat& out, const TooN::Matrix<2>& M, const TooN::Vector<2>& inOrig, const TooN::Vector<2>& outOrig, const float defaultValue = float())
+int cv_transform(cv::Mat& in, cv::Mat& out, const TooN::Matrix<2>& M, const TooN::Vector<2>& inOrig, const TooN::Vector<2>& outOrig, const float defaultValue)
 {
 	const int w = out.size().width, h = out.size().height, iw = in.size().width, ih = in.size().height;
 	const TooN::Vector<2> across = M.T()[0];
@@ -117,17 +117,6 @@ double getSubpix(const cv::Mat &img, TooN::Vector<2> vec)
 {
 	cv::Point2d pt(vec[0], vec[1]);
 	return getSubpix(img, pt);
-}
-
-
-inline void glVertex(const cv::Point &i)
-{
-	glVertex2i(i.x, i.y);
-}
-
-inline void glVertex(const TooN::Vector<2>& v)
-{
-	glVertex2d(v[0], v[1]);
 }
 
 inline unsigned int mag_squared(const cv::Point &pt)

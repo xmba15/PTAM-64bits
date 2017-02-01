@@ -15,7 +15,6 @@
 #endif
 
 using namespace std;
-using namespace CVD;
 
 //Image<float> CalibCornerPatch::mimSharedSourceTemplate;
 cv::Mat CalibCornerPatch::mimSharedSourceTemplate;

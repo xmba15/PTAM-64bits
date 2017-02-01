@@ -15,7 +15,7 @@ namespace glExceptions
 		std::string what;
 	};
 
-	struct OutOfMemory: public All
+	struct OutOfMemory : public All
 	{
 		OutOfMemory()
 		{
@@ -27,26 +27,26 @@ namespace glExceptions
 	/// @ingroup gException
 	namespace GLWindow
 	{
-	    /// Base class for all CVD::GLWindow exceptions
-	    /// @ingroup gException
-	    struct All: public glExceptions::All{
-	    };
+		/// Base class for all CVD::GLWindow exceptions
+		/// @ingroup gException
+		struct All : public glExceptions::All {
+		};
 
-	    /// An exception occurred during initialisation
-	    /// @ingroup gException
-	    struct CreationError: public All
-	    {
-		CreationError(std::string w); ///< Construct from error string
-	    };
+		/// An exception occurred during initialisation
+		/// @ingroup gException
+		struct CreationError : public All
+		{
+			CreationError(std::string w); ///< Construct from error string
+		};
 
-	    /// An exception occurred during run-time
-	    /// @ingroup gException
-	    struct RuntimeError: public All
-	    {
-		RuntimeError(std::string w); ///< Construct from error string
-	    };
+		/// An exception occurred during run-time
+		/// @ingroup gException
+		struct RuntimeError : public All
+		{
+			RuntimeError(std::string w); ///< Construct from error string
+		};
 	}
-    }
+}
 
     /// An object that creates a window and a GL context attached to that window, and manages its events.
     class GLWindow {

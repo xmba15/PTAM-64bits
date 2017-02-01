@@ -4,11 +4,11 @@
 #ifndef __CAMERACALIBRATOR_H
 #define __CAMERACALIBRATOR_H
 #include "CalibImage.h"
-#include "VideoSource.h"
 #include "VideoSourceOpenCV.h"
 #include <gvars3/gvars3.h>
 #include <vector>
 #include "GLWindow2.h"
+#include "additionalUtility.h"
 
 class CameraCalibrator
 {
@@ -18,7 +18,11 @@ public:
   
 protected:
   void Reset();
+#if _WIN64
+  void HandleFrame(cv::Mat imFrame);
+#else
   void HandleFrame(CVD::Image<CVD::byte> imFrame);
+#endif
   static void MainLoopCallback(void* pvUserData);
   void MainLoopStep();
   VideoSource mVideoSource;

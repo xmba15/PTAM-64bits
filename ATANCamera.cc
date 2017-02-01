@@ -1,13 +1,11 @@
 // Copyright 2008 Isis Innovation Limited
 #include "ATANCamera.h"
 #include <TooN/helpers.h>
-//#include <cvd/vector_image_ref.h>
 #include <iostream>
 #include <gvars3/instances.h>
 #include <algorithm>
 
 using namespace std;
-//using namespace CVD;
 using namespace GVars3;
 using namespace TooN;
 using namespace cv;
@@ -146,30 +144,30 @@ TooN::Vector<2> ATANCamera::UnProject(const TooN::Vector<2>& v2Im)
 
 // Utility function for easy drawing with OpenGL
 // C.f. comment in top of ATANCamera.h
-TooN::Matrix<4> ATANCamera::MakeUFBLinearFrustumMatrix(double near, double far)
+TooN::Matrix<4> ATANCamera::MakeUFBLinearFrustumMatrix(double _near, double _far)
 {
   TooN::Matrix<4> m4 = Zeros;
   
 
-  double left = mvImplaneTL[0] * near;
-  double right = mvImplaneBR[0] * near;
-  double top = mvImplaneTL[1] * near;
-  double bottom = mvImplaneBR[1] * near;
+  double left = mvImplaneTL[0] * _near;
+  double right = mvImplaneBR[0] * _near;
+  double top = mvImplaneTL[1] * _near;
+  double bottom = mvImplaneBR[1] * _near;
   
   // The openGhelL frustum manpage is A PACK OF LIES!!
   // Two of the elements are NOT what the manpage says they should be.
   // Anyway, below code makes a frustum projection matrix
   // Which projects a RHS-coord frame with +z in front of the camera
   // Which is what I usually want, instead of glFrustum's LHS, -z idea.
-  m4[0][0] = (2 * near) / (right - left);
-  m4[1][1] = (2 * near) / (top - bottom);
+  m4[0][0] = (2 * _near) / (right - left);
+  m4[1][1] = (2 * _near) / (top - bottom);
   
   m4[0][2] = (right + left) / (left - right);
   m4[1][2] = (top + bottom) / (bottom - top);
-  m4[2][2] = (far + near) / (far - near);
+  m4[2][2] = (_far + _near) / (_far - _near);
   m4[3][2] = 1;
   
-  m4[2][3] = 2*near*far / (near - far);
+  m4[2][3] = 2 * _near * _far / (_near - _far);
 
   return m4;
 };

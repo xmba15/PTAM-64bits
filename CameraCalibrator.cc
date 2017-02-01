@@ -6,18 +6,17 @@
 #include <fstream>
 #include <stdlib.h>
 
-using namespace CVD;
 using namespace std;
 using namespace GVars3;
 
 int main()
 {
-  cout << "  Welcome to CameraCalibrator " << endl;
-  cout << "  -------------------------------------- " << endl;
-  cout << "  Parallel tracking and mapping for Small AR workspaces" << endl;
-  cout << "  Copyright (C) Isis Innovation Limited 2008 " << endl;
-  cout << endl;  
-  cout << "  Parsing calibrator_settings.cfg ...." << endl;
+  std::cout << "  Welcome to CameraCalibrator " << std::endl;
+  std::cout << "  -------------------------------------- " << std::endl;
+  std::cout << "  Parallel tracking and mapping for Small AR workspaces" << std::endl;
+  std::cout << "  Copyright (C) Isis Innovation Limited 2008 " << std::endl;
+  std::cout << std::endl;  
+  std::cout << "  Parsing calibrator_settings.cfg ...." << std::endl;
   
   GUI.LoadFile("calibrator_settings.cfg");
 
@@ -31,7 +30,7 @@ int main()
       CameraCalibrator c;
       c.Run();
     }
-  catch(CVD::Exceptions::All e)
+  catch(glExceptions::All e)
     {
       cout << endl;
       cout << "!! Failed to run CameraCalibrator; got exception. " << endl;
@@ -43,7 +42,7 @@ int main()
 
 
 CameraCalibrator::CameraCalibrator()
-  :mGLWindow(mVideoSource.Size(), "Camera Calibrator"), mCamera("Camera")
+  :mGLWindow(mVideoSource.imgSize(), "Camera Calibrator"), mCamera("Camera")
 {
   mbDone = false;
   GUI.RegisterCommand("CameraCalibrator.GrabNextFrame", GUICommandCallBack, this);
@@ -76,10 +75,13 @@ void CameraCalibrator::Run()
       // We use two versions of each video frame:
       // One black and white (for processing by the tracker etc)
       // and one RGB, for drawing.
-      
-      Image<Rgb<byte> > imFrameRGB(mVideoSource.Size());
+#if _WIN64
+	  cv::Mat imFrameRGB;
+	  cv::Mat imFrameBW;
+#else
+      Image<Rgb<byte> > imFrameRGB(mVideoSource.imgSize());
       Image<byte>  imFrameBW(mVideoSource.Size());
-      
+#endif 
       // Grab new video frame...
       mVideoSource.GetAndFillFrameBWandRGB(imFrameBW, imFrameRGB);  
       
@@ -157,7 +159,7 @@ void CameraCalibrator::Reset()
   *mCamera.mgvvCameraParams = ATANCamera::mvDefaultParams;
   if(*mgvnDisableDistortion) mCamera.DisableRadialDistortion();
   
-  mCamera.SetImageSize(mVideoSource.Size());
+  mCamera.SetImageSize(mVideoSource.imgSize());
   mbGrabNextFrame =false;
   *mgvnOptimizing = false;
   mvCalibImgs.clear();
@@ -258,7 +260,7 @@ void CameraCalibrator::OptimizeOneStep()
   
   mdMeanPixelError = sqrt(dSumSquaredError / nTotalMeas);
 
-  SVD<> svd(mJTJ);
+  TooN::SVD<> svd(mJTJ);
   Vector<> vUpdate(nDim);
   vUpdate= svd.backsub(vJTe);
   vUpdate *= 0.1; // Slow down because highly nonlinear...

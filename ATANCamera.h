@@ -50,10 +50,10 @@
 #include <gvars3/gvars3.h>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 #include "additionalUtility.h"
 
 using namespace TooN;
-//using namespace CVD;
 using namespace cv;
 #define NUMTRACKERCAMPARAMETERS 5
 
@@ -104,7 +104,7 @@ class ATANCamera {
   inline TooN::Vector<2> ImplaneBR(); 
 
   // OpenGL helper function
-  TooN::Matrix<4> MakeUFBLinearFrustumMatrix(double near, double far);
+  TooN::Matrix<4> MakeUFBLinearFrustumMatrix(double _near, double _far);
 
   // Feedback for Camera Calibrator
   double PixelAspectRatio() { return mvFocal[1] / mvFocal[0];}

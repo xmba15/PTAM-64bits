@@ -11,6 +11,7 @@
 #include <map>
 #include <gvars3/gvars3.h>
 #include "GLWindow2.h"
+#include "additionalUtility.h"
 
 class GLWindowMenu
 {

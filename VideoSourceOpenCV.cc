@@ -3,7 +3,6 @@
 #include <Windows.h>
 
 
-using namespace CVD;
 using namespace std;
 
 #define CAPTURE_SIZE_X	640
@@ -23,32 +22,6 @@ VideoSource::VideoSource()
 	VideoSource::size = cv::Size(CAPTURE_SIZE_X, CAPTURE_SIZE_Y);
 };
 
-
-//void VideoSource::GetAndFillFrameBWandRGB(Image<CVD::byte> &imBW, Image<CVD::Rgb<CVD::byte> > &imRGB)
-//{
-//	EWC_GetImage(0, m_buffer);
-//
-//	unsigned char* pImage = m_buffer;
-//
-//	BasicImage<CVD::byte> imCaptured(pImage, mirSize);
-//	imRGB.resize(mirSize);
-//	imBW.resize(mirSize);
-//
-//	for (int y=0; y<mirSize.y; y++) {
-//		for (int x=0; x<mirSize.x; x++) {
-//			imRGB[y][x].blue = *pImage;
-//			pImage++;
-//
-//			imRGB[y][x].green = *pImage;
-//			imBW[y][x]        = *pImage;
-//			pImage++;
-//
-//			imRGB[y][x].red = *pImage;
-//			pImage++;
-//		}
-//	}
-//
-//}
 
 void VideoSource::GetAndFillFrameBWandRGB(cv::Mat &imBW, cv::Mat &imRGB) {
 	cv::Mat frame;

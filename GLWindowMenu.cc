@@ -6,7 +6,6 @@
 #include <sstream>
 
 using namespace GVars3;
-using namespace CVD;
 using namespace std;
 
 GLWindowMenu::GLWindowMenu(string sName, string sTitle)
@@ -187,7 +186,7 @@ void GLWindowMenu::Render(int nTop, int nHeight, int nWidth, GLWindow2 &glw)
 	  FillBox(nBase, nBase + *mgvnMenuItemWidth +1, mnMenuTop, mnMenuTop + mnMenuHeight);
 	  glColor4d(0,1,0,dAlpha);
 	  LineBox(nBase, nBase + *mgvnMenuItemWidth +1, mnMenuTop, mnMenuTop + mnMenuHeight);
-	  glw.PrintString(ImageRef( nBase + 3, mnMenuTop + *mgvnMenuTextOffset),
+	  glw.PrintString(cv::Point( nBase + 3, mnMenuTop + *mgvnMenuTextOffset),
 			  i->sName);
 	  break;
 	  
@@ -202,7 +201,7 @@ void GLWindowMenu::Render(int nTop, int nHeight, int nWidth, GLWindow2 &glw)
 	  else
 	    glColor4d(1,0,0,dAlpha);
 	  LineBox(nBase, nBase + *mgvnMenuItemWidth +1, mnMenuTop, mnMenuTop + mnMenuHeight);
-	  glw.PrintString(ImageRef( nBase + 3, mnMenuTop + *mgvnMenuTextOffset),
+	  glw.PrintString(cv::Point( nBase + 3, mnMenuTop + *mgvnMenuTextOffset),
 			  i->sName + " " + ((*(i->gvnIntValue))?("On"):("Off")));
 	  break;
 
@@ -211,7 +210,7 @@ void GLWindowMenu::Render(int nTop, int nHeight, int nWidth, GLWindow2 &glw)
 	  FillBox(nBase, nBase + *mgvnMenuItemWidth +1, mnMenuTop, mnMenuTop + mnMenuHeight);
 	  glColor4d(0,1,1,dAlpha);
 	  LineBox(nBase, nBase + *mgvnMenuItemWidth +1, mnMenuTop, mnMenuTop + mnMenuHeight);
-	  glw.PrintString(ImageRef( nBase + 3, mnMenuTop + *mgvnMenuTextOffset),
+	  glw.PrintString(cv::Point( nBase + 3, mnMenuTop + *mgvnMenuTextOffset),
 			  i->sName + " " + GV2.StringValue(i->sParam, true));
 	  break;
 	  
@@ -230,7 +229,7 @@ void GLWindowMenu::Render(int nTop, int nHeight, int nWidth, GLWindow2 &glw)
 	    LineBox(nBase, nBase + *mgvnMenuItemWidth +1, mnMenuTop, mnMenuTop + mnMenuHeight);
 	    ostringstream ost;
 	    ost << i->sName << " " << *(i->gvnIntValue);
-	    glw.PrintString(ImageRef( nBase + 3, mnMenuTop + *mgvnMenuTextOffset),
+	    glw.PrintString(cv::Point( nBase + 3, mnMenuTop + *mgvnMenuTextOffset),
 			    ost.str());
 	  }
 	  break;
@@ -241,7 +240,7 @@ void GLWindowMenu::Render(int nTop, int nHeight, int nWidth, GLWindow2 &glw)
   FillBox(mnWidth - *mgvnMenuItemWidth, mnWidth-1, mnMenuTop, mnMenuTop + mnMenuHeight);
   glColor4d(1,1,0,dAlpha);
   LineBox(mnWidth - *mgvnMenuItemWidth, mnWidth-1, mnMenuTop, mnMenuTop + mnMenuHeight);
-  ImageRef ir( mnWidth - *mgvnMenuItemWidth + 5, mnMenuTop + *mgvnMenuTextOffset);
+  cv::Point ir( mnWidth - *mgvnMenuItemWidth + 5, mnMenuTop + *mgvnMenuTextOffset);
   if(msCurrentSubMenu == "Root")
     glw.PrintString(ir, msTitle+":");
   else
