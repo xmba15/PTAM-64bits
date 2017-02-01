@@ -53,6 +53,7 @@
 #include <opencv2/imgproc.hpp>
 #include "additionalUtility.h"
 
+using namespace additionalUtility;
 using namespace TooN;
 using namespace cv;
 #define NUMTRACKERCAMPARAMETERS 5

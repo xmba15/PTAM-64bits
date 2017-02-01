@@ -2,7 +2,6 @@
 #include "VideoSourceOpenCV.h"
 #include <Windows.h>
 
-
 using namespace std;
 
 #define CAPTURE_SIZE_X	640

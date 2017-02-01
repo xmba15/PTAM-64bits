@@ -17,6 +17,8 @@ using namespace TooN;
 #include <cvd/byte.h>
 #endif
 
+using namespace additionalUtility;
+
 class CalibCornerPatch
 {
 public:

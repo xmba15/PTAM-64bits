@@ -4,16 +4,6 @@
 #include <stdlib.h>
 #include <gvars3/instances.h>
 
-#if _WIN64
-#include "additionalUtility.h"
-#else
-#include <cvd/utility.h>
-#include <cvd/convolution.h>
-#include <cvd/fast_corner.h>
-#include <cvd/vector_image_ref.h>
-#include <cvd/image_interpolate.h>
-using namespace CVD;
-#endif
 #include <TooN/se3.h>
 #include <TooN/SVD.h>
 #include <TooN/wls.h>
@@ -21,7 +11,6 @@ using namespace CVD;
 using namespace std;
 using namespace GVars3;
 
-#if _WIN64
 inline bool isCorner(cv::Mat &im, cv::Point ir, int nGate)
 {
 	int nSum = 0;
@@ -63,56 +52,7 @@ inline bool isCorner(cv::Mat &im, cv::Point ir, int nGate)
 	}
 	return (nSwaps == 4);
 }
-#else
-inline bool IsCorner(Image<byte> &im, ImageRef ir, int nGate)
-{ // Does a quick check to see if a point in an image could be a grid corner.
-  // Does this by going around a 16-pixel ring, and checking that there's four
-  // transitions (black - white- black - white - )
-  // Also checks that the central pixel is blurred.
 
-  // Find the mean intensity of the pixel ring...
-  int nSum = 0;
-  static byte abPixels[16];
-  for(int i=0; i<16; i++)
-    {
-      abPixels[i] = im[ir + [i]];
-      nSum += abPixels[i];
-    };
-  int nMean = nSum / 16;
-  int nHiThresh = nMean + nGate;
-  int nLoThresh = nMean - nGate;
-
-  // If the center pixel is roughly the same as the mean, this isn't a corner.
-  int nCenter = im[ir];
-  if(nCenter <= nLoThresh || nCenter >= nHiThresh)
-    return false;
-  
-  // Count transitions around the ring... there should be four!
-  bool bState = (abPixels[15] > nMean);
-  int nSwaps = 0;
-  for(int i=0; i<16; i++)
-    {
-      byte bValNow = abPixels[i];
-      if(bState)
-	{
-	  if(bValNow < nLoThresh)
-	    {
-	      bState = false;
-	      nSwaps++;
-	    }
-	}
-      else
-	if(bValNow > nHiThresh)
-	  {
-	    bState = true;
-	    nSwaps++;
-	  };
-    }
-  return (nSwaps == 4);
-};
-#endif
-
-#if _WIN64
 Vector<2> GuessInitialAngles(cv::Mat &im, cv::Point irCenter)
 {
 	//image_interpolate<Interpolate::Bilinear, byte> imInterp(im);
@@ -152,50 +92,6 @@ Vector<2> GuessInitialAngles(cv::Mat &im, cv::Point irCenter)
 	return v2Ret;
 }
 
-#else
-Vector<2> GuessInitialAngles(Image<byte> &im, ImageRef irCenter)
-{
-  // The iterative patch-finder works better if the initial guess
-  // is roughly aligned! Find one of the line-axes by searching round 
-  // the circle for the strongest gradient, and use that and +90deg as the
-  // initial guesses for patch angle.
-  //
-  // Yes, this is a very poor estimate, but it's generally (hopefully?) 
-  // enough for the iterative finder to converge.
-  
-  image_interpolate<Interpolate::Bilinear, byte> imInterp(im);
-  double dBestAngle = 0;
-  double dBestGradMag = 0;
-  double dGradAtBest = 0;
-  for(double dAngle = 0.0; dAngle < M_PI; dAngle += 0.1)
-    {
-      Vector<2> v2Dirn;
-      v2Dirn[0] = cos(dAngle);      v2Dirn[1] = sin(dAngle);
-      Vector<2> v2Perp;
-      v2Perp[1] = -v2Dirn[0];      v2Perp[0] = v2Dirn[1];
-      
-      double dG =     imInterp[vec(irCenter) + v2Dirn * 3.0 + v2Perp * 0.1] - 
-	              imInterp[vec(irCenter) + v2Dirn * 3.0 - v2Perp * 0.1]
-	       +      imInterp[vec(irCenter) - v2Dirn * 3.0 - v2Perp * 0.1] - 
-		      imInterp[vec(irCenter) - v2Dirn * 3.0 + v2Perp * 0.1];
-      if(fabs(dG) > dBestGradMag)
-	{
-	  dBestGradMag = fabs(dG);
-	  dGradAtBest = dG;
-	  dBestAngle = dAngle;
-	};
-    }
-  
-  Vector<2> v2Ret;
-  if(dGradAtBest < 0)
-    {   v2Ret[0] = dBestAngle; v2Ret[1] = dBestAngle + M_PI / 2.0;    }
-  else
-    {   v2Ret[1] = dBestAngle; v2Ret[0] = dBestAngle - M_PI / 2.0;    }
-  return v2Ret;
-}
-#endif
-
-#if _WIN64
 bool CalibImage::MakeFromImage(cv::Mat &im)
 {
 	static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
@@ -290,102 +186,7 @@ bool CalibImage::MakeFromImage(cv::Mat &im)
 	return true;
 
 }
-#else
-bool CalibImage::MakeFromImage(Image<byte> &im)
-{
-  static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
-  mvCorners.clear();
-  mvGridCorners.clear();
-  
-  mim = im;
-  mim.make_unique();
-  
-  // Find potential corners..
-  // This works better on a blurred image, so make a blurred copy
-  // and run the corner finding on that.
-  {
-    Image<byte> imBlurred = mim;
-    imBlurred.make_unique();
-    convolveGaussian(imBlurred, GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, SILENT));
-    ImageRef irTopLeft(5,5);
-    ImageRef irBotRight = mim.size() - irTopLeft;
-    ImageRef ir = irTopLeft;
-    glPointSize(1);
-    glColor3f(1,0,1);
-    glBegin(GL_POINTS);
-    int nGate = GV2.GetInt("CameraCalibrator.MeanGate", 10, SILENT);
-    do
-      if(IsCorner(imBlurred, ir, nGate))
-	{
-	  mvCorners.push_back(ir);
-	  glVertex(ir);
-	}
-    while(ir.next(irTopLeft, irBotRight));
-    glEnd();
-  }
-  
-  // If there's not enough corners, i.e. camera pointing somewhere random, abort.
-  if((int) mvCorners.size() < GV2.GetInt("CameraCalibrator.MinCornersForGrabbedImage", 20, SILENT))
-    return false;
-  
-  // Pick a central corner point...
-  ImageRef irCenterOfImage = mim.size()  / 2;
-  ImageRef irBestCenterPos;
-  unsigned int nBestDistSquared = 99999999;
-  for(unsigned int i=0; i<mvCorners.size(); i++)
-    {
-      unsigned int nDist = (mvCorners[i] - irCenterOfImage).mag_squared();
-      if(nDist < nBestDistSquared)
-	{
-	  nBestDistSquared = nDist;
-	  irBestCenterPos = mvCorners[i];
-	}
-    }
-  
-  // ... and try to fit a corner-patch to that.
-  CalibCornerPatch Patch(*gvnCornerPatchSize);
-  CalibCornerPatch::Params Params;
-  Params.v2Pos = vec(irBestCenterPos);
-  Params.v2Angles = GuessInitialAngles(mim, irBestCenterPos); 
-  Params.dGain = 80.0;
-  Params.dMean = 120.0;
-  
-  if(!Patch.IterateOnImageWithDrawing(Params, mim))
-    return false;
-  
-  // The first found corner patch becomes the origin of the detected grid.
-  CalibGridCorner cFirst;
-  cFirst.Params = Params;
-  mvGridCorners.push_back(cFirst);
-  cFirst.Draw();
-  
-  // Next, go in two compass directions from the origin patch, and see if 
-  // neighbors can be found.
-  if(!(ExpandByAngle(0,0) || ExpandByAngle(0,2)))
-    return false;
-  if(!(ExpandByAngle(0,1) || ExpandByAngle(0,3)))
-    return false;
-  
-  mvGridCorners[1].mInheritedSteps = mvGridCorners[2].mInheritedSteps = mvGridCorners[0].GetSteps(mvGridCorners);
-  
-  // The three initial grid elements are enough to find the rest of the grid.
-  int nNext;
-  int nSanityCounter = 0; // Stop it getting stuck in an infinite loop...
-  const int nSanityCounterLimit = 500;
-  while((nNext = NextToExpand()) >= 0 && nSanityCounter < nSanityCounterLimit )
-    {
-      ExpandByStep(nNext);
-      nSanityCounter++;
-    }
-  if(nSanityCounter == nSanityCounterLimit)
-    return false;
-  
-  DrawImageGrid();
-  return true;
-}
-#endif
 
-#if _WIN64
 bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
 {
 	static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
@@ -439,57 +240,6 @@ bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
 	mvGridCorners.back().Draw();
 	return true;
 }
-#else
-bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
-{
-  static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
-  CalibGridCorner &gSrc = mvGridCorners[nSrc];
-  
-  ImageRef irBest;
-  double dBestDist = 99999;
-  Vector<2> v2TargetDirn = gSrc.Params.m2Warp().T()[nDirn%2];
-  if(nDirn >= 2)
-    v2TargetDirn *= -1;
-  for(unsigned int i=0; i<mvCorners.size(); i++)
-    {
-      Vector<2> v2Diff = vec(mvCorners[i]) - gSrc.Params.v2Pos;
-      if(v2Diff * v2Diff < 100)
-	continue;
-      if(v2Diff * v2Diff > dBestDist * dBestDist)
-	continue;
-      Vector<2> v2Dirn = v2Diff;
-      normalize(v2Dirn);
-      if(v2Dirn * v2TargetDirn < cos(M_PI / 18.0))
-	continue;
-      dBestDist = sqrt(v2Diff * v2Diff);
-      irBest = mvCorners[i];
-    }
-  
-  CalibGridCorner gTarget;
-  gTarget.Params = gSrc.Params;
-  gTarget.Params.v2Pos = vec(irBest);
-  gTarget.Params.dGain *= -1;
-  
-  CalibCornerPatch Patch(*gvnCornerPatchSize);
-  if(!Patch.IterateOnImageWithDrawing(gTarget.Params, mim))
-    {
-      gSrc.aNeighborStates[nDirn].val = N_FAILED;
-      return false;
-    }
-
-  gTarget.irGridPos = gSrc.irGridPos;
-  if(nDirn < 2)
-    gTarget.irGridPos[nDirn]++;
-  else gTarget.irGridPos[nDirn%2]--;
-  // Update connection states:
-  mvGridCorners.push_back(gTarget); // n.b. This invalidates gSrc!
-  mvGridCorners.back().aNeighborStates[(nDirn + 2) % 4].val = nSrc;
-  mvGridCorners[nSrc].aNeighborStates[nDirn].val = mvGridCorners.size() - 1;
-  
-  mvGridCorners.back().Draw();
-  return true;
-}
-#endif
 
 void CalibGridCorner::Draw()
 {
@@ -730,21 +480,12 @@ void CalibImage::Draw3DGrid(ATANCamera &Camera, bool bDrawErrors)
     }
 };
 
-#if _WIN64
-cv::Point IR_from_dirn(int nDirn)
+cv::Point CalibImage::IR_from_dirn(int nDirn)
 {
 	int ir[2] = { 0,0 };
 	ir[nDirn % 2] = (nDirn < 2) ? 1 : -1;
 	return cv::Point(ir[0], ir[1]);
 }
-#else
-ImageRef CalibImage::IR_from_dirn(int nDirn)
-{
-  ImageRef ir;
-  ir[nDirn%2] = (nDirn < 2) ? 1: -1;
-  return ir;
-}
-#endif
 
 void CalibImage::GuessInitialPose(ATANCamera &Camera)
 {

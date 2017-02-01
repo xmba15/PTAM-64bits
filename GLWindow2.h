@@ -14,6 +14,7 @@
 #include <TooN/TooN.h>
 #include "additionalUtility.h"
 
+using namespace additionalUtility;
 class GLWindowMenu;
 
 

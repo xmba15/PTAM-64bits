@@ -10,6 +10,8 @@
 #include "GLWindow2.h"
 #include "additionalUtility.h"
 
+using namespace additionalUtility;
+
 class CameraCalibrator
 {
 public:

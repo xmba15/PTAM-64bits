@@ -7,6 +7,9 @@
 #include "CalibCornerPatch.h"
 #include <vector>
 #include <TooN/se3.h>
+#include "additionalUtility.h"
+
+using namespace additionalUtility;
 
 const int N_NOT_TRIED=-1;
 const int N_FAILED=-2;
@@ -20,11 +23,7 @@ struct CalibGridCorner
   };
   
   CalibCornerPatch::Params Params;
-#if _WIN64
   cv::Point irGridPos;
-#else
-  CVD::ImageRef irGridPos;
-#endif
 
   NeighborState aNeighborStates[4];
   
@@ -39,12 +38,7 @@ struct CalibGridCorner
 class CalibImage
 {
 public:
-
-#if _WIN64
   bool MakeFromImage(cv::Mat &im);
-#else
-  bool MakeFromImage(CVD::Image<CVD::byte> &im);
-#endif
   TooN::SE3<> mse3CamFromWorld;
   void DrawImageGrid();
   void Draw3DGrid(ATANCamera &Camera, bool bDrawErrors);
@@ -59,32 +53,18 @@ public:
 
   std::vector<ErrorAndJacobians> Project(ATANCamera &Camera);
 
-#if _WIN64
   cv::Mat mim;
-#else
-  CVD::Image<CVD::byte> mim;
-#endif
 
 protected:
-#if _WIN64
-	std::vector<cv::Point> mvCorners;
-#else
-  std::vector<CVD::ImageRef> mvCorners;
-#endif
+
+  std::vector<cv::Point> mvCorners;
   std::vector<CalibGridCorner> mvGridCorners;
   
   bool ExpandByAngle(int nSrc, int nDirn);
   int NextToExpand();
   void ExpandByStep(int n);
 
-#if _WIN64
   cv::Point IR_from_dirn(int nDirn);
-#else
-  CVD::ImageRef IR_from_dirn(int nDirn);
-#endif
-
 };
 
-
 #endif
-
