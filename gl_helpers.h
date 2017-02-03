@@ -521,8 +521,14 @@
 	{
 		::glPixelStorei(GL_UNPACK_ALIGNMENT, (i.step & 3) ? 1 : 4);
 		::glPixelStorei(GL_UNPACK_ROW_LENGTH, i.step / i.elemSize());
-		::glDrawPixels(i.cols, i.rows, GL_RGB, GL_UNSIGNED_BYTE, i.data);
-		//::glDrawPixels(i.cols, i.rows, GL_LUMINANCE, GL_UNSIGNED_BYTE, i.data);
+		//cv::imshow("temp", i);
+		//cv::waitKey(0);
+		if (i.channels() == 1) {
+			::glDrawPixels(i.cols, i.rows, GL_LUMINANCE, GL_UNSIGNED_BYTE, i.data);
+		}
+		else {
+			::glDrawPixels(i.cols, i.rows, GL_RGB, GL_UNSIGNED_BYTE, i.data);
+		}
 		::glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	}
 
