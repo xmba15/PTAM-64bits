@@ -76,18 +76,15 @@ class ATANCamera {
   void SetImageSize(TooN::Vector<2> v2ImageSize);
 
   inline void SetImageSize(cv::Size imagesize) { SetImageSize(size2Vec(imagesize)); }
-  /* inline void SetImageSize(CVD::ImageRef irImageSize) {SetImageSize(CVD::vec(irImageSize));}; */
   inline TooN::Vector<2> GetImageSize() {return mvImageSize;};
   void RefreshParams();
   
   // Various projection functions
   TooN::Vector<2> Project(const Vector<2>& camframe); // Projects from camera z=1 plane to pixel coordinates, with radial distortion
   inline TooN::Vector<2> Project(cv::Size imagesize) { return Project(size2Vec(imagesize)); }
-  /* inline TooN::Vector<2> Project(CVD::ImageRef ir) { return Project(vec(ir)); } */
 
   TooN::Vector<2> UnProject(const TooN::Vector<2>& imframe); // Inverse operation
   inline TooN::Vector<2> UnProject(cv::Size imagesize) { return UnProject(size2Vec(imagesize)); }
-  /* inline TooN::Vector<2> UnProject(CVD::ImageRef ir)  { return UnProject(vec(ir)); } */
   
   TooN::Vector<2> UFBProject(const TooN::Vector<2>& camframe);
   TooN::Vector<2> UFBUnProject(const TooN::Vector<2>& camframe);
@@ -188,7 +185,4 @@ inline TooN::Vector<2> ATANCamera::UFBLinearUnProject(const TooN::Vector<2>& fbf
   v2Res[1] = (fbframe[1] - mvUFBLinearCenter[1]) * mvUFBLinearInvFocal[1];
   return v2Res;
 }
-
-
 #endif
-
