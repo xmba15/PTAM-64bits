@@ -7,20 +7,21 @@
 #include <TooN/se3.h>
 #include <TooN/SVD.h>
 #include <TooN/wls.h>
+#include "FAST/fast_corner.h"
 
 using namespace std;
 using namespace GVars3;
+using namespace FAST;
 
 inline bool isCorner(cv::Mat &im, cv::Point ir, int nGate)
 {
 	int nSum = 0;
-	static uchar abPixels[16];
-	static int x_shift[16] = { 0, 1, 2, 3, 3, 3, 2, 1, 0, -1, -2, -3, -3, -3, -2, -1};
-	static int y_shift[16] = { -3, -3, -2, -1, 0, 1, 2, 3, 3, 3, 2, 1, 0, -1, -2, -3 };
+	static int abPixels[16];
 	for (int i = 0; i < 16; i++)
 	{
-		abPixels[i] = im.ptr<uchar>(ir.y + y_shift[i])[ir.x + x_shift[i]];
+		abPixels[i] = im.ptr<uchar>(ir.y + FAST::fast_pixel_ring[i].y)[ir.x + FAST::fast_pixel_ring[i].x];
 	}
+
 	int nMean = nSum / 16;
 	int nHiThresh = nMean + nGate;
 	int nLoThresh = nMean - nGate;
@@ -55,8 +56,6 @@ inline bool isCorner(cv::Mat &im, cv::Point ir, int nGate)
 
 Vector<2> GuessInitialAngles(cv::Mat &im, cv::Point irCenter)
 {
-	//image_interpolate<Interpolate::Bilinear, byte> imInterp(im);
-
 	double dBestAngle = 0;
 	double dBestGradMag = 0;
 	double dGradAtBest = 0;
