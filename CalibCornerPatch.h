@@ -3,13 +3,9 @@
 
 #ifndef __CALIB_CORNER_PATCH_H
 #define __CALIB_CORNER_PATCH_H
-#include <TooN/TooN.h>
-using namespace TooN;
+
 #include <vector>
 
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
 #include "additionalUtility.h"
 
 using namespace additionalUtility;
@@ -20,29 +16,31 @@ public:
   struct Params
   {
     Params();
-    TooN::Matrix<2> m2Warp();
-    TooN::Vector<2> v2Pos;
-    TooN::Vector<2> v2Angles;
+    //TooN::Matrix<2> m2Warp();
+	cv::Matx<double, 2, 2> m2Warp();
+    cv::Vec2d v2Pos;
+    cv::Vec2d v2Angles;
     double dMean;
     double dGain;
   };
-  
+
   CalibCornerPatch(int nSideSize = 8);
-  bool IterateOnImage(Params &params, cv::Mat &im);
-  bool IterateOnImageWithDrawing(Params &params, cv::Mat &im);
+  bool IterateOnImage(Params &params, cv::Mat_<uchar> &im);
+  bool IterateOnImageWithDrawing(Params &params, cv::Mat_<uchar> &im);
 
  protected:
 
   void MakeTemplateWithCurrentParams();
-  double Iterate(cv::Mat &im);
+  void FillTemplate(cv::Mat_<double> &im, Params params);
+  double Iterate(cv::Mat_<uchar> &im);
 
   Params mParams;
-  cv::Mat mimTemplate;
-  std::vector<cv::Mat> mimGradients;
-  std::vector<cv::Mat> mimAngleJacs;
+  cv::Mat_<double> mimTemplate;
+  cv::Mat_<cv::Vec2d> mimGradients;
+  cv::Mat_<cv::Vec2d> mimAngleJacs;
 
   void MakeSharedTemplate();
-  static cv::Mat mimSharedSourceTemplate;
+  static cv::Mat_<double> mimSharedSourceTemplate;
   double mdLastError;
 };
 #endif

@@ -1,30 +1,21 @@
 // Copyright 2008 Isis Innovation Limited
 #include "ATANCamera.h"
-#include <TooN/helpers.h>
 #include <iostream>
 #include <gvars3/instances.h>
 #include <algorithm>
 
 using namespace std;
 using namespace GVars3;
-using namespace TooN;
-using namespace cv;
 
-ATANCamera::ATANCamera(string sName)
+ATANCamera::ATANCamera(string sName, const cv::Size imgsize)
 {
   // The camera name is used to find the camera's parameters in a GVar.
   msName = sName;
+  ATANCamera::mvDefaultParams = cv::Vec<double, NUMTRACKERCAMPARAMETERS>(0.5, 0.75, 0.5, 0.5, 0.1);
   GV2.Register(mgvvCameraParams, sName + ".Parameters", mvDefaultParams, HIDDEN | FATAL_IF_NOT_DEFINED);
-  mvImageSize[0] = 640.0;
-  mvImageSize[1] = 480.0;
+  mvImageSize = imgsize;
   RefreshParams();
 }
-
-void ATANCamera::SetImageSize(TooN::Vector<2> vImageSize)
-{
-  mvImageSize = vImageSize;
-  RefreshParams();
-};
 
 void ATANCamera::RefreshParams() 
 {
@@ -33,10 +24,10 @@ void ATANCamera::RefreshParams()
   //
   
   // First: Focal length and image center in pixel coordinates
-  mvFocal[0] = mvImageSize[0] * (*mgvvCameraParams)[0];
-  mvFocal[1] = mvImageSize[1] * (*mgvvCameraParams)[1];
-  mvCenter[0] = mvImageSize[0] * (*mgvvCameraParams)[2] - 0.5;
-  mvCenter[1] = mvImageSize[1] * (*mgvvCameraParams)[3] - 0.5;
+  mvFocal[0] = mvImageSize.width * (*mgvvCameraParams)[0];
+  mvFocal[1] = mvImageSize.height * (*mgvvCameraParams)[1];
+  mvCenter[0] = mvImageSize.width * (*mgvvCameraParams)[2] - 0.5;
+  mvCenter[1] = mvImageSize.height * (*mgvvCameraParams)[3] - 0.5;
   
   // One over focal length
   mvInvFocal[0] = 1.0 / mvFocal[0];
@@ -59,10 +50,9 @@ void ATANCamera::RefreshParams()
     }
   
   // work out biggest radius in image
-  TooN::Vector<2> v2;
-  v2[0]= max((*mgvvCameraParams)[2], 1.0 - (*mgvvCameraParams)[2]) / (*mgvvCameraParams)[0];
-  v2[1]= max((*mgvvCameraParams)[3], 1.0 - (*mgvvCameraParams)[3]) / (*mgvvCameraParams)[1];
-  mdLargestRadius = invrtrans(sqrt(v2*v2));
+  cv::Vec2d v2( std::max((*mgvvCameraParams)[2], 1.0 - (*mgvvCameraParams)[2]) / (*mgvvCameraParams)[0],
+                std::max((*mgvvCameraParams)[3], 1.0 - (*mgvvCameraParams)[3]) / (*mgvvCameraParams)[1]);
+  mdLargestRadius = invrtrans(cv::norm(v2));
   
   // At what stage does the model become invalid?
   mdMaxR = 1.5 * mdLargestRadius; // (pretty arbitrary)
@@ -70,23 +60,23 @@ void ATANCamera::RefreshParams()
   // work out world radius of one pixel
   // (This only really makes sense for square-ish pixels)
   {
-    TooN::Vector<2> v2Center = UnProject(mvImageSize / 2);
+    cv::Vec2d v2Center = UnProject(mvImageSize.width * 0.5, mvImageSize.height * 0.5);
     //TooN::Vector<2> v2RootTwoAway = UnProject(mvImageSize / 2 + vec(ImageRef(1,1)));
-	TooN::Vector<2> v2RootTwoAway = UnProject(mvImageSize / 2 + size2Vec(cv::Size(1, 1)));
-	TooN::Vector<2> v2Diff = v2Center - v2RootTwoAway;
-    mdOnePixelDist = sqrt(v2Diff * v2Diff) / sqrt(2.0);
+	cv::Vec2d v2RootTwoAway = UnProject(mvImageSize.width * 0.5 + 1, mvImageSize.height * 0.5 + 1);
+	cv::Vec2d v2Diff = v2Center - v2RootTwoAway;
+    mdOnePixelDist = cv::norm(v2Diff) / sqrt(2.0);
   }
   
   // Work out the linear projection values for the UFB
   {
     // First: Find out how big the linear bounding rectangle must be
-    vector<TooN::Vector<2> > vv2Verts;
-    vv2Verts.push_back(UnProject(makeVector( -0.5, -0.5)));
-    vv2Verts.push_back(UnProject(makeVector( mvImageSize[0]-0.5, -0.5)));
-    vv2Verts.push_back(UnProject(makeVector( mvImageSize[0]-0.5, mvImageSize[1]-0.5)));
-    vv2Verts.push_back(UnProject(makeVector( -0.5, mvImageSize[1]-0.5)));
-    TooN::Vector<2> v2Min = vv2Verts[0];
-    TooN::Vector<2> v2Max = vv2Verts[0];
+    std::vector<cv::Vec2d > vv2Verts;
+    vv2Verts.push_back(UnProject(-0.5, -0.5));
+    vv2Verts.push_back(UnProject(mvImageSize.width - 0.5, -0.5));
+    vv2Verts.push_back(UnProject(mvImageSize.width - 0.5, mvImageSize.height-0.5));
+    vv2Verts.push_back(UnProject(-0.5, mvImageSize.height - 0.5));
+    cv::Vec2d v2Min = vv2Verts[0];
+    cv::Vec2d v2Max = vv2Verts[0];
     for(int i=0; i<4; i++)
       for(int j=0; j<2; j++)
 	{
@@ -97,7 +87,7 @@ void ATANCamera::RefreshParams()
     mvImplaneBR = v2Max;
     
     // Store projection parameters to fill this bounding box
-    TooN::Vector<2> v2Range = v2Max - v2Min;
+    cv::Vec2d v2Range = v2Max - v2Min;
     mvUFBLinearInvFocal = v2Range;
     mvUFBLinearFocal[0] = 1.0 / mvUFBLinearInvFocal[0];
     mvUFBLinearFocal[1] = 1.0 / mvUFBLinearInvFocal[1];
@@ -107,46 +97,11 @@ void ATANCamera::RefreshParams()
   
 }
 
-// Project from the camera z=1 plane to image pixels,
-// while storing intermediate calculation results in member variables
-TooN::Vector<2> ATANCamera::Project(const TooN::Vector<2>& vCam){
-  mvLastCam = vCam;
-  mdLastR = sqrt(vCam * vCam);
-  mbInvalid = (mdLastR > mdMaxR);
-  mdLastFactor = rtrans_factor(mdLastR);
-  mdLastDistR = mdLastFactor * mdLastR;
-  mvLastDistCam = mdLastFactor * mvLastCam;
-  
-  mvLastIm[0] = mvCenter[0] + mvFocal[0] * mvLastDistCam[0];
-  mvLastIm[1] = mvCenter[1] + mvFocal[1] * mvLastDistCam[1];
-  
-  return mvLastIm;
-}
-
-// Un-project from image pixel coords to the camera z=1 plane
-// while storing intermediate calculation results in member variables
-TooN::Vector<2> ATANCamera::UnProject(const TooN::Vector<2>& v2Im)
-{
-  mvLastIm = v2Im;
-  mvLastDistCam[0] = (mvLastIm[0] - mvCenter[0]) * mvInvFocal[0];
-  mvLastDistCam[1] = (mvLastIm[1] - mvCenter[1]) * mvInvFocal[1];
-  mdLastDistR = sqrt(mvLastDistCam * mvLastDistCam);
-  mdLastR = invrtrans(mdLastDistR);
-  double dFactor;
-  if(mdLastDistR > 0.01)
-    dFactor =  mdLastR / mdLastDistR;
-  else
-    dFactor = 1.0;
-  mdLastFactor = 1.0 / dFactor;
-  mvLastCam = dFactor * mvLastDistCam;
-  return mvLastCam;
-}
-
 // Utility function for easy drawing with OpenGL
 // C.f. comment in top of ATANCamera.h
-TooN::Matrix<4> ATANCamera::MakeUFBLinearFrustumMatrix(double _near, double _far)
+cv::Matx<double, 4, 4> ATANCamera::MakeUFBLinearFrustumMatrix(double _near, double _far)
 {
-  TooN::Matrix<4> m4 = Zeros;
+  cv::Matx<double, 4, 4> m4 = cv::Matx<double, 4, 4>::zeros();
   
 
   double left = mvImplaneTL[0] * _near;
@@ -159,20 +114,20 @@ TooN::Matrix<4> ATANCamera::MakeUFBLinearFrustumMatrix(double _near, double _far
   // Anyway, below code makes a frustum projection matrix
   // Which projects a RHS-coord frame with +z in front of the camera
   // Which is what I usually want, instead of glFrustum's LHS, -z idea.
-  m4[0][0] = (2 * _near) / (right - left);
-  m4[1][1] = (2 * _near) / (top - bottom);
+  m4(0, 0) = (2 * _near) / (right - left);
+  m4(1, 1) = (2 * _near) / (top - bottom);
   
-  m4[0][2] = (right + left) / (left - right);
-  m4[1][2] = (top + bottom) / (bottom - top);
-  m4[2][2] = (_far + _near) / (_far - _near);
-  m4[3][2] = 1;
+  m4(0, 2) = (right + left) / (left - right);
+  m4(1, 2) = (top + bottom) / (bottom - top);
+  m4(2, 2) = (_far + _near) / (_far - _near);
+  m4(3, 2) = 1;
   
-  m4[2][3] = 2 * _near * _far / (_near - _far);
+  m4(2, 3) = 2 * _near * _far / (_near - _far);
 
   return m4;
 };
 
-TooN::Matrix<2,2> ATANCamera::GetProjectionDerivs()
+cv::Matx<double, 2, 2> ATANCamera::GetProjectionDerivs()
 {
   // get the derivative of image frame wrt camera z=1 frame at the last computed projection
   // in the form (d im1/d cam1, d im1/d cam2)
@@ -199,44 +154,107 @@ TooN::Matrix<2,2> ATANCamera::GetProjectionDerivs()
 	mdWinv * (k * y) / (r*r*(1 + k*k*r*r)) - y * mdLastFactor / (r*r); 
     }
   
-  TooN::Matrix<2> m2Derivs;
+  cv::Matx<double, 2, 2> m2Derivs;
   
-  m2Derivs[0][0] = mvFocal[0] * (dFracBydx * x + mdLastFactor);  
-  m2Derivs[1][0] = mvFocal[1] * (dFracBydx * y);  
-  m2Derivs[0][1] = mvFocal[0] * (dFracBydy * x);  
-  m2Derivs[1][1] = mvFocal[1] * (dFracBydy * y + mdLastFactor);  
+  m2Derivs(0, 0) = mvFocal[0] * (dFracBydx * x + mdLastFactor);  
+  m2Derivs(1, 0) = mvFocal[1] * (dFracBydx * y);  
+  m2Derivs(0, 1) = mvFocal[0] * (dFracBydy * x);  
+  m2Derivs(1, 1) = mvFocal[1] * (dFracBydy * y + mdLastFactor);  
   return m2Derivs;
 }
 
-TooN::Matrix<2,NUMTRACKERCAMPARAMETERS> ATANCamera::GetCameraParameterDerivs()
+cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> ATANCamera::GetCamParamAnalyticalDerivs()
+{
+	// Differentials wrt to the camera parameters
+	// Use these to calibrate the camera
+	// No need for this to be quick, so do them numerically
+
+	cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> m2nJ;
+
+	cv::Vec2d v2Cam = mvLastCam;
+	double ru = cv::norm(v2Cam); 	// undistorted radius
+	double xe = v2Cam[0], ye = v2Cam[1]; // Euclidean normalized coordinates
+
+	double imwidth = mvImageSize.width;
+	double imheight = mvImageSize.height;
+
+	double fx = imwidth * (*mgvvCameraParams)[0];
+	double fy = imheight * (*mgvvCameraParams)[2];
+	double distort = 1.0;
+	double rd;
+	double w = (*mgvvCameraParams)[4];
+
+	double DrdDw = 0; // the derivative of the distorted radius wrt w
+					  // **** Note that:
+					  //
+					  //   rd = atan(2 * ru * tan(w/2) ) / w
+					  //
+	if (w != 0 && mdW != 0) {
+		double cc = 2 * ru*tan(w / 2);
+		rd = atan(cc) / w;
+		distort = rd / ru;
+
+		DrdDw = (ru / (cos(w / 2)*cos(w / 2) * (1 + cc*cc)) - rd) / w;
+	}
+
+	// 1. Derivatives wrt sx = fx / w
+	m2nJ(0, 0) = imwidth * xe * distort;
+	m2nJ(1, 0) = 0;
+
+	// 2. Derivatives wrt kx = cx / w
+	m2nJ(0, 2) = imwidth;
+	m2nJ(1, 2) = 0;
+
+	// 3. Derivatives wrt sy = fy / h
+	m2nJ(0, 1) = 0;
+	m2nJ(1, 1) = imheight * ye * distort;
+
+	// 4. Derivatives wrt ky = cy / h
+	m2nJ(0, 3) = 0;
+	m2nJ(1, 3) = imheight;
+
+	// 5. Derivatives wrt w
+	m2nJ(0, 4) = fx * xe * DrdDw / ru;
+	m2nJ(1, 4) = fy * ye * DrdDw / ru;
+
+	return m2nJ;
+}
+
+
+cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> ATANCamera::GetCameraParameterDerivs()
 {
   // Differentials wrt to the camera parameters
   // Use these to calibrate the camera
   // No need for this to be quick, so do them numerically
   
-  TooN::Matrix<2, NUMTRACKERCAMPARAMETERS> m2NNumDerivs;
-  TooN::Vector<NUMTRACKERCAMPARAMETERS> vNNormal = *mgvvCameraParams;
-  TooN::Vector<2> v2Cam = mvLastCam;
-  TooN::Vector<2> v2Out = Project(v2Cam);
+  cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> m2NNumDerivs;
+  cv::Vec<double, NUMTRACKERCAMPARAMETERS> vNNormal = *mgvvCameraParams;
+  cv::Vec2d v2Cam = mvLastCam;
+  cv::Vec2d v2Out = Project(v2Cam);
   for(int i=0; i<NUMTRACKERCAMPARAMETERS; i++)
     {
       if(i == NUMTRACKERCAMPARAMETERS-1 && mdW == 0.0)
 	continue;
-      TooN::Vector<NUMTRACKERCAMPARAMETERS> vNUpdate;
-      vNUpdate = Zeros;
+      cv::Vec<double, NUMTRACKERCAMPARAMETERS> vNUpdate;
+      vNUpdate = cv::Vec<double, NUMTRACKERCAMPARAMETERS>::all(0);
       vNUpdate[i] += 0.001;
       UpdateParams(vNUpdate); 
-      TooN::Vector<2> v2Out_B = Project(v2Cam);
-      m2NNumDerivs.T()[i] = (v2Out_B - v2Out) / 0.001;
+      cv::Vec2d v2Out_B = Project(v2Cam);
+	  cv::Vec2d DparamsByDpi = (v2Out_B - v2Out) / 0.001;
+	  m2NNumDerivs(0, i) = DparamsByDpi[0];
+	  m2NNumDerivs(1, i) = DparamsByDpi[1];
       *mgvvCameraParams = vNNormal;
       RefreshParams();
     }
-  if(mdW == 0.0)
-    m2NNumDerivs.T()[NUMTRACKERCAMPARAMETERS-1] = Zeros;
+
+  if (mdW == 0.0) {
+	  m2NNumDerivs(0, NUMTRACKERCAMPARAMETERS - 1) = 0;
+	  m2NNumDerivs(1, NUMTRACKERCAMPARAMETERS - 1) = 0;
+  }
   return m2NNumDerivs;
 }
 
-void ATANCamera::UpdateParams(TooN::Vector<5> vUpdate)
+void ATANCamera::UpdateParams(cv::Vec<double, NUMTRACKERCAMPARAMETERS> vUpdate)
 {
   // Update the camera parameters; use this as part of camera calibration.
   (*mgvvCameraParams) = (*mgvvCameraParams) + vUpdate;
@@ -251,11 +269,11 @@ void ATANCamera::DisableRadialDistortion()
   RefreshParams();
 }
 
-TooN::Vector<2> ATANCamera::UFBProject(const TooN::Vector<2>& vCam)
+cv::Vec2d ATANCamera::UFBProject(const cv::Vec2d &vCam)
 {
   // Project from camera z=1 plane to UFB, storing intermediate calc results.
   mvLastCam = vCam;
-  mdLastR = sqrt(vCam * vCam);
+  mdLastR = cv::norm(vCam);
   mbInvalid = (mdLastR > mdMaxR);
   mdLastFactor = rtrans_factor(mdLastR);
   mdLastDistR = mdLastFactor * mdLastR;
@@ -266,12 +284,12 @@ TooN::Vector<2> ATANCamera::UFBProject(const TooN::Vector<2>& vCam)
   return mvLastIm;
 }
 
-TooN::Vector<2> ATANCamera::UFBUnProject(const TooN::Vector<2>& v2Im)
+cv::Vec2d ATANCamera::UFBUnProject(const cv::Vec2d &v2Im)
 {
   mvLastIm = v2Im;
   mvLastDistCam[0] = (mvLastIm[0] - (*mgvvCameraParams)[2]) / (*mgvvCameraParams)[0];
   mvLastDistCam[1] = (mvLastIm[1] - (*mgvvCameraParams)[3]) / (*mgvvCameraParams)[1];
-  mdLastDistR = sqrt(mvLastDistCam * mvLastDistCam);
+  mdLastDistR = cv::norm(mvLastDistCam);
   mdLastR = invrtrans(mdLastDistR);
   double dFactor;
   if(mdLastDistR > 0.01)
@@ -282,5 +300,3 @@ TooN::Vector<2> ATANCamera::UFBUnProject(const TooN::Vector<2>& v2Im)
   mvLastCam = dFactor * mvLastDistCam;
   return mvLastCam;
 }
-
-const TooN::Vector<NUMTRACKERCAMPARAMETERS> ATANCamera::mvDefaultParams = makeVector(0.5, 0.75, 0.5, 0.5, 0.1);

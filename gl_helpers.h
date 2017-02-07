@@ -39,11 +39,7 @@
 #endif
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
-
-#include <TooN/TooN.h>
+#include "FAST/OpenCV.h"
 
  
 
@@ -55,7 +51,7 @@
 		glVertex2i(i.x, i.y);
 	}
 
-	inline void glVertex(const TooN::Vector<2>& v)
+	inline void glVertex(const cv::Vec2d& v)
 	{
 		glVertex2d(v[0], v[1]);
 	}

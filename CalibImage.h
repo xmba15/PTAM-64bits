@@ -6,7 +6,6 @@
 #include "ATANCamera.h"
 #include "CalibCornerPatch.h"
 #include <vector>
-#include <TooN/se3.h>
 #include "additionalUtility.h"
 
 using namespace additionalUtility;
@@ -27,8 +26,8 @@ struct CalibGridCorner
 
   NeighborState aNeighborStates[4];
   
-  TooN::Matrix<2> GetSteps(std::vector<CalibGridCorner> &vgc); 
-  TooN::Matrix<2> mInheritedSteps;
+  cv::Matx<double, 2, 2> GetSteps(std::vector<CalibGridCorner> &vgc); 
+  cv::Matx<double, 2, 2> mInheritedSteps;
   
   void Draw();
   
