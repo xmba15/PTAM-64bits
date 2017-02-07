@@ -40,17 +40,12 @@
 // glMultMatrix(Camera.MakeUFBLinearFrustumMatrix(near,far));
 // To render un-distorted geometry with full frame coverage.
 //
-
-#ifndef __ATAN_CAMERA_H
-#define __ATAN_CAMERA_H
+#pragma once
 
 #include <TooN/TooN.h>
 #include <cmath>
-//#include <cvd/vector_image_ref.h>
 #include <gvars3/gvars3.h>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
+#include "FAST/OpenCV.h"
 #include "additionalUtility.h"
 
 using namespace additionalUtility;
@@ -185,4 +180,3 @@ inline TooN::Vector<2> ATANCamera::UFBLinearUnProject(const TooN::Vector<2>& fbf
   v2Res[1] = (fbframe[1] - mvUFBLinearCenter[1]) * mvUFBLinearInvFocal[1];
   return v2Res;
 }
-#endif
