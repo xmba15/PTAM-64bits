@@ -8,7 +8,8 @@
 using namespace std;
 namespace FAST
 {
-void fast_corner_detect_plain_8(const cv::Mat_<uchar>& i, vector<cv::Point2i>& corners, int b)
+// CV_8UC1 image
+void fast_corner_detect_plain_8(const cv::Mat &i, vector<cv::Point> &corners, int b)
   {
 	int y, cb, c_b;
 	const uchar *line_max, *line_min;

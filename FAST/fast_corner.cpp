@@ -29,7 +29,7 @@ const cv::Point fast_pixel_ring[16] =
 struct CornerPositive { inline static int sub(int a, int b) { return a-b; } };
 struct CornerNegative { inline static int sub(int a, int b) { return b-a; } };
 
-int old_style_corner_score(const cv::Mat_<uchar> &im, cv::Point c, const int *pointer_dir, int barrier)
+int old_style_corner_score(const cv::Mat &im, cv::Point c, const int *pointer_dir, int barrier)
 {
 	const uchar* imp = im.ptr<uchar>(c.y, c.x);
 	
@@ -53,7 +53,7 @@ int old_style_corner_score(const cv::Mat_<uchar> &im, cv::Point c, const int *po
 		return sn;
 }
 
-void compute_fast_score_old(const cv::Mat_<uchar> &im, const vector<cv::Point> &corners, int barrier, vector<int> &scores)
+void compute_fast_score_old(const cv::Mat &im, const vector<cv::Point> &corners, int barrier, vector<int> &scores)
 {
 	int	pointer_dir[16];
 	int stride = (int)im.step;
@@ -66,14 +66,14 @@ void compute_fast_score_old(const cv::Mat_<uchar> &im, const vector<cv::Point> &
 		scores[i] = old_style_corner_score(im, corners[i], pointer_dir, barrier);
 }
 
-void fast_nonmax(const cv::Mat_<uchar> &im, const vector<cv::Point> &corners, int barrier, vector<cv::Point> &max_corners)
+void fast_nonmax(const cv::Mat &im, const vector<cv::Point> &corners, int barrier, vector<cv::Point> &max_corners)
 {
 	vector<int> scores;
 	compute_fast_score_old(im, corners, barrier, scores);
 	nonmax_suppression(corners, scores, max_corners);
 }
 
-void fast_nonmax_with_scores(const cv::Mat_<uchar> &im, const vector<cv::Point> &corners, int barrier, vector<pair<cv::Point, int> > &max_corners)
+void fast_nonmax_with_scores(const cv::Mat &im, const vector<cv::Point> &corners, int barrier, vector<pair<cv::Point, int> > &max_corners)
 {
 	vector<int> scores;
 	compute_fast_score_old(im, corners, barrier, scores);
