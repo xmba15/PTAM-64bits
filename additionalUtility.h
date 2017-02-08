@@ -2,11 +2,8 @@
 
 #define NOMINMAX
 
-#include <TooN/TooN.h>
-#include "FAST/OpenCV.h"
+#include "OpenCV.h"
 #include "OpenGL.h"
-#include "glwindow.h"
-#include "gl_helpers.h"
 #include <cassert>
 
 namespace additionalUtility

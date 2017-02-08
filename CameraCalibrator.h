@@ -1,8 +1,8 @@
 // -*- c++ -*-
 // Copyright 2008 Isis Innovation Limited
 
-#ifndef __CAMERACALIBRATOR_H
-#define __CAMERACALIBRATOR_H
+#pragma once
+
 #include "CalibImage.h"
 #include "VideoSourceOpenCV.h"
 #include <gvars3/gvars3.h>
@@ -20,11 +20,7 @@ public:
   
 protected:
   void Reset();
-#if _WIN64
   void HandleFrame(cv::Mat imFrame);
-#else
-  void HandleFrame(CVD::Image<CVD::byte> imFrame);
-#endif
   static void MainLoopCallback(void* pvUserData);
   void MainLoopStep();
   VideoSource mVideoSource;
@@ -45,5 +41,3 @@ protected:
   void GUICommandHandler(std::string sCommand, std::string sParams);
   static void GUICommandCallBack(void* ptr, std::string sCommand, std::string sParams);
 };
-
-#endif

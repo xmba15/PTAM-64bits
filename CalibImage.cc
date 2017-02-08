@@ -2,24 +2,31 @@
 #include "OpenGL.h"
 #include "CalibImage.h"
 #include <stdlib.h>
+#include <cmath>
 #include <gvars3/instances.h>
-
-#include <TooN/se3.h>
-#include <TooN/SVD.h>
-#include <TooN/wls.h>
+#include "GCVD/GLHelpers.h"
 #include "FAST/fast_corner.h"
 
 using namespace std;
 using namespace GVars3;
 using namespace FAST;
+using namespace RigidTransforms;
+using namespace GLXInterface;
+using namespace CvUtils;
 
-inline bool isCorner(cv::Mat &im, cv::Point ir, int nGate)
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+
+inline bool isCorner(cv::Mat_<uchar> &im, cv::Point ir, int nGate)
 {
 	int nSum = 0;
 	static int abPixels[16];
 	for (int i = 0; i < 16; i++)
 	{
 		abPixels[i] = im.ptr<uchar>(ir.y + FAST::fast_pixel_ring[i].y)[ir.x + FAST::fast_pixel_ring[i].x];
+		nSum += abPixels[i];
 	}
 
 	int nMean = nSum / 16;
@@ -54,22 +61,22 @@ inline bool isCorner(cv::Mat &im, cv::Point ir, int nGate)
 	return (nSwaps == 4);
 }
 
-Vector<2> GuessInitialAngles(cv::Mat &im, cv::Point irCenter)
+cv::Vec2d GuessInitialAngles(cv::Mat_<uchar> &im, cv::Point irCenter)
 {
 	double dBestAngle = 0;
 	double dBestGradMag = 0;
 	double dGradAtBest = 0;
 	for (double dAngle = 0.0; dAngle < M_PI; dAngle += 0.1)
 	{
-		Vector<2> v2Dirn;
+		cv::Vec2d v2Dirn;
 		v2Dirn[0] = cos(dAngle);      v2Dirn[1] = sin(dAngle);
-		Vector<2> v2Perp;
+		cv::Vec2d v2Perp;
 		v2Perp[1] = -v2Dirn[0];      v2Perp[0] = v2Dirn[1];
-
-		double dG = getSubpix(im, size2Vec(irCenter) + v2Dirn * 3.0 + v2Perp * 0.1) -
-			getSubpix(im, size2Vec(irCenter) + v2Dirn * 3.0 - v2Perp * 0.1)
-			+ getSubpix(im, size2Vec(irCenter) - v2Dirn * 3.0 - v2Perp * 0.1) -
-			getSubpix(im, size2Vec(irCenter) - v2Dirn * 3.0 + v2Perp * 0.1);
+		cv::Vec2d vec_irCenter(irCenter.x, irCenter.y);
+		double dG = getSubpix(im, vec_irCenter + v2Dirn * 3.0 + v2Perp * 0.1) -
+			getSubpix(im, vec_irCenter + v2Dirn * 3.0 - v2Perp * 0.1)
+			+ getSubpix(im, vec_irCenter - v2Dirn * 3.0 - v2Perp * 0.1) -
+			getSubpix(im, vec_irCenter - v2Dirn * 3.0 + v2Perp * 0.1);
 
 		if (fabs(dG) > dBestGradMag)
 		{
@@ -79,7 +86,7 @@ Vector<2> GuessInitialAngles(cv::Mat &im, cv::Point irCenter)
 		};
 	}
 
-	Vector<2> v2Ret;
+	cv::Vec2d v2Ret;
 	if (dGradAtBest < 0)
 	{
 		v2Ret[0] = dBestAngle; v2Ret[1] = dBestAngle + M_PI / 2.0;
@@ -91,16 +98,17 @@ Vector<2> GuessInitialAngles(cv::Mat &im, cv::Point irCenter)
 	return v2Ret;
 }
 
-bool CalibImage::MakeFromImage(cv::Mat &im)
+bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 {
 	static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
 	mvCorners.clear();
 	mvGridCorners.clear();
 
-	cv::Mat mim = im.clone();
+	im.copyTo(mim);
+	rgbmim = cim;
 
 	{
-		cv::Mat imBlurred = mim.clone();
+		cv::Mat_<uchar> imBlurred = mim.clone();
 		//convolveGaussian(imBlurred, GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, SILENT));
 		int ksize = (int)ceil(GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, SILENT) * 3.0);
 		cv::GaussianBlur(imBlurred, imBlurred, cv::Size(ksize, ksize), GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, SILENT), 3.0);
@@ -146,7 +154,7 @@ bool CalibImage::MakeFromImage(cv::Mat &im)
 	// ... and try to fit a corner-patch to that.
 	CalibCornerPatch Patch(*gvnCornerPatchSize);
 	CalibCornerPatch::Params Params;
-	Params.v2Pos = size2Vec(irBestCenterPos);
+	Params.v2Pos = cv::Vec2d(irBestCenterPos.x, irBestCenterPos.y);
 	Params.v2Angles = GuessInitialAngles(mim, irBestCenterPos);
 	Params.dGain = 80.0;
 	Params.dMean = 120.0;
@@ -193,27 +201,27 @@ bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
 
 	cv::Point irBest;
 	double dBestDist = 99999;
-	TooN::Vector<2> v2TargetDirn = gSrc.Params.m2Warp().T()[nDirn % 2];
+	cv::Vec2d v2TargetDirn(gSrc.Params.m2Warp()(0, nDirn % 2), gSrc.Params.m2Warp()(1, nDirn % 2));
+
 	if (nDirn >= 2)
 		v2TargetDirn *= -1;
 	for (unsigned int i = 0; i < mvCorners.size(); i++)
 	{
-		TooN::Vector<2> v2Diff = size2Vec(mvCorners[i]) - gSrc.Params.v2Pos;
-		if (v2Diff * v2Diff < 100)
+		cv::Vec2d v2Diff = cv::Vec2d(mvCorners[i].x, mvCorners[i].y) - gSrc.Params.v2Pos;
+		if (v2Diff[0] * v2Diff[0] + v2Diff[1] * v2Diff[1] < 100)
 			continue;
-		if (v2Diff * v2Diff > dBestDist * dBestDist)
+		if (v2Diff[0] * v2Diff[0] + v2Diff[1] * v2Diff[1] > dBestDist * dBestDist)
 			continue;
-		TooN::Vector<2> v2Dirn = v2Diff;
-		TooN::normalize(v2Dirn);
-		if (v2Dirn * v2TargetDirn < cos(M_PI / 18.0))
+		cv::Vec2d v2Dirn = cv::normalize(v2Diff);
+		if (v2Dirn[0] * v2TargetDirn[0] + v2Dirn[1] * v2TargetDirn[1] < cos(M_PI / 18.0))
 			continue;
-		dBestDist = sqrt(v2Diff * v2Diff);
+		dBestDist = cv::norm(v2Diff);
 		irBest = mvCorners[i];
 	}
 
 	CalibGridCorner gTarget;
 	gTarget.Params = gSrc.Params;
-	gTarget.Params.v2Pos = size2Vec(irBest);
+	gTarget.Params.v2Pos = cv::Vec2d(irBest.x, irBest.y);
 	gTarget.Params.dGain *= -1;
 
 	CalibCornerPatch Patch(*gvnCornerPatchSize);
@@ -247,10 +255,26 @@ void CalibGridCorner::Draw()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBegin(GL_LINES);
-	glVertex(Params.v2Pos + Params.m2Warp() * size2Vec(cv::Point(10, 0)));
-	glVertex(Params.v2Pos + Params.m2Warp() * size2Vec(cv::Point(-10, 0)));
-	glVertex(Params.v2Pos + Params.m2Warp() * size2Vec(cv::Point(0, 10)));
-	glVertex(Params.v2Pos + Params.m2Warp() * size2Vec(cv::Point(0, -10)));
+
+	// right vertex
+	cv::Vec2d vertex1(Params.v2Pos[0] + Params.m2Warp()(0, 0) * 10 + Params.m2Warp()(0, 1) * 0.0,
+		Params.v2Pos[1] + Params.m2Warp()(1, 0) * 10 + Params.m2Warp()(1, 1) * 0.0);
+	// left vertex
+	cv::Vec2d vertex2(Params.v2Pos[0] + Params.m2Warp()(0, 0) * (-10) + Params.m2Warp()(0, 1) * 0.0,
+		Params.v2Pos[1] + Params.m2Warp()(1, 0) * (-10) + Params.m2Warp()(1, 1) * 0.0);
+	// upper vertex
+	cv::Vec2d vertex3(Params.v2Pos[0] + Params.m2Warp()(0, 0) * 0.0 + Params.m2Warp()(0, 1) * 10,
+		Params.v2Pos[1] + Params.m2Warp()(1, 0) * 0.0 + Params.m2Warp()(1, 1) * 10);
+	// lower vertex
+	cv::Vec2d vertex4(Params.v2Pos[0] + Params.m2Warp()(0, 0) * 0.0 + Params.m2Warp()(0, 1) * (-10),
+		Params.v2Pos[1] + Params.m2Warp()(1, 0) * 0.0 + Params.m2Warp()(1, 1) * (-10));
+
+	// 'horizontal' line 
+	glVertex2d(vertex1[0], vertex1[1]);
+	glVertex2d(vertex2[0], vertex2[1]);
+	// 'vertical' line
+	glVertex2d(vertex3[0], vertex3[1]);
+	glVertex2d(vertex4[0], vertex4[1]);
 	glEnd();
 };
 
@@ -289,14 +313,13 @@ double CalibGridCorner::ExpansionPotential()
 };
 
 
-Matrix<2> CalibGridCorner::GetSteps(vector<CalibGridCorner> &vgc)
+cv::Matx<double, 2, 2> CalibGridCorner::GetSteps(vector<CalibGridCorner> &vgc)
 {
-  Matrix<2> m2Steps;
+  cv::Matx<double, 2, 2> m2Steps;
   for(int dirn=0; dirn<2; dirn++)
     {
-      Vector<2> v2Dirn;
+      cv::Vec2d v2Dirn(0, 0);
       int nFound = 0;
-      v2Dirn = Zeros;
       if(aNeighborStates[dirn].val >=0)
 	{
 	  v2Dirn += vgc[aNeighborStates[dirn].val].Params.v2Pos - Params.v2Pos;
@@ -307,13 +330,17 @@ Matrix<2> CalibGridCorner::GetSteps(vector<CalibGridCorner> &vgc)
 	  v2Dirn -= vgc[aNeighborStates[dirn+2].val].Params.v2Pos - Params.v2Pos;
 	  nFound++;
 	}
-      if(nFound == 0)
-	m2Steps[dirn] = mInheritedSteps[dirn];
-      else
-	m2Steps[dirn] = v2Dirn / nFound;
+	  if (nFound == 0) {
+		  m2Steps(dirn, 0) = mInheritedSteps(dirn, 0);
+		  m2Steps(dirn, 1) = mInheritedSteps(dirn, 1);
+	  }
+	  else {
+		  m2Steps(dirn, 0) = v2Dirn[0] / nFound;
+		  m2Steps(dirn, 1) = v2Dirn[1] / nFound;
+	  }
     }
   return m2Steps;
-};
+}
 
 int CalibImage::NextToExpand()
 {
@@ -355,14 +382,14 @@ void CalibImage::ExpandByStep(int n)
 	nDirn = i;
     }
   assert(nDirn != -10);
-
-  Vector<2> v2Step;
-  //ImageRef irGridStep = IR_from_dirn(nDirn);
   
   cv::Point irGridStep = IR_from_dirn(nDirn);
-  v2Step = gSrc.GetSteps(mvGridCorners).T() * size2Vec(irGridStep);
-  
-  Vector<2> v2SearchPos = gSrc.Params.v2Pos + v2Step;
+  cv::Matx<double, 2, 2> M = gSrc.GetSteps(mvGridCorners);
+
+  cv::Vec2d v2Step(M(0, 0) * irGridStep.x + M(1, 0) * irGridStep.y,
+	  M(0, 1) * irGridStep.x + M(1, 1) * irGridStep.y);
+
+  cv::Vec2d v2SearchPos = gSrc.Params.v2Pos + v2Step;
   
   // Before the search: pre-fill the failure result for easy returns.
   gSrc.aNeighborStates[nDirn].val = N_FAILED;
@@ -372,20 +399,21 @@ void CalibImage::ExpandByStep(int n)
   double dBestDist = 99999;
   for(unsigned int i=0; i<mvCorners.size(); i++)
     {
-      Vector<2> v2Diff = size2Vec(mvCorners[i]) - v2SearchPos;
-      if(v2Diff * v2Diff > dBestDist * dBestDist)
-	continue;
-      dBestDist = sqrt(v2Diff * v2Diff);
+      cv::Vec2d v2Diff = cv::Vec2d(mvCorners[i].x, mvCorners[i].y) - v2SearchPos;
+	  double v2DiffNorm = cv::norm(v2Diff);
+	  if (v2DiffNorm > dBestDist)
+		  continue;
+	  dBestDist = v2DiffNorm;
       irBest = mvCorners[i];
     }
   
-  double dStepDist= sqrt(v2Step * v2Step);
-  if(dBestDist > *gvdMaxStepDistFraction * dStepDist)
-    return;
+  double dStepDist= cv::norm(v2Step);
+  if (dBestDist > *gvdMaxStepDistFraction * dStepDist)
+	  return;
   
   CalibGridCorner gTarget;
   gTarget.Params = gSrc.Params;
-  gTarget.Params.v2Pos = size2Vec(irBest);
+  gTarget.Params.v2Pos = cv::Vec2d(irBest.x, irBest.y);
   gTarget.Params.dGain *= -1;
   gTarget.irGridPos = gSrc.irGridPos + irGridStep;
   gTarget.mInheritedSteps = gSrc.GetSteps(mvGridCorners);
@@ -424,8 +452,9 @@ void CalibImage::DrawImageGrid()
       for(int dirn=0; dirn<4; dirn++)
 	if(mvGridCorners[i].aNeighborStates[dirn].val > i)
 	  {
-	    glVertex(mvGridCorners[i].Params.v2Pos);
-	    glVertex(mvGridCorners[mvGridCorners[i].aNeighborStates[dirn].val].Params.v2Pos);
+	    glVertex2d(mvGridCorners[i].Params.v2Pos[0], mvGridCorners[i].Params.v2Pos[1]);
+	    glVertex2d(mvGridCorners[mvGridCorners[i].aNeighborStates[dirn].val].Params.v2Pos[0],
+			       mvGridCorners[mvGridCorners[i].aNeighborStates[dirn].val].Params.v2Pos[1]);
 	  }
     }
   glEnd();
@@ -435,7 +464,7 @@ void CalibImage::DrawImageGrid()
   glColor3f(1,1,0);
   glBegin(GL_POINTS);
   for(unsigned int i=0; i<mvGridCorners.size(); i++)
-    glVertex(mvGridCorners[i].Params.v2Pos);
+    glVertex2d(mvGridCorners[i].Params.v2Pos[0],mvGridCorners[i].Params.v2Pos[1]);
   glEnd();
 };
 
@@ -452,31 +481,48 @@ void CalibImage::Draw3DGrid(ATANCamera &Camera, bool bDrawErrors)
       for(int dirn=0; dirn<4; dirn++)
 	if(mvGridCorners[i].aNeighborStates[dirn].val > i)
 	  {
-	    Vector<3> v3; v3[2] = 0.0;
-	    v3.slice<0,2>() = size2Vec(mvGridCorners[i].irGridPos);
-	    glVertex(Camera.Project(project(mse3CamFromWorld * v3)));
-	    v3.slice<0,2>() = size2Vec(mvGridCorners[mvGridCorners[i].aNeighborStates[dirn].val].irGridPos);
-	    glVertex(Camera.Project(project(mse3CamFromWorld * v3)));
+	    cv::Vec3d v3(mvGridCorners[i].irGridPos[0],
+			      mvGridCorners[i].irGridPos[1],
+			      0.0);
+		cv::Vec3d cvec = mse3CamFromWorld * v3;
+		cv::Vec2d cvec_proj = cv::Vec2d(cvec[0] / cvec[2], cvec[1] / cvec[2]);;
+
+		cv::Vec2d m = Camera.Project(cvec_proj);
+
+	    glVertex2d(m[0], m[1]);
+	    v3[0] = mvGridCorners[mvGridCorners[i].aNeighborStates[dirn].val].irGridPos.x;
+		v3[1] = mvGridCorners[mvGridCorners[i].aNeighborStates[dirn].val].irGridPos.y;
+
+		cvec = mse3CamFromWorld * v3; 
+		cvec_proj = cv::Vec2d(cvec[0] / cvec[2], cvec[1] / cvec[2]);
+		m = Camera.Project(cvec_proj);
+		glVertex2d(m[0], m[1]);
 	  }
     }
   glEnd();
 
-  if(bDrawErrors)
-    {
-      glColor3f(1,0,0);
-      glLineWidth(1);
-      glBegin(GL_LINES);
-      for(int i=0; i< (int) mvGridCorners.size(); i++)
-	{
-	  Vector<3> v3; v3[2] = 0.0;
-	  v3.slice<0,2>() = size2Vec(mvGridCorners[i].irGridPos);
-	  Vector<2> v2Pixels_Projected = Camera.Project(project(mse3CamFromWorld * v3));
-	  Vector<2> v2Error = mvGridCorners[i].Params.v2Pos - v2Pixels_Projected;
-	  glVertex(v2Pixels_Projected);
-	  glVertex(v2Pixels_Projected + 10.0 * v2Error);
-	}
-      glEnd();
-    }
+  if (bDrawErrors)
+  {
+	  glColor3f(1, 0, 0);
+	  glLineWidth(1);
+	  glBegin(GL_LINES);
+	  for (int i = 0; i < (int)mvGridCorners.size(); i++)
+	  {
+		  cv::Vec3d v3(mvGridCorners[i].irGridPos[0],
+			  mvGridCorners[i].irGridPos[1],
+			  0.0);
+		  cv::Vec3d cvec = mse3CamFromWorld * v3;
+		  cv::Vec2d cvec_proj(cvec[0] / cvec[2], cvec[1] / cvec[2]);
+		  cv::Vec2d m = Camera.Project(cvec_proj);
+
+		  cv::Vec2d v2pixBackProjection = Camera.Project(m);
+		  cv::Vec2d v2Error = mvGridCorners[i].Params.v2Pos - v2pixBackProjection;
+
+		  glVertex2d(v2pixBackProjection[0], v2pixBackProjection[1]);
+		  glVertex2d(v2pixBackProjection[0] + 10.0 * v2Error[0], v2pixBackProjection[1] + 10.0 * v2Error[1]);
+	  }
+	  glEnd();
+  }
 };
 
 cv::Point CalibImage::IR_from_dirn(int nDirn)
@@ -488,135 +534,203 @@ cv::Point CalibImage::IR_from_dirn(int nDirn)
 
 void CalibImage::GuessInitialPose(ATANCamera &Camera)
 {
-  // First, find a homography which maps the grid to the unprojected image coords
-  // Use the standard null-space-of-SVD-thing to find 9 homography parms
-  // (c.f. appendix of thesis)
-  
-  int nPoints = mvGridCorners.size();
-  Matrix<> m2Nx9(2*nPoints, 9);
-  for(int n=0; n<nPoints; n++)
-    {
-      // First, un-project the points to the image plane
-      Vector<2> v2UnProj = Camera.UnProject(mvGridCorners[n].Params.v2Pos);
-      double u = v2UnProj[0];
-      double v = v2UnProj[1];
-      // Then fill in the matrix..
-      double x = mvGridCorners[n].irGridPos.x;
-      double y = mvGridCorners[n].irGridPos.y;
-      
-      m2Nx9[n*2+0][0] = x;
-      m2Nx9[n*2+0][1] = y;
-      m2Nx9[n*2+0][2] = 1;
-      m2Nx9[n*2+0][3] = 0;
-      m2Nx9[n*2+0][4] = 0;
-      m2Nx9[n*2+0][5] = 0;
-      m2Nx9[n*2+0][6] = -x*u;
-      m2Nx9[n*2+0][7] = -y*u;
-      m2Nx9[n*2+0][8] = -u;
 
-      m2Nx9[n*2+1][0] = 0;
-      m2Nx9[n*2+1][1] = 0;
-      m2Nx9[n*2+1][2] = 0;
-      m2Nx9[n*2+1][3] = x;
-      m2Nx9[n*2+1][4] = y;
-      m2Nx9[n*2+1][5] = 1;
-      m2Nx9[n*2+1][6] = -x*v;
-      m2Nx9[n*2+1][7] = -y*v;
-      m2Nx9[n*2+1][8] = -v;
-    }
+	// number of registered grid points
+	int nPoints = mvGridCorners.size();
+	// Doing the 9x9 gram-matrix accumulator instead of the data matrix. Its better.
+	cv::Matx<double, 9, 9> m9D = cv::Matx<double, 9, 9>::zeros();
+	for (int n = 0; n<nPoints; n++) {
+		// First, beck-project the image locations of the recovered grid corners onto the normalized Euclidean plane (z = 1)
+		cv::Vec2d v2UnProj = Camera.UnProject(mvGridCorners[n].Params.v2Pos);
+		double x2 = v2UnProj[0];
+		double y2 = v2UnProj[1];
+		// So, now u and v are 2D Euclidean coordinates on the projection ray for z = 1.
 
-  // The right null-space (should only be one) of the matrix gives the homography...
-  TooN::SVD<> svdHomography(m2Nx9);
-  Vector<9> vH = svdHomography.get_VT()[8];
-  Matrix<3> m3Homography;
-  m3Homography[0] = vH.slice<0,3>();
-  m3Homography[1] = vH.slice<3,3>();
-  m3Homography[2] = vH.slice<6,3>();
-  
-  
-  // Fix up possibly poorly conditioned bits of the homography
-  {
-    TooN::SVD<2> svdTopLeftBit(m3Homography.slice<0,0,2,2>());
-    Vector<2> v2Diagonal = svdTopLeftBit.get_diagonal();
-    m3Homography = m3Homography / v2Diagonal[0];
-    v2Diagonal = v2Diagonal / v2Diagonal[0];
-    double dLambda2 = v2Diagonal[1];
-    
-    Vector<2> v2b;   // This is one hypothesis for v2b ; the other is the negative.
-    v2b[0] = 0.0;
-    v2b[1] = sqrt( 1.0 - (dLambda2 * dLambda2)); 
-    
-    Vector<2> v2aprime = v2b * svdTopLeftBit.get_VT();
-    
-    Vector<2> v2a = m3Homography[2].slice<0,2>();
-    double dDotProd = v2a * v2aprime;
-    
-    if(dDotProd>0) 
-      m3Homography[2].slice<0,2>() = v2aprime;
-    else
-      m3Homography[2].slice<0,2>() = -v2aprime;
-  }
- 
-  
-  // OK, now turn homography into something 3D ...simple gram-schmidt ortho-norm
-  // Take 3x3 matrix H with column: abt
-  // And add a new 3rd column: abct
-  Matrix<3> mRotation;
-  Vector<3> vTranslation;
-  double dMag1 = sqrt(m3Homography.T()[0] * m3Homography.T()[0]);
-  m3Homography = m3Homography / dMag1;
-  
-  mRotation.T()[0] = m3Homography.T()[0];
-  
-  // ( all components of the first vector are removed from the second...
-  
-  mRotation.T()[1] = m3Homography.T()[1] - m3Homography.T()[0]*(m3Homography.T()[0]*m3Homography.T()[1]); 
-  mRotation.T()[1] /= sqrt(mRotation.T()[1] * mRotation.T()[1]);
-  mRotation.T()[2] = mRotation.T()[0]^mRotation.T()[1];
-  vTranslation = m3Homography.T()[2];
-  
-  // Store result
-  mse3CamFromWorld.get_rotation()=mRotation;
-  mse3CamFromWorld.get_translation() = vTranslation;
+		// Then fill in the matrix..
+		double x1 = mvGridCorners[n].irGridPos.x; // corner x-location in the grid! (assuming unit length in the grid!)
+		double y1 = mvGridCorners[n].irGridPos.y; // corner y-locatin in the grid!  
+
+												  // filling ONLY the Upper triangle of m9D...
+												  //
+												  // 1. Filling the upper triangle of the upper 3x3 block (which is equal to  the second 3x3 diagonal block)
+		m9D(0, 0) += x1*x1;  m9D(0, 1) += x1*y1; m9D(0, 2) += x1;
+		m9D(1, 1) += y1*y1; m9D(1, 2) += y1;
+		m9D(2, 2) += 1.0;
+
+		// 2. Now filling the 3 columns from 7 to 8 down-to and including the diagonal:
+		m9D(0, 6) += -x1*x1*x2;             m9D(0, 7) += -x1*x2*y1;              m9D(0, 8) += -x1*x2;
+		m9D(1, 6) += -x1*x2*y1;             m9D(1, 7) += -x2*y1*y1;              m9D(1, 8) += -x2*y1;
+		m9D(2, 6) += -x1*x2;                m9D(2, 7) += -x2*y1;                 m9D(2, 8) += -x2;
+		m9D(3, 6) += -x1*x1*y2;             m9D(3, 7) += -x1*y1*y2;              m9D(3, 8) += -x1*y2;
+		m9D(4, 6) += -x1*y1*y2;             m9D(4, 7) += -y1*y1*y2;              m9D(4, 8) += -y1*y2;
+		m9D(5, 6) += -x1*y2;                m9D(5, 7) += -y1*y2;                 m9D(5, 8) += -y2;
+		m9D(6, 6) += x1*x1*(x2*x2 + y2*y2); m9D(6, 7) += x1*y1*(x2*x2 + y2*y2);  m9D(6, 8) += x1*(x2*x2 + y2*y2);
+		m9D(7, 7) += y1*y1*(x2*x2 + y2*y2);  m9D(7, 8) += y1*(x2*x2 + y2*y2);
+		m9D(8, 8) += x2*x2 + y2*y2;
+
+	}
+	// Sow no filling-in the gaps (left-out due to symmetry):
+	// 1. Filling the missing lower partof the upper 3x3 diagonal block and copying tho the second diagonal 3x3 block
+	m9D(1, 0) = m9D(4, 3) = m9D(3, 4) = m9D(0, 1);
+	m9D(2, 0) = m9D(5, 3) = m9D(3, 5) = m9D(0, 2);   m9D(2, 1) = m9D(5, 4) = m9D(4, 5) = m9D(1, 2);
+	// and the diagonalelements from 3 - 5 are the same ones from 0-2:
+	m9D(3, 3) = m9D(0, 0); m9D(4, 4) = m9D(1, 1); m9D(5, 5) = m9D(2, 2);
+
+	// 2. Now copying the last 3 columns (down-to and exluding the diagonal) to the last 3 rows...
+	m9D(6, 0) = m9D(0, 6); m9D(6, 1) = m9D(1, 6); m9D(6, 2) = m9D(2, 6); m9D(6, 3) = m9D(3, 6); m9D(6, 4) = m9D(4, 6); m9D(6, 5) = m9D(5, 6);
+	m9D(7, 0) = m9D(0, 7); m9D(7, 1) = m9D(1, 7); m9D(7, 2) = m9D(2, 7); m9D(7, 3) = m9D(3, 7); m9D(7, 4) = m9D(4, 7); m9D(7, 5) = m9D(5, 7); m9D(7, 6) = m9D(6, 7);
+	m9D(8, 0) = m9D(0, 8); m9D(8, 1) = m9D(1, 8); m9D(8, 2) = m9D(2, 8); m9D(8, 3) = m9D(3, 8); m9D(8, 4) = m9D(4, 8); m9D(8, 5) = m9D(5, 8); m9D(8, 6) = m9D(6, 8); m9D(8, 7) = m9D(7, 8);
+
+
+
+	// In any case (null-space or smallest singular value), we need the last row of V^t
+	// The right null-space or th last eigenvector of m3D9 gives the homography...
+	cv::Matx<double, 9, 9> U, Vt;
+	cv::Matx<double, 9, 1> w;
+	cv::SVD::compute(m9D, w, U, Vt);
+
+	cv::Matx<double, 3, 3> m3Homography;
+	m3Homography(0, 0) = Vt(8, 0); m3Homography(0, 1) = Vt(8, 1); m3Homography(0, 2) = Vt(8, 2);
+	m3Homography(1, 0) = Vt(8, 3); m3Homography(1, 1) = Vt(8, 4); m3Homography(1, 2) = Vt(8, 5);
+	m3Homography(2, 0) = Vt(8, 6); m3Homography(2, 1) = Vt(8, 7); m3Homography(2, 2) = Vt(8, 8);
+
+	//cout <<"Difference between homographies "<<m3H - cv::Mat(m3Homography)<<endl;
+
+	// Fix up possibly poorly conditioned bits of the homography
+	// This appears to be essentially the scaling-down of the homography by the largest singular values of its upper- left 2x2 block
+	{
+		cv::Matx<double, 2, 2> Htl = m3Homography.get_minor<2, 2>(0, 0);
+
+		cv::Matx<double, 2, 1> v2Diagonal;
+		cv::Matx<double, 2, 2> v2Vt;
+		cv::Matx<double, 2, 2> v2U;
+
+		cv::SVD::compute(Htl, v2Diagonal, v2U, v2Vt);
+		double smax = v2Diagonal(0, 0);
+
+
+		// scaling down the entire homography by the largest singular value of H11
+		m3Homography = (1 / smax) * m3Homography;
+		// scaling down the singular values as well...
+		v2Diagonal = (1 / smax) * v2Diagonal;
+		// store second largest singular value in dLambda2
+		double dLambda2 = v2Diagonal(1, 0);
+
+		// *********** I am keeping old PTAM instructions in comments for double-checking in order to be on the safe side. 
+		// *********** Pose extraction from homography entails ambiguities and the slighhtest mistakes can make one's life really mizerable...
+
+		// v2b is one hypothesis for v2b ; the other is the negative.
+		cv::Vec2d v2b(0.0,
+			sqrt(1.0 - (dLambda2 * dLambda2)));
+
+		//Vector<2> v2aprime = v2b * svdTopLeftBit.get_VT();
+		cv::Vec2d v2aprime(v2b[0] * Vt(0, 0) + v2b[1] * Vt(1, 0),
+			v2b[0] * Vt(0, 1) + v2b[1] * Vt(1, 1));
+
+
+		//Vector<2> v2a = m3Homography[2].slice<0,2>();
+
+		// double dDotProd = v2a * v2aprime;
+		double dDotProd = m3Homography(2, 0) * v2aprime[0] + m3Homography(2, 1) * v2aprime[1];
+
+		if (dDotProd>0) {
+			//m3Homography[2].slice<0,2>() = v2aprime;
+			m3Homography(2, 0) = v2aprime[0]; m3Homography(2, 1) = v2aprime[1];
+		}
+		else {
+			//m3Homography[2].slice<0,2>() = -v2aprime;
+			m3Homography(2, 0) = -v2aprime[0]; m3Homography(2, 1) = -v2aprime[1];
+		}
+
+	}
+
+
+	// OK, now turn homography into something 3D ...simple gram-schmidt ortho-norm
+	// Take 3x3 matrix H with column: abt
+	// And add a new 3rd column: abct
+	cv::Matx<float, 3, 3> mRotation(3, 3);
+	cv::Vec3d vTranslation;
+	//double dMag1 = sqrt(m3Homography.T()[0] * m3Homography.T()[0]);
+	double dMag1 = sqrt(m3Homography(0, 0) * m3Homography(0, 0) +
+		m3Homography(1, 0) * m3Homography(1, 0) +
+		m3Homography(2, 0) * m3Homography(2, 0));
+	// 1. Scale the entire homography (it could have been just the first column)
+	m3Homography = (1 / dMag1) * m3Homography;
+
+	// Store the first column of the homography in the 1st column of the rotation
+	//mRotation.T()[0] = m3Homography.T()[0];
+	mRotation(0, 0) = m3Homography(0, 0);
+	mRotation(1, 0) = m3Homography(1, 0);
+	mRotation(2, 0) = m3Homography(2, 0);
+
+	// 2. Now subtract the projection of the second column onto the first from the second. Store result in the second column of the rotation matrix
+	double dot12 = m3Homography(0, 0) * m3Homography(0, 1) + m3Homography(1, 0) * m3Homography(1, 1) + m3Homography(2, 0) * m3Homography(2, 1);
+	mRotation(0, 1) = m3Homography(0, 1) - dot12 * m3Homography(0, 0);
+	mRotation(1, 1) = m3Homography(1, 1) - dot12 * m3Homography(1, 0);
+	mRotation(2, 1) = m3Homography(2, 1) - dot12 * m3Homography(2, 0);
+
+	// 3. Normalize the second column of the rotation matrix...
+	double norm2 = sqrt(mRotation(0, 1) * mRotation(0, 1) + mRotation(1, 1) * mRotation(1, 1) + mRotation(2, 1) * mRotation(2, 1));
+	mRotation(0, 1) /= norm2; mRotation(1, 1) /= norm2; mRotation(2, 1) /= norm2;
+
+	// 3. Store the cross product of the first and second column of the rotation matrix in the third,
+	// Although i have an overload read ("^"), I 'd rather play it safe and embed the operation below...
+	mRotation(0, 2) = -mRotation(2, 0) * mRotation(1, 1) + mRotation(1, 0) * mRotation(2, 1);
+	mRotation(1, 2) = mRotation(2, 0) * mRotation(0, 1) - mRotation(0, 0) * mRotation(2, 1);
+	mRotation(2, 2) = -mRotation(1, 0) * mRotation(0, 1) + mRotation(0, 0) * mRotation(1, 1);
+
+	// Obtaining the translation from the 3d column of the homography
+	//vTranslation = m3Homography.T()[2];
+	vTranslation[0] = m3Homography(0, 2);
+	vTranslation[1] = m3Homography(1, 2);
+	vTranslation[2] = m3Homography(2, 2);
+
+
+
+
+	// Finally, store everything in the SE3 object the takes world points to the camera
+	mse3CamFromWorld.get_rotation().get_matrix() = mRotation;
+	mse3CamFromWorld.get_translation() = vTranslation;
+
+	//cout << "recovered rotation : " << mse3CamFromWorld.get_rotation().get_matrix() << endl;
+	//cout << "recovered translation : " << mse3CamFromWorld.get_translation() << endl;
 };
 
 vector<CalibImage::ErrorAndJacobians> CalibImage::Project(ATANCamera &Camera)
 {
-  vector<ErrorAndJacobians> vResult;
+  vector<CalibImage::ErrorAndJacobians> vResult;
   for(unsigned int n=0; n<mvGridCorners.size(); n++)
     {
       ErrorAndJacobians EAJ;
       
       // First, project into image...
-      Vector<3> v3World;
-      v3World[2] = 0.0;
-      v3World.slice<0,2>() = size2Vec(mvGridCorners[n].irGridPos);
-      
-      Vector<3> v3Cam = mse3CamFromWorld * v3World;
+      cv::Vec3d v3World(mvGridCorners[n].irGridPos.x, mvGridCorners[n].irGridPos.y, 0.0);
+      cv::Vec3d v3Cam = mse3CamFromWorld * v3World;
       if(v3Cam[2] <= 0.001)
 	continue;
       
-      Vector<2> v2Image = Camera.Project(project(v3Cam));
-      if(Camera.Invalid())
-	continue;
+      cv::Vec2d v2Image = Camera.Project(CvUtils::pproject(v3Cam));
+	  if (Camera.Invalid())
+		  continue;
       
       EAJ.v2Error = mvGridCorners[n].Params.v2Pos - v2Image;
       
       // Now find motion jacobian..
       double dOneOverCameraZ = 1.0 / v3Cam[2];
-      Matrix<2> m2CamDerivs = Camera.GetProjectionDerivs();
+      cv::Matx<double, 2, 2> m2CamDerivs = Camera.GetProjectionDerivs();
       
-      for(int dof=0; dof<6; dof++)
-	{
-	  const Vector<4> v4Motion = SE3<>::generator_field(dof, unproject(v3Cam));
-	  Vector<2> v2CamFrameMotion;
-	  v2CamFrameMotion[0] = (v4Motion[0] - v3Cam[0] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
-	  v2CamFrameMotion[1] = (v4Motion[1] - v3Cam[1] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
-	  EAJ.m26PoseJac.T()[dof] = m2CamDerivs * v2CamFrameMotion;
-	};
+	  for (int dof = 0; dof < 6; dof++)
+	  {
+		  const cv::Vec4d v4Motion = RigidTransforms::SE3<>::generator_field(dof, CvUtils::backproject(v3Cam));
+		  cv::Vec2d v2CamFrameMotion((v4Motion[0] - v3Cam[0] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ,
+			  (v4Motion[1] - v3Cam[1] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ);
+		  EAJ.m26PoseJac(0, dof) = m2CamDerivs(0, 0) * v2CamFrameMotion[0] + m2CamDerivs(0, 1) * v2CamFrameMotion[1];
+		  EAJ.m26PoseJac(1, dof) = m2CamDerivs(1, 0) * v2CamFrameMotion[0] + m2CamDerivs(1, 1) * v2CamFrameMotion[1];
+	  }
 
       // Finally, the camera provids its own jacobian
-      EAJ.m2NCameraJac = Camera.GetCameraParameterDerivs();
+      //EAJ.m2NCameraJac = Camera.GetCameraParameterDerivs();
+	  EAJ.m2NCameraJac = Camera.GetCamParamAnalyticalDerivs();
       vResult.push_back(EAJ);
     }
   return vResult;

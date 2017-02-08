@@ -1,14 +1,14 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
+#pragma once
 
-#ifndef __CALIB_IMAGE_H
-#define __CALIB_IMAGE_H
 #include "ATANCamera.h"
 #include "CalibCornerPatch.h"
 #include <vector>
 #include "additionalUtility.h"
+#include "GCVD/Addedutils.h"
+#include "GCVD/SE3.h"
 
 using namespace additionalUtility;
+using namespace RigidTransforms;
 
 const int N_NOT_TRIED=-1;
 const int N_FAILED=-2;
@@ -37,23 +37,24 @@ struct CalibGridCorner
 class CalibImage
 {
 public:
-  bool MakeFromImage(cv::Mat &im);
-  TooN::SE3<> mse3CamFromWorld;
+  bool MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim);
+  RigidTransforms::SE3<> mse3CamFromWorld;
   void DrawImageGrid();
   void Draw3DGrid(ATANCamera &Camera, bool bDrawErrors);
   void GuessInitialPose(ATANCamera &Camera);
 
   struct ErrorAndJacobians
   {
-    TooN::Vector<2> v2Error;
-    TooN::Matrix<2,6> m26PoseJac;
-	TooN::Matrix<2, NUMTRACKERCAMPARAMETERS> m2NCameraJac;
+    cv::Vec2d v2Error;
+    cv::Matx<double, 2, 6> m26PoseJac;
+	cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> m2NCameraJac;
+	ErrorAndJacobians() : m26PoseJac(cv::Matx<double, 2, 6>()), m2NCameraJac(cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS>()) {}
   };
 
   std::vector<ErrorAndJacobians> Project(ATANCamera &Camera);
 
-  cv::Mat mim;
-
+  cv::Mat_<uchar> mim;
+  cv::Mat rgbmim;
 protected:
 
   std::vector<cv::Point> mvCorners;
@@ -65,5 +66,3 @@ protected:
 
   cv::Point IR_from_dirn(int nDirn);
 };
-
-#endif

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "OpenCV.h"
+#include "../OpenCV.h"
 
 namespace FAST
 {

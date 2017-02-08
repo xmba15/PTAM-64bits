@@ -1,31 +1,33 @@
-#include "glwindow.h"
+#include <cvd/config.h>
+#include <cvd/glwindow.h>
 #include <exception>
 
-#include <Windows.h>
+#include <windows.h>
 #include <windowsx.h>
 #include <gl/gl.h>
 
 #include <cassert>
 #include <map>
 #include <iostream>
-
 using namespace std;
 
-glExceptions::GLWindow::CreationError::CreationError(std::string w)
+namespace CVD {
+
+Exceptions::GLWindow::CreationError::CreationError(std::string w)
 {
     what="GLWindow creation error: " + w;
 }
 
-glExceptions::GLWindow::RuntimeError::RuntimeError(std::string w)
+Exceptions::GLWindow::RuntimeError::RuntimeError(std::string w)
 {
     what="GLWindow error: " + w;
 }
 
 struct GLWindow::State {
-    cv::Size size;
-    cv::Point position;
-    cv::Size size_offset; // offsets dictated by windows decoration to get proper MoveWindows arguments
-    cv::Point position_offset;
+    ImageRef size;
+    ImageRef position;
+    ImageRef size_offset; // offsets dictated by windows decoration to get proper MoveWindows arguments
+    ImageRef position_offset;
     std::string title;
 
     GLWindow * parent;
@@ -43,7 +45,7 @@ static GLWindow::EventHandler * currentHandler = NULL;
 
 static bool windowClassRegistered = false;
 
-void GLWindow::init(const cv::Size& size, int bpp, const std::string& title)
+void GLWindow::init(const ImageRef& size, int bpp, const std::string& title)
 {
     GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 	WNDCLASS	wc;						// Windows Class Structure
@@ -51,9 +53,9 @@ void GLWindow::init(const cv::Size& size, int bpp, const std::string& title)
 	DWORD		dwStyle;				// Window Style
 	RECT		WindowRect;				// Grabs Rectangle Upper Left / Lower Right Values
 	WindowRect.left=(long)0;			// Set Left Value To 0
-	WindowRect.right=(long)size.width;		// Set Right Value To Requested Width
+	WindowRect.right=(long)size.x;		// Set Right Value To Requested Width
 	WindowRect.top=(long)0;				// Set Top Value To 0
-	WindowRect.bottom=(long)size.height;		// Set Bottom Value To Requested Height
+	WindowRect.bottom=(long)size.y;		// Set Bottom Value To Requested Height
 
 	//fullscreen=fullscreenflag;			// Set The Global Fullscreen Flag
 	// Grab An Instance For Our Window   
@@ -71,7 +73,7 @@ void GLWindow::init(const cv::Size& size, int bpp, const std::string& title)
 	    wc.lpszClassName	= "glwindow";								// Set The Class Name
 
 	    if (!RegisterClass(&wc))
-            throw glExceptions::GLWindow::CreationError("Failed to register the Window Class.");
+            throw Exceptions::GLWindow::CreationError("Failed to register the Window Class.");
         windowClassRegistered = true;
     }
 
@@ -135,7 +137,7 @@ void GLWindow::init(const cv::Size& size, int bpp, const std::string& title)
 								hInstance,							// Instance
 								NULL)))								// Dont Pass Anything To WM_CREATE
 	{
-		throw glExceptions::GLWindow::CreationError("Window Creation Error.");
+		throw Exceptions::GLWindow::CreationError("Window Creation Error.");
 	}
 
 	static	PIXELFORMATDESCRIPTOR pfd=				// pfd Tells Windows How We Want Things To Be
@@ -162,31 +164,31 @@ void GLWindow::init(const cv::Size& size, int bpp, const std::string& title)
 
     HDC hDC;
 	if (!(hDC=GetDC(hWnd)))
-        throw glExceptions::GLWindow::CreationError("Can't create a GL Device Context.");
+        throw Exceptions::GLWindow::CreationError("Can't create a GL Device Context.");
 
 	if (!(PixelFormat=ChoosePixelFormat(hDC,&pfd)))
-        throw glExceptions::GLWindow::CreationError("Can't find a suitable PixelFormat.");
+        throw Exceptions::GLWindow::CreationError("Can't find a suitable PixelFormat.");
 
 	if(!SetPixelFormat(hDC,PixelFormat,&pfd))
-        throw glExceptions::GLWindow::CreationError("Can't Set The PixelFormat.");
+        throw Exceptions::GLWindow::CreationError("Can't Set The PixelFormat.");
 
     HGLRC hRC;
 	if (!(hRC=wglCreateContext(hDC)))
-        throw glExceptions::GLWindow::CreationError("Can't Create A GL Rendering Context.");
+        throw Exceptions::GLWindow::CreationError("Can't Create A GL Rendering Context.");
 
 	if(!wglMakeCurrent(hDC,hRC))
-        throw glExceptions::GLWindow::CreationError("Can't Activate The GL Rendering Context.");
+        throw Exceptions::GLWindow::CreationError("Can't Activate The GL Rendering Context.");
 
 	ShowWindow(hWnd,SW_SHOW);						// Show The Window
 	SetForegroundWindow(hWnd);						// Slightly Higher Priority
 	SetFocus(hWnd);									// Sets Keyboard Focus To The Window
 
     glLoadIdentity();
-    glViewport(0, 0, size.width, size.height);
+    glViewport(0, 0, size.x, size.y);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glColor3f(1.0f,1.0f,1.0f);
-    glOrtho(0, size.width, size.height, 0, -1 , 1);
+    glOrtho(0, size.x, size.y, 0, -1 , 1);
     glPixelZoom(1,-1);
     glRasterPos2f(0, 0);
     
@@ -198,8 +200,8 @@ void GLWindow::init(const cv::Size& size, int bpp, const std::string& title)
     state->hDC = hDC;
     state->hWnd = hWnd;
 
-    state->size_offset.width = (WindowRect.right - WindowRect.left) - (oldRect.right - oldRect.left);
-    state->size_offset.height = (WindowRect.bottom - WindowRect.top) - (oldRect.bottom - oldRect.top);
+    state->size_offset.x = (WindowRect.right - WindowRect.left) - (oldRect.right - oldRect.left);
+    state->size_offset.y = (WindowRect.bottom - WindowRect.top) - (oldRect.bottom - oldRect.top);
     state->position_offset.x = WindowRect.left - oldRect.left;
     state->position_offset.y = WindowRect.top - oldRect.top;
 
@@ -210,16 +212,16 @@ GLWindow::~GLWindow()
 {
 	if(state->hRC){
 		if (!wglMakeCurrent(NULL,NULL))	
-		    throw glExceptions::GLWindow::RuntimeError("Release of DC and RC failed.");
+		    throw Exceptions::GLWindow::RuntimeError("Release of DC and RC failed.");
 		if (!wglDeleteContext(state->hRC))
-		    throw glExceptions::GLWindow::RuntimeError("Release Rendering Context failed.");
+		    throw Exceptions::GLWindow::RuntimeError("Release Rendering Context failed.");
 	}
 
 	if (state->hDC && !ReleaseDC(state->hWnd,state->hDC))
-	    throw glExceptions::GLWindow::RuntimeError("Release Device Context failed.");
+	    throw Exceptions::GLWindow::RuntimeError("Release Device Context failed.");
 
 	if (state->hWnd && !DestroyWindow(state->hWnd))
-		throw glExceptions::GLWindow::RuntimeError("Destroy Window failed.");
+		throw Exceptions::GLWindow::RuntimeError("Destroy Window failed.");
 
 #if 0
 	if (!UnregisterClass("glwindow",GetModuleHandle(NULL)))
@@ -230,29 +232,29 @@ GLWindow::~GLWindow()
     state = NULL;
 }
 
-cv::Size GLWindow::size() const { return state->size; }
+ImageRef GLWindow::size() const { return state->size; }
 
-void GLWindow::set_size(const cv::Size & s_){
+void GLWindow::set_size(const ImageRef & s_){
     state->size = s_;
-    MoveWindow(state->hWnd, state->position.x + state->position_offset.x, state->position.y + state->position_offset.y, state->size.width + state->size_offset.width, state->size.height + state->size_offset.height, FALSE);
+    MoveWindow(state->hWnd, state->position.x + state->position_offset.x, state->position.y + state->position_offset.y, state->size.x + state->size_offset.x, state->size.y + state->size_offset.y, FALSE);
 }
 
-cv::Point GLWindow::position() const { return state->position; }
+ImageRef GLWindow::position() const { return state->position; }
 
-void GLWindow::set_position(const cv::Point & p_){
+void GLWindow::set_position(const ImageRef & p_){
     state->position = p_;
-    MoveWindow(state->hWnd, state->position.x + state->position_offset.x, state->position.y + state->position_offset.y, state->size.width + state->size_offset.width, state->size.height + state->size_offset.height, FALSE);
+    MoveWindow(state->hWnd, state->position.x + state->position_offset.x, state->position.y + state->position_offset.y, state->size.x + state->size_offset.x, state->size.y + state->size_offset.y, FALSE);
 }
 
-void GLWindow::set_cursor_position(const cv::Point& where)
+void GLWindow::set_cursor_position(const ImageRef& where)
 {
     // FIXME
     //XWarpPointer(state->display, None, state->window, 0, 0, 0, 0, where.x, where.y);
 }
 
-cv::Point GLWindow::cursor_position() const
+ImageRef GLWindow::cursor_position() const
 {
-    cv::Point where;
+    ImageRef where;
     POINT point;
     GetCursorPos(&point);
     where.x = point.x - state->position.x;
@@ -295,9 +297,9 @@ inline int convertButtonState(const WPARAM state)
   return ret;
 }
 
-inline cv::Point convertPosition(LPARAM param)
+inline ImageRef convertPosition(LPARAM param)
 {
-    return cv::Point(GET_X_LPARAM(param), GET_Y_LPARAM(param));
+    return ImageRef(GET_X_LPARAM(param), GET_Y_LPARAM(param));
 }
 
 void GLWindow::handle_events(EventHandler& handler)
@@ -391,7 +393,7 @@ public:
 	events.push_back(e);
     }
 
-    void on_mouse_move(GLWindow&, cv::Point where, int state) {
+    void on_mouse_move(GLWindow&, ImageRef where, int state) {
 	GLWindow::Event e;
 	e.type = GLWindow::Event::MOUSE_MOVE;
 	e.state = state;
@@ -399,7 +401,7 @@ public:
 	events.push_back(e);
     }
 
-    void on_mouse_down(GLWindow&, cv::Point where, int state, int button) {
+    void on_mouse_down(GLWindow&, ImageRef where, int state, int button) {
 	GLWindow::Event e;
 	e.type = GLWindow::Event::MOUSE_DOWN;
 	e.state = state;
@@ -408,7 +410,7 @@ public:
 	events.push_back(e);
     }
 
-    void on_mouse_up(GLWindow&, cv::Point where, int state, int button) {
+    void on_mouse_up(GLWindow&, ImageRef where, int state, int button) {
 	GLWindow::Event e;
 	e.type = GLWindow::Event::MOUSE_UP;
 	e.state = state;
@@ -417,7 +419,7 @@ public:
 	events.push_back(e);
     }
 
-    void on_resize(GLWindow&, cv::Size size) {
+    void on_resize(GLWindow&, ImageRef size) {
 	GLWindow::Event e;
 	e.type = GLWindow::Event::RESIZE;
 	e.size = size;
@@ -451,9 +453,9 @@ public:
 
     void on_key_down(GLWindow&, int key) {	++summary.key_down[key]; }
     void on_key_up(GLWindow&, int key) { ++summary.key_up[key]; }
-    void on_mouse_move(GLWindow&, cv::Point where, int) { summary.cursor = where; summary.cursor_moved = true; }
-    void on_mouse_down(GLWindow&, cv::Point where, int state, int button) { summary.mouse_down[button] = std::make_pair(where,state); }
-    void on_mouse_up(GLWindow&, cv::Point where, int state, int button) { summary.mouse_up[button] = std::make_pair(where,state); }
+    void on_mouse_move(GLWindow&, ImageRef where, int) { summary.cursor = where; summary.cursor_moved = true; }
+    void on_mouse_down(GLWindow&, ImageRef where, int state, int button) { summary.mouse_down[button] = std::make_pair(where,state); }
+    void on_mouse_up(GLWindow&, ImageRef where, int state, int button) { summary.mouse_up[button] = std::make_pair(where,state); }
     void on_event(GLWindow&, int event) { ++summary.events[event]; }
 };
 
@@ -473,35 +475,37 @@ bool GLWindow::has_events() const
 void GLWindow::activate()
 {
     if(!wglMakeCurrent(state->hDC,state->hRC))
-        throw glExceptions::GLWindow::RuntimeError("wglMakeCurrent failed");
+        throw Exceptions::GLWindow::RuntimeError("wglMakeCurrent failed");
 }
 
-LRESULT CALLBACK WndProc(HWND	hWnd,			// Handle For This Window
-	UINT	uMsg,			// Message For This Window
-	WPARAM	wParam,			// Additional Message Information
-	LPARAM	lParam)			// Additional Message Information
+LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
+							UINT	uMsg,			// Message For This Window
+							WPARAM	wParam,			// Additional Message Information
+							LPARAM	lParam)			// Additional Message Information
 {
-	switch (uMsg) {
-	case WM_WINDOWPOSCHANGED:
-		if (windowMap.count(hWnd) == 1) {
-			GLWindow::State & state = windowMap[hWnd];
-			WINDOWPOS * pos = (WINDOWPOS *)lParam;
-			cv::Size newSize(pos->cx, pos->cy);
-			newSize -= state.size_offset;
-			if (newSize != state.size) {
-				state.size = newSize;
-				state.parent->activate();
-				glViewport(0, 0, state.size.width, state.size.height);
-				if (currentHandler != NULL)
-					currentHandler->on_resize(*state.parent, state.size);
-				else
-					cerr << "Event outside of cvd control for " << state.title << endl;
-			}
-			state.position = cv::Point(pos->x, pos->y) - state.position_offset;
-			return 0;
-		}
-		break;
-	}
+    switch(uMsg){
+    case WM_WINDOWPOSCHANGED:
+        if(windowMap.count(hWnd) == 1){
+            GLWindow::State & state = windowMap[hWnd];
+            WINDOWPOS * pos = (WINDOWPOS *)lParam;
+            ImageRef newSize(pos->cx, pos->cy);
+            newSize -= state.size_offset;
+            if(newSize != state.size){
+                state.size = newSize;
+                state.parent->activate();
+                glViewport(0, 0, state.size.x, state.size.y);
+                if(currentHandler != NULL)
+                    currentHandler->on_resize(*state.parent, state.size);
+                else
+                    cerr << "Event outside of cvd control for " << state.title << endl;
+            }
+            state.position = ImageRef(pos->x, pos->y) - state.position_offset;
+            return 0;
+        }
+        break;
+    }
 	// Pass All Unhandled Messages To DefWindowProc
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	return DefWindowProc(hWnd,uMsg,wParam,lParam);
 }
+
+} // namespace CVD
