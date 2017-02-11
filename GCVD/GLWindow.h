@@ -173,9 +173,9 @@ namespace GLXInterface {
 	   
     private:
 	State* state;
-	void init(const cv::Size2i& sz, int bpp, const std::string& title, const std::string& display);
-    
-	
+	//void init(const cv::Size2i& sz, int bpp, const std::string& title, const std::string& display);
+	void init(const cv::Size2i& sz, int bpp, const std::string& title);
+
     };
 
 
