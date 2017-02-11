@@ -1,110 +1,34 @@
-#include "gl_helpers.h"
+//#include "GLHelpers.h"
+#include "GLFont.h"
 
 #include <cassert>
+#include <cmath> 
 #include <map>
-#include <algorithm>
 
-using namespace std;
-
-namespace Internal {
-
-struct Point {
-    float x,y;
-};
-
-struct Font {
-    typedef unsigned short Index;
-
-    struct Char {
-        Index vertexOffset;
-        Index triangleOffset;
-        Index outlineOffset;
-        GLsizei numTriangles;
-        GLsizei numOutlines;
-        float advance;
-    };
-
-    Point * vertices;
-    Index * triangles;
-    Index * outlines;
-    Char * characters;
-    string glyphs;
-
-    const Char * findChar( const char c ) const {
-        size_t ind = glyphs.find(c);
-        if(ind == string::npos)
-            return NULL;
-        return characters + ind;
-    }
-
-    float getAdvance( const char c ) const {
-        const Char * ch = findChar(c);
-        if(!ch)
-            return 0;
-        return ch->advance;
-    }
-
-    void fill( const char c ) const {
-        const Char * ch = findChar(c);
-        if(!ch || !ch->numTriangles)
-            return;
-        glVertexPointer(2, GL_FLOAT, 0, vertices + ch->vertexOffset);
-        glDrawElements(GL_TRIANGLES, ch->numTriangles, GL_UNSIGNED_SHORT, triangles + ch->triangleOffset);
-    }
-
-    void outline( const char c ) const {
-        const Char * ch = findChar(c);
-        if(!ch || !ch->numOutlines)
-            return;
-        glVertexPointer(2, GL_FLOAT, 0, vertices + ch->vertexOffset);
-        glDrawElements(GL_LINES, ch->numOutlines, GL_UNSIGNED_SHORT, outlines + ch->outlineOffset);
-    }
-
-    void draw( const char c ) const {
-        const Char * ch = findChar(c);
-        if(!ch || !ch->numTriangles || !ch->numOutlines)
-            return;
-        glVertexPointer(2, GL_FLOAT, 0, vertices + ch->vertexOffset);
-        glDrawElements(GL_TRIANGLES, ch->numTriangles, GL_UNSIGNED_SHORT, triangles + ch->triangleOffset);
-        glDrawElements(GL_LINES, ch->numOutlines, GL_UNSIGNED_SHORT, outlines + ch->outlineOffset);
-    }
-};
 
 // the fonts defined in these headers are derived from Bitstream Vera fonts. See http://www.gnome.org/fonts/ for license and details
+
+
+
 #include "sans.h"
 #include "mono.h"
 #include "serif.h"
 
 
-struct FontData {
+using namespace std;
 
-    typedef map<string,Font *> FontMap;
+namespace GLXInterface {
 
-    FontData() {
-        fonts["sans"] = &sans_font;
-        fonts["mono"] = &mono_font;
-        fonts["serif"] = &serif_font;
-        glSetFont("sans");
-    }
-    inline Font * currentFont(){
-        return fonts[currentFontName];
-    }
 
-    string currentFontName;
-    FontMap fonts;
-};
-
-static struct FontData data;
-
-} // namespace Internal
-
-void glSetFont( const std::string & fontname ){
-    if(Internal::data.fonts.count(fontname) > 0)
-        Internal::data.currentFontName = fontname;
+void glSetFont( const std::string &fontname ) {
+    
+  if(GLXInterface::data.fonts.count(fontname) > 0)
+        data.currentFontName = fontname;
 }
 
-const std::string & glGetFont(){
-    return Internal::data.currentFontName;
+const std::string& glGetFont() {
+    
+  return data.currentFontName;
 }
 
 std::pair<double,double> glDrawText(const std::string& text, enum TEXT_STYLE style, double spacing, double kerning){
@@ -119,13 +43,13 @@ std::pair<double,double> glDrawText(const std::string& text, enum TEXT_STYLE sty
     glEnableClientState(GL_VERTEX_ARRAY);
 
     // figure out which operation to do on the Char (yes, this is a pointer to member function :)
-    void (Internal::Font::* operation)(const char c) const;
+    void (Font::* operation)(const char c) const;
     switch(style){
-        case FILL: operation = &Internal::Font::fill;
+        case FILL: operation = &Font::fill;
             break;
-        case OUTLINE: operation = &Internal::Font::outline;
+        case OUTLINE: operation = &Font::outline;
             break;
-        case NICE: operation = &Internal::Font::draw;
+        case NICE: operation = &Font::draw;
             break;
         default: assert(false);
     }
@@ -133,7 +57,9 @@ std::pair<double,double> glDrawText(const std::string& text, enum TEXT_STYLE sty
     int lines = 0;
     double max_total = 0;
     double total=0;
-    const Internal::Font * font = Internal::data.currentFont();
+    const Font * font = data.currentFont();
+    const Font::Char * space = font->findChar(' ');
+    const double tab_width = 8 * ((space)?(space->advance):1);
     for (size_t i=0; i<text.length(); ++i) {
         char c = text[i];
         if (c == '\n') {
@@ -143,7 +69,13 @@ std::pair<double,double> glDrawText(const std::string& text, enum TEXT_STYLE sty
             ++lines;
             continue;
         }
-        const Internal::Font::Char * ch = font->findChar(c);
+        if(c == '\t'){
+            const float advance = tab_width - std::fmod(total, tab_width);
+            total += advance;
+            glTranslated(advance, 0, 0);
+            continue;
+        }
+        const Font::Char * ch = font->findChar(c);
         if(!ch){
             c = toupper(c);
             ch = font->findChar(c);
@@ -176,7 +108,7 @@ std::pair<double, double> glGetExtends(const std::string & text, double spacing,
     int lines = 0;
     double max_total = 0;
     double total=0;
-    const Internal::Font * font = Internal::data.currentFont();
+    const Font* font = data.currentFont();
     for (size_t i=0; i<text.length(); ++i) {
         char c = text[i];
         if (c == '\n') {
@@ -185,7 +117,7 @@ std::pair<double, double> glGetExtends(const std::string & text, double spacing,
             ++lines;
             continue;
         }
-        const Internal::Font::Char * ch = font->findChar(c);
+        const Font::Char * ch = font->findChar(c);
         if(!ch){
             c = toupper(c);
             ch = font->findChar(c);
@@ -200,4 +132,6 @@ std::pair<double, double> glGetExtends(const std::string & text, double spacing,
     }
     max_total = std::max(total, max_total);
     return std::make_pair(max_total, (lines+1)*spacing);
+}
+
 }

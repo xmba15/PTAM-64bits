@@ -481,8 +481,8 @@ void CalibImage::Draw3DGrid(ATANCamera &Camera, bool bDrawErrors)
       for(int dirn=0; dirn<4; dirn++)
 	if(mvGridCorners[i].aNeighborStates[dirn].val > i)
 	  {
-	    cv::Vec3d v3(mvGridCorners[i].irGridPos[0],
-			      mvGridCorners[i].irGridPos[1],
+	    cv::Vec3d v3(mvGridCorners[i].irGridPos.x,
+			      mvGridCorners[i].irGridPos.y,
 			      0.0);
 		cv::Vec3d cvec = mse3CamFromWorld * v3;
 		cv::Vec2d cvec_proj = cv::Vec2d(cvec[0] / cvec[2], cvec[1] / cvec[2]);;
@@ -508,8 +508,8 @@ void CalibImage::Draw3DGrid(ATANCamera &Camera, bool bDrawErrors)
 	  glBegin(GL_LINES);
 	  for (int i = 0; i < (int)mvGridCorners.size(); i++)
 	  {
-		  cv::Vec3d v3(mvGridCorners[i].irGridPos[0],
-			  mvGridCorners[i].irGridPos[1],
+		  cv::Vec3d v3(mvGridCorners[i].irGridPos.x,
+			  mvGridCorners[i].irGridPos.y,
 			  0.0);
 		  cv::Vec3d cvec = mse3CamFromWorld * v3;
 		  cv::Vec2d cvec_proj(cvec[0] / cvec[2], cvec[1] / cvec[2]);

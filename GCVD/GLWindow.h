@@ -109,11 +109,11 @@ namespace GLXInterface {
 	/// @param title   Window title
 	/// @param display X11 display string, passed to XOpenDisplay. "" Is used to indicate NULL. This is ignored for non X11 platforms. 
 	GLWindow(const cv::Size2i& size, int bpp=24, const std::string& title="GLWindow", const std::string& display="") {
-	  init(size, bpp, title, display);
+	  init(size, bpp, title);
 	}
 	///@overload
 	GLWindow(const cv::Size2i& size, const std::string& title, int bpp=24, const std::string& display="") {
-	  init(size, bpp, title, display);
+	  init(size, bpp, title);
 	}
 
 	~GLWindow();

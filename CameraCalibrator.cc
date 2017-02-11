@@ -1,12 +1,12 @@
 // Copyright 2008 Isis Innovation Limited
+
 #include "OpenGL.h"
+#include "GCVD/GLHelpers.h"
 #include <gvars3/instances.h>
 #include "CameraCalibrator.h"
-#include <TooN/SVD.h>
 #include <fstream>
 #include <stdlib.h>
 
-using namespace std;
 using namespace GVars3;
 
 int main()
@@ -23,20 +23,20 @@ int main()
   GUI.StartParserThread();
   atexit(GUI.StopParserThread); // Clean up readline when program quits
   
-  GV3::get<Vector<NUMTRACKERCAMPARAMETERS> >("Camera.Parameters", ATANCamera::mvDefaultParams, SILENT);
+  GV3::get<cv::Vec<double, NUMTRACKERCAMPARAMETERS> >("Camera.Parameters", ATANCamera::mvDefaultParams, SILENT);
 
   try
     {
       CameraCalibrator c;
       c.Run();
     }
-  catch(glExceptions::All e)
-    {
-      cout << endl;
-      cout << "!! Failed to run CameraCalibrator; got exception. " << endl;
-      cout << "   Exception was: " << endl;
-      cout << e.what << endl;
-    }
+  catch (cv::Exception e)
+  {
+	  cout << endl;
+	  cout << "!! Failed to run CameraCalibrator; got exception. " << endl;
+	  cout << "   Exception was: " << endl;
+	  cout << "At line : " << e.line << endl << e.msg << endl;
+  }
 }
 
 CameraCalibrator::CameraCalibrator()
@@ -91,10 +91,10 @@ void CameraCalibrator::Run()
       if(!*mgvnOptimizing)
 	{
 	  GUI.ParseLine("CalibMenu.ShowMenu Live");
-	  glDrawPixels(imFrameBW);
+	  GLXInterface::glDrawPixelsGRAY(imFrameBW);
 	  
 	  CalibImage c;
-	  if(c.MakeFromImage(imFrameBW))
+	  if(c.MakeFromImage((cv::Mat_<uchar>) imFrameBW, imFrameRGB))
 	    {
 	      if(mbGrabNextFrame)
 		{
@@ -116,8 +116,7 @@ void CameraCalibrator::Run()
 	  if(nToShow >= (int) mvCalibImgs.size())
 	    nToShow = mvCalibImgs.size()-1;
 	  *mgvnShowImage = nToShow + 1;
-      
-	  glDrawPixels(mvCalibImgs[nToShow].mim);
+	  GLXInterface::glDrawPixelsGRAY(mvCalibImgs[nToShow].mim);
 	  mvCalibImgs[nToShow].Draw3DGrid(mCamera,true);
 	}
       
@@ -214,10 +213,13 @@ void CameraCalibrator::OptimizeOneStep()
   int nDim = 6 * nViews + NUMTRACKERCAMPARAMETERS;
   int nCamParamBase = nDim - NUMTRACKERCAMPARAMETERS;
   
-  Matrix<> mJTJ(nDim, nDim);
-  Vector<> vJTe(nDim);
-  mJTJ = Identity; // Weak stabilizing prior
-  vJTe = Zeros;
+  cv::Mat_<double> mJTJ = cv::Mat_<double>::eye(nDim, nDim); // a matrix vector... Smells like Least Squares....
+  cv::Mat_<double> vJTe = cv::Mat_<double>::zeros(nDim, 1);
+
+  //Matrix<> mJTJ(nDim, nDim);
+  //Vector<> vJTe(nDim);
+  //mJTJ = Identity; // Weak stabilizing prior
+  //vJTe = Zeros;
 
   if(*mgvnDisableDistortion) mCamera.DisableRadialDistortion();
 
@@ -225,41 +227,85 @@ void CameraCalibrator::OptimizeOneStep()
   double dSumSquaredError = 0.0;
   int nTotalMeas = 0;
   
-  for(int n=0; n<nViews; n++)
-    {
-      int nMotionBase = n*6;
-      vector<CalibImage::ErrorAndJacobians> vEAJ = mvCalibImgs[n].Project(mCamera);
-      for(unsigned int i=0; i<vEAJ.size(); i++)
-	{
-	  CalibImage::ErrorAndJacobians &EAJ = vEAJ[i];
-	  // All the below should be +=, but the MSVC compiler doesn't seem to understand that. :(
-      mJTJ.slice(nMotionBase, nMotionBase, 6, 6) = 
-      mJTJ.slice(nMotionBase, nMotionBase, 6, 6) + EAJ.m26PoseJac.T() * EAJ.m26PoseJac;
-      mJTJ.slice(nCamParamBase, nCamParamBase, NUMTRACKERCAMPARAMETERS, NUMTRACKERCAMPARAMETERS) = 
-      mJTJ.slice(nCamParamBase, nCamParamBase, NUMTRACKERCAMPARAMETERS, NUMTRACKERCAMPARAMETERS) + EAJ.m2NCameraJac.T() * EAJ.m2NCameraJac;
-      mJTJ.slice(nMotionBase, nCamParamBase, 6, NUMTRACKERCAMPARAMETERS) =
-      mJTJ.slice(nMotionBase, nCamParamBase, 6, NUMTRACKERCAMPARAMETERS) + EAJ.m26PoseJac.T() * EAJ.m2NCameraJac;
-      mJTJ.T().slice(nMotionBase, nCamParamBase, 6, NUMTRACKERCAMPARAMETERS) = 
-      mJTJ.T().slice(nMotionBase, nCamParamBase, 6, NUMTRACKERCAMPARAMETERS) + EAJ.m26PoseJac.T() * EAJ.m2NCameraJac;
-      // Above does twice the work it needs to, but who cares..
+  for (int n = 0; n < nViews; n++)
+  {
+	  int nMotionBase = n * 6;
+	  vector<CalibImage::ErrorAndJacobians> vEAJ = mvCalibImgs[n].Project(mCamera);
 
-      vJTe.slice(nMotionBase,6) = 
-      vJTe.slice(nMotionBase,6) + EAJ.m26PoseJac.T() * EAJ.v2Error;
-      vJTe.slice(nCamParamBase,NUMTRACKERCAMPARAMETERS) = 
-      vJTe.slice(nCamParamBase,NUMTRACKERCAMPARAMETERS) + EAJ.m2NCameraJac.T() * EAJ.v2Error;
+	  if (vEAJ.size() == 0) {
+		  cout << "All point projections are invalid with current parameters. Leaving image out of the optimization..." << endl;
 
-	  dSumSquaredError += EAJ.v2Error * EAJ.v2Error;
-	  ++nTotalMeas;
-	}
-    };
-  
+		  continue;
+
+	  }
+
+	  for (unsigned int i = 0; i < vEAJ.size(); i++)
+	  {
+		  int r_, c_;
+		  CalibImage::ErrorAndJacobians &EAJ = vEAJ[i];
+		  // All the below should be +=, but the MSVC compiler doesn't seem to understand that. :(
+		  for (r_ = 0; r_ < 6; r_++) {
+			  mJTJ(nMotionBase + r_, nMotionBase + r_) += EAJ.m26PoseJac(0, r_) * EAJ.m26PoseJac(0, r_) +
+				  EAJ.m26PoseJac(1, r_) * EAJ.m26PoseJac(1, r_);
+			  for (c_ = 0; c_ < r_; c_++)
+				  mJTJ(r_ + nMotionBase, c_ + nMotionBase) = (mJTJ(c_ + nMotionBase, r_ + nMotionBase) += EAJ.m26PoseJac(0, r_) * EAJ.m26PoseJac(0, c_) +
+					  EAJ.m26PoseJac(1, r_) * EAJ.m26PoseJac(1, c_));
+		  }
+
+		  for (r_ = 0; r_ < NUMTRACKERCAMPARAMETERS; r_++) {
+
+			  mJTJ(nCamParamBase + r_, nCamParamBase + r_) += EAJ.m2NCameraJac(0, r_) * EAJ.m2NCameraJac(0, r_) +
+				  EAJ.m2NCameraJac(1, r_) * EAJ.m2NCameraJac(1, r_);
+
+			  for (c_ = 0; c_ < r_; c_++)
+				  mJTJ(r_ + nCamParamBase, c_ + nCamParamBase) = (mJTJ(c_ + nCamParamBase, r_ + nCamParamBase) +=
+					  EAJ.m2NCameraJac(0, r_) * EAJ.m2NCameraJac(0, c_) +
+					  EAJ.m2NCameraJac(1, r_) * EAJ.m2NCameraJac(1, c_));
+		  }
+
+		  for (r_ = 0; r_ < 6; r_++)
+			  for (c_ = 0; c_ < NUMTRACKERCAMPARAMETERS; c_++)
+				  mJTJ(r_ + nMotionBase, c_ + nCamParamBase) = (mJTJ(c_ + nCamParamBase, r_ + nMotionBase) +=
+					  EAJ.m26PoseJac(0, r_) * EAJ.m2NCameraJac(0, c_) +
+					  EAJ.m26PoseJac(1, r_) * EAJ.m2NCameraJac(1, c_));
+
+
+		  for (r_ = 0; r_ < 6; r_++)
+			  vJTe(r_ + nMotionBase) += EAJ.m26PoseJac(0, r_) * EAJ.v2Error[0] +
+			  EAJ.m26PoseJac(1, r_) * EAJ.v2Error[1];
+
+		  for (c_ = 0; c_ < NUMTRACKERCAMPARAMETERS; c_++)
+			  vJTe(c_ + nCamParamBase, 0) += EAJ.m2NCameraJac(0, c_) * EAJ.v2Error[0] +
+			  EAJ.m2NCameraJac(1, c_) * EAJ.v2Error[1];
+
+		  dSumSquaredError += EAJ.v2Error[0] * EAJ.v2Error[0] + EAJ.v2Error[1] * EAJ.v2Error[1];
+
+		  ++nTotalMeas;
+	  }
+  };
+
+  if (nTotalMeas == 0) {
+	  cout << "Did not manage to include a single grid corner in the optimization ! Skipping updates !" << endl;
+	  return;
+  }
+
   mdMeanPixelError = sqrt(dSumSquaredError / nTotalMeas);
 
-  TooN::SVD<> svd(mJTJ);
-  Vector<> vUpdate(nDim);
-  vUpdate= svd.backsub(vJTe);
+  cv::Mat_<double> vUpdate(nDim, 1);
+  cv::solve(mJTJ, vJTe, vUpdate, cv::DECOMP_CHOLESKY);
   vUpdate *= 0.1; // Slow down because highly nonlinear...
-  for(int n=0; n<nViews; n++)
-    mvCalibImgs[n].mse3CamFromWorld = SE3<>::exp(vUpdate.slice(n * 6, 6)) * mvCalibImgs[n].mse3CamFromWorld;
-  mCamera.UpdateParams(vUpdate.slice(nCamParamBase, NUMTRACKERCAMPARAMETERS));
+  for (int n = 0; n < nViews; n++)
+  {
+	  SE3<> Dse3 = SE3<>::exp(cv::Vec<double, 6>(vUpdate(n * 6 + 0, 0),
+		  vUpdate(n * 6 + 1, 0),
+		  vUpdate(n * 6 + 2, 0),
+		  vUpdate(n * 6 + 3, 0),
+		  vUpdate(n * 6 + 4, 0),
+		  vUpdate(n * 6 + 5, 0))
+	  );
+	  mvCalibImgs[n].mse3CamFromWorld = Dse3 * mvCalibImgs[n].mse3CamFromWorld;
+  }
+  cv::Vec<double, NUMTRACKERCAMPARAMETERS> Dparams;
+  for (int k = 0; k<NUMTRACKERCAMPARAMETERS; k++) Dparams[k] = vUpdate(nCamParamBase + k, 0);
+  mCamera.UpdateParams(Dparams);
 };

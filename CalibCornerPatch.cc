@@ -1,9 +1,11 @@
 // Copyright 2008 Isis Innovation Limited
 #include "CalibCornerPatch.h"
 #include "OpenGL.h"
-#include "SmallMatrixOpts.h"
 #include <math.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 using namespace additionalUtility;
 
 cv::Mat_<double> CalibCornerPatch::mimSharedSourceTemplate;
@@ -58,8 +60,8 @@ void CalibCornerPatch::MakeTemplateWithCurrentParams()
 	  double dAngle = mParams.v2Angles[i];
 	  if(dof == i)
 	    dAngle += 0.01;
-	  m2Warp[0][i] = cos(dAngle);
-	  m2Warp[1][i] = sin(dAngle);
+	  m2Warp(0,i) = cos(dAngle);
+	  m2Warp(1,i) = sin(dAngle);
 	};
       
 	  additionalUtility::cv_transform(mimSharedSourceTemplate, imToBlur,
@@ -103,7 +105,7 @@ bool CalibCornerPatch::IterateOnImageWithDrawing(CalibCornerPatch::Params &param
 		glPointSize(3);
 		glColor3f(1, 0, 0);
 		glBegin(GL_POINTS);
-		glVertex(params.v2Pos);
+		glVertex2d(params.v2Pos[0], params.v2Pos[1]);
 		glEnd();
 	}
 	return bReturn;

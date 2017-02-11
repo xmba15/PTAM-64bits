@@ -3,6 +3,8 @@
 
 #pragma once
 
+#define NOMINMAX
+
 #include "CalibImage.h"
 #include "VideoSourceOpenCV.h"
 #include <gvars3/gvars3.h>

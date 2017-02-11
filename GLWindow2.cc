@@ -1,17 +1,15 @@
 #include "OpenGL.h"
 #include "GLWindow2.h"
 #include "GLWindowMenu.h"
+#include "GCVD/GLHelpers.h"
+
 #include <stdlib.h>
 #include <gvars3/GStringUtil.h>
 #include <gvars3/instances.h>
-#include <TooN/helpers.h>
 
-#if !_WIN64
-using namespace CVD;
-#endif
 using namespace std;
 using namespace GVars3;
-using namespace TooN;
+using namespace GLXInterface;
 
 GLWindow2::GLWindow2(cv::Size irSize, string sTitle)
   : GLWindow(irSize, sTitle)
@@ -36,8 +34,8 @@ GLWindow2::GLWindow2(cv::Size irSize, string sTitle)
   mirVideoSize = irSize;
   GUI.RegisterCommand("GLWindow.AddMenu", GUICommandCallBack, this);
   glSetFont("sans");
-  mvMCPoseUpdate=Zeros;
-  mvLeftPoseUpdate=Zeros;
+  mvMCPoseUpdate = cv::Vec<double, 6>::all(0);
+  mvLeftPoseUpdate = cv::Vec<double, 6>::all(0);
 };
 
 void GLWindow2::AddMenu(string sName, string sTitle)
@@ -233,11 +231,11 @@ void GLWindow2::on_event(GLWindow& win, int event)
     GUI.ParseLine("quit");
 }
 
-pair<Vector<6>, Vector<6> > GLWindow2::GetMousePoseUpdate()
+pair<cv::Vec<double, 6>, cv::Vec<double, 6> > GLWindow2::GetMousePoseUpdate()
 {
-  pair<Vector<6>, Vector<6> > result = make_pair(mvLeftPoseUpdate, mvMCPoseUpdate);
-  mvLeftPoseUpdate = Zeros;
-  mvMCPoseUpdate = Zeros;
+  pair<cv::Vec<double, 6>, cv::Vec<double, 6> > result = make_pair(mvLeftPoseUpdate, mvMCPoseUpdate);
+  mvLeftPoseUpdate = cv::Vec<double, 6>::all(0);
+  mvMCPoseUpdate = cv::Vec<double, 6>::all(0);
   return result;
 }
 

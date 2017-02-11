@@ -176,8 +176,8 @@ class ATANCamera {
   inline double OnePixelDist() { return mdOnePixelDist; }
   
   // The z=1 plane bounding box of what the camera can see
-  inline TooN::Vector<2> ImplaneTL(); 
-  inline TooN::Vector<2> ImplaneBR(); 
+  cv::Vec2d ImplaneTL(); 
+  cv::Vec2d ImplaneBR(); 
 
   // OpenGL helper function
   cv::Matx<double, 4, 4> MakeUFBLinearFrustumMatrix(double _near, double _far); // Returns A 4x4 matrix

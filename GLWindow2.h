@@ -1,19 +1,25 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
-#ifndef __GL_WINDOW_2_H
-#define __GL_WINDOW_2_H
-//
-//  A class which wraps a CVD::GLWindow and provides some basic
-//  user-interface funtionality: A gvars-driven clickable menu, and a
-//  caption line for text display. Also provides some handy GL helpers
-//  and a wrapper for CVD's text display routines.
+#pragma once
+
+#include "GCVD/GLWindow.h"
 
 #include <TooN/TooN.h>
 #include "additionalUtility.h"
 
 using namespace additionalUtility;
+using namespace GLXInterface;
 class GLWindowMenu;
 
+enum GUICommand {
+	ccmd_GrabNextFrame,
+	ccmd_Reset,
+	ccmd_ShowNext,
+	ccmd_SaveCalib,
+	ccmd_Quit,
+	ccmd_Optimize,
+	ccmd_ShowGrabbedFrame,
+	ccmd_ToggleNoDist,
+	ccmd_Exit
+};
 
 class GLWindow2 : public GLWindow, public GLWindow::EventHandler
 {
@@ -39,7 +45,7 @@ public:
   void DrawCaption(std::string s);
   
   // Map viewer mouse interface:
-  std::pair<TooN::Vector<6>, TooN::Vector<6> > GetMousePoseUpdate();
+  std::pair<cv::Vec<double, 6>, cv::Vec<double, 6> > GetMousePoseUpdate();
   
 
 protected:
@@ -59,9 +65,8 @@ protected:
   cv::Point mirLastMousePos;
 
   // Storage for map viewer updates:
-  TooN::Vector<6> mvMCPoseUpdate;
-  TooN::Vector<6> mvLeftPoseUpdate;
+  cv::Vec<double, 6> mvMCPoseUpdate;
+  cv::Vec<double, 6> mvLeftPoseUpdate;
 
 };
-#endif
 
