@@ -1,5 +1,3 @@
-// These functions need to be in a .cpp file or the linker will drive you crazy....
-
 #include "serialize.h"
 #include <vector>
 

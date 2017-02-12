@@ -2,12 +2,12 @@
 
 #include "OpenGL.h"
 #include "GCVD/GLHelpers.h"
-#include <gvars3/instances.h>
+#include "Persistence/instances.h"
 #include "CameraCalibrator.h"
 #include <fstream>
 #include <stdlib.h>
 
-using namespace GVars3;
+using namespace Persistence;
 
 int main()
 {
@@ -23,7 +23,7 @@ int main()
   GUI.StartParserThread();
   atexit(GUI.StopParserThread); // Clean up readline when program quits
   
-  GV3::get<cv::Vec<double, NUMTRACKERCAMPARAMETERS> >("Camera.Parameters", ATANCamera::mvDefaultParams, SILENT);
+  Persistence::PV3::get<cv::Vec<double, NUMTRACKERCAMPARAMETERS> >("Camera.Parameters", ATANCamera::mvDefaultParams, Persistence::SILENT);
 
   try
     {
@@ -49,9 +49,9 @@ CameraCalibrator::CameraCalibrator()
   GUI.RegisterCommand("CameraCalibrator.SaveCalib", GUICommandCallBack, this);
   GUI.RegisterCommand("quit", GUICommandCallBack, this);
   GUI.RegisterCommand("exit", GUICommandCallBack, this);
-  GV3::Register(mgvnOptimizing, "CameraCalibrator.Optimize", 0, SILENT);
-  GV3::Register(mgvnShowImage, "CameraCalibrator.Show", 0, SILENT);
-  GV3::Register(mgvnDisableDistortion, "CameraCalibrator.NoDistortion", 0, SILENT);
+  PV3::Register(mgvnOptimizing, "CameraCalibrator.Optimize", 0, SILENT);
+  PV3::Register(mgvnShowImage, "CameraCalibrator.Show", 0, SILENT);
+  PV3::Register(mgvnDisableDistortion, "CameraCalibrator.NoDistortion", 0, SILENT);
   GUI.ParseLine("GLWindow.AddMenu CalibMenu");
   GUI.ParseLine("CalibMenu.AddMenuButton Live GrabFrame CameraCalibrator.GrabNextFrame");
   GUI.ParseLine("CalibMenu.AddMenuButton Live Reset CameraCalibrator.Reset");
@@ -133,7 +133,7 @@ void CameraCalibrator::Run()
       else
 	{
 	  ost << "Current RMS pixel error is " << mdMeanPixelError << endl;
-	  ost << "Current camera params are  " << GV3::get_var("Camera.Parameters") << endl;
+	  ost << "Current camera params are  " << PV3::get_var("Camera.Parameters") << endl;
 	  ost << "(That would be a pixel aspect ratio of " 
 	      <<  mCamera.PixelAspectRatio() << ")" << endl;
 	  ost << "Check fit by looking through the grabbed images." << endl;
@@ -150,7 +150,7 @@ void CameraCalibrator::Run()
 
 void CameraCalibrator::Reset()
 {
-  *mCamera.mgvvCameraParams = ATANCamera::mvDefaultParams;
+  *mCamera.mpvvCameraParams = ATANCamera::mvDefaultParams;
   if(*mgvnDisableDistortion) mCamera.DisableRadialDistortion();
   
   mCamera.SetImageSize(mVideoSource.imgSize());
@@ -184,19 +184,19 @@ void CameraCalibrator::GUICommandHandler(string sCommand, string sParams)  // Ca
     }
   if(sCommand=="CameraCalibrator.SaveCalib")
     {
-      cout << "  Camera calib is " << GV3::get_var("Camera.Parameters") << endl;
-      cout << "  Saving camera calib to camera.cfg..." << endl;
+      std::cout << "  Camera calib is " << PV3::get_var("Camera.Parameters") << std::endl;
+      std::cout << "  Saving camera calib to camera.cfg..." << std::endl;
       ofstream ofs("camera.cfg");
       if(ofs.good())
 	{
-	  GV2.PrintVar("Camera.Parameters", ofs);
+	  PV3::PrintVar("Camera.Parameters", ofs);
 	  ofs.close();
 	  cout << "  .. saved."<< endl;
 	}
       else
 	{
 	  cout <<"! Could not open camera.cfg for writing." << endl;
-	  GV2.PrintVar("Camera.Parameters", cout);
+	  PV3::PrintVar("Camera.Parameters", cout);
 	  cout <<"  Copy-paste above line to settings.cfg or camera.cfg! " << endl;
 	}
       mbDone = true;

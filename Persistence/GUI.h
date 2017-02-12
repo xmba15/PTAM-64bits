@@ -1,6 +1,4 @@
-
-#ifndef PER_GUI_H
-#define PER_GUI_H
+#pragma once
 
 #include "PVars.h"
 
@@ -79,5 +77,3 @@ namespace Persistence
 	};
 
 }
-
-#endif

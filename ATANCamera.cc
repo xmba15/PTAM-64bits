@@ -1,18 +1,23 @@
 // Copyright 2008 Isis Innovation Limited
 #include "ATANCamera.h"
 #include <iostream>
-#include <gvars3/instances.h>
 #include <algorithm>
+#include "Persistence/instances.h" 
 
 using namespace std;
-using namespace GVars3;
+using namespace Persistence;
 
 ATANCamera::ATANCamera(string sName, const cv::Size imgsize)
 {
   // The camera name is used to find the camera's parameters in a GVar.
   msName = sName;
   ATANCamera::mvDefaultParams = cv::Vec<double, NUMTRACKERCAMPARAMETERS>(0.5, 0.75, 0.5, 0.5, 0.1);
-  GV2.Register(mgvvCameraParams, sName + ".Parameters", mvDefaultParams, HIDDEN | FATAL_IF_NOT_DEFINED);
+
+  // The camera name is used to find the camera's parameters in a GVar.
+  msName = sName;
+  // Need to do a "get" in order to put the tag msName+".Parameters" in the list. value is loaded either from the file, or from the defaults
+  Persistence::PV3::get<cv::Vec<float, NUMTRACKERCAMPARAMETERS> >(msName + ".Parameters", ATANCamera::mvDefaultParams, Persistence::SILENT);
+  Persistence::PV3.Register(mpvvCameraParams, sName + ".Parameters", mvDefaultParams, HIDDEN | FATAL_IF_NOT_DEFINED);
   mvImageSize = imgsize;
   RefreshParams();
 }
@@ -24,17 +29,17 @@ void ATANCamera::RefreshParams()
   //
   
   // First: Focal length and image center in pixel coordinates
-  mvFocal[0] = mvImageSize.width * (*mgvvCameraParams)[0];
-  mvFocal[1] = mvImageSize.height * (*mgvvCameraParams)[1];
-  mvCenter[0] = mvImageSize.width * (*mgvvCameraParams)[2] - 0.5;
-  mvCenter[1] = mvImageSize.height * (*mgvvCameraParams)[3] - 0.5;
+  mvFocal[0] = mvImageSize.width * (*mpvvCameraParams)[0];
+  mvFocal[1] = mvImageSize.height * (*mpvvCameraParams)[1];
+  mvCenter[0] = mvImageSize.width * (*mpvvCameraParams)[2] - 0.5;
+  mvCenter[1] = mvImageSize.height * (*mpvvCameraParams)[3] - 0.5;
   
   // One over focal length
   mvInvFocal[0] = 1.0 / mvFocal[0];
   mvInvFocal[1] = 1.0 / mvFocal[1];
 
   // Some radial distortion parameters..
-  mdW =  (*mgvvCameraParams)[4];
+  mdW =  (*mpvvCameraParams)[4];
   if(mdW != 0.0)
     {
       md2Tan = 2.0 * tan(mdW / 2.0);
@@ -50,8 +55,8 @@ void ATANCamera::RefreshParams()
     }
   
   // work out biggest radius in image
-  cv::Vec2d v2( std::max((*mgvvCameraParams)[2], 1.0 - (*mgvvCameraParams)[2]) / (*mgvvCameraParams)[0],
-                std::max((*mgvvCameraParams)[3], 1.0 - (*mgvvCameraParams)[3]) / (*mgvvCameraParams)[1]);
+  cv::Vec2d v2( std::max((*mpvvCameraParams)[2], 1.0 - (*mpvvCameraParams)[2]) / (*mpvvCameraParams)[0],
+                std::max((*mpvvCameraParams)[3], 1.0 - (*mpvvCameraParams)[3]) / (*mpvvCameraParams)[1]);
   mdLargestRadius = invrtrans(cv::norm(v2));
   
   // At what stage does the model become invalid?
@@ -178,11 +183,11 @@ cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> ATANCamera::GetCamParamAnalyticalDe
 	double imwidth = mvImageSize.width;
 	double imheight = mvImageSize.height;
 
-	double fx = imwidth * (*mgvvCameraParams)[0];
-	double fy = imheight * (*mgvvCameraParams)[2];
+	double fx = imwidth * (*mpvvCameraParams)[0];
+	double fy = imheight * (*mpvvCameraParams)[2];
 	double distort = 1.0;
 	double rd;
-	double w = (*mgvvCameraParams)[4];
+	double w = (*mpvvCameraParams)[4];
 
 	double DrdDw = 0; // the derivative of the distorted radius wrt w
 					  // **** Note that:
@@ -228,7 +233,7 @@ cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> ATANCamera::GetCameraParameterDeriv
   // No need for this to be quick, so do them numerically
   
   cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> m2NNumDerivs;
-  cv::Vec<double, NUMTRACKERCAMPARAMETERS> vNNormal = *mgvvCameraParams;
+  cv::Vec<double, NUMTRACKERCAMPARAMETERS> vNNormal = *mpvvCameraParams;
   cv::Vec2d v2Cam = mvLastCam;
   cv::Vec2d v2Out = Project(v2Cam);
   for(int i=0; i<NUMTRACKERCAMPARAMETERS; i++)
@@ -243,7 +248,7 @@ cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> ATANCamera::GetCameraParameterDeriv
 	  cv::Vec2d DparamsByDpi = (v2Out_B - v2Out) / 0.001;
 	  m2NNumDerivs(0, i) = DparamsByDpi[0];
 	  m2NNumDerivs(1, i) = DparamsByDpi[1];
-      *mgvvCameraParams = vNNormal;
+      *mpvvCameraParams = vNNormal;
       RefreshParams();
     }
 
@@ -257,7 +262,7 @@ cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> ATANCamera::GetCameraParameterDeriv
 void ATANCamera::UpdateParams(cv::Vec<double, NUMTRACKERCAMPARAMETERS> vUpdate)
 {
   // Update the camera parameters; use this as part of camera calibration.
-  (*mgvvCameraParams) = (*mgvvCameraParams) + vUpdate;
+  (*mpvvCameraParams) = (*mpvvCameraParams) + vUpdate;
   RefreshParams();
 }
 
@@ -265,7 +270,7 @@ void ATANCamera::DisableRadialDistortion()
 {
   // Set the radial distortion parameter to zero
   // This disables radial distortion and also disables its differentials
-  (*mgvvCameraParams)[NUMTRACKERCAMPARAMETERS-1] = 0.0;
+  (*mpvvCameraParams)[NUMTRACKERCAMPARAMETERS-1] = 0.0;
   RefreshParams();
 }
 
@@ -279,16 +284,16 @@ cv::Vec2d ATANCamera::UFBProject(const cv::Vec2d &vCam)
   mdLastDistR = mdLastFactor * mdLastR;
   mvLastDistCam = mdLastFactor * mvLastCam;
   
-  mvLastIm[0] = (*mgvvCameraParams)[2]  + (*mgvvCameraParams)[0] * mvLastDistCam[0];
-  mvLastIm[1] = (*mgvvCameraParams)[3]  + (*mgvvCameraParams)[1] * mvLastDistCam[1];
+  mvLastIm[0] = (*mpvvCameraParams)[2]  + (*mpvvCameraParams)[0] * mvLastDistCam[0];
+  mvLastIm[1] = (*mpvvCameraParams)[3]  + (*mpvvCameraParams)[1] * mvLastDistCam[1];
   return mvLastIm;
 }
 
 cv::Vec2d ATANCamera::UFBUnProject(const cv::Vec2d &v2Im)
 {
   mvLastIm = v2Im;
-  mvLastDistCam[0] = (mvLastIm[0] - (*mgvvCameraParams)[2]) / (*mgvvCameraParams)[0];
-  mvLastDistCam[1] = (mvLastIm[1] - (*mgvvCameraParams)[3]) / (*mgvvCameraParams)[1];
+  mvLastDistCam[0] = (mvLastIm[0] - (*mpvvCameraParams)[2]) / (*mpvvCameraParams)[0];
+  mvLastDistCam[1] = (mvLastIm[1] - (*mpvvCameraParams)[3]) / (*mpvvCameraParams)[1];
   mdLastDistR = cv::norm(mvLastDistCam);
   mdLastR = invrtrans(mdLastDistR);
   double dFactor;

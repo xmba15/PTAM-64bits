@@ -2,9 +2,10 @@
 #include <vector>
 #include <algorithm>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <fnmatch.h>
 #else 
+
 // FIXME: empty dummy implementation for now
 int fnmatch(const char *, const char *, int ){
     return -1;

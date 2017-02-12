@@ -1,12 +1,11 @@
-// Copyright 2008 Isis Innovation Limited
 #include "OpenGL.h"
 #include "GLWindowMenu.h"
-#include <gvars3/instances.h>
-#include <gvars3/GStringUtil.h>
+#include "Persistence/instances.h"
+#include "Persistence/GStringUtil.h"
 #include <sstream>
 
-using namespace GVars3;
 using namespace std;
+using namespace Persistence;
 
 GLWindowMenu::GLWindowMenu(string sName, string sTitle)
 {
@@ -18,9 +17,9 @@ GLWindowMenu::GLWindowMenu(string sName, string sTitle)
   GUI.RegisterCommand(msName+".AddMenuSlider", GUICommandCallBack, this);
   GUI.RegisterCommand(msName+".AddMenuMonitor", GUICommandCallBack, this);
   GUI.RegisterCommand(msName+".ShowMenu", GUICommandCallBack, this);
-  GV2.Register(mgvnMenuItemWidth, msName+".MenuItemWidth", 90, HIDDEN | SILENT);
-  GV2.Register(mgvnMenuTextOffset, msName+".MenuTextOffset", 20, HIDDEN | SILENT);
-  GV2.Register(mgvnEnabled, msName+".Enabled", 1, HIDDEN | SILENT);
+  PV3.Register(mgvnMenuItemWidth, msName+".MenuItemWidth", 90, HIDDEN | SILENT);
+  PV3.Register(mgvnMenuTextOffset, msName+".MenuTextOffset", 20, HIDDEN | SILENT);
+  PV3.Register(mgvnEnabled, msName+".Enabled", 1, HIDDEN | SILENT);
   
   mmSubMenus.clear();
   msCurrentSubMenu="";
@@ -71,7 +70,7 @@ void GLWindowMenu::GUICommandHandler(string sCommand, string sParams)
       MenuItem m;
       m.type = Toggle;
       m.sName = vs[1];
-      GV2.Register(m.gvnIntValue, vs[2]);
+      PV3.Register(m.gvnIntValue, vs[2]);
       m.sNextMenu = (vs.size()>3)?(vs[3]):("");
       mmSubMenus[vs[0]].mvItems.push_back(m);
       return;
@@ -103,7 +102,7 @@ void GLWindowMenu::GUICommandHandler(string sCommand, string sParams)
       MenuItem m;
       m.type = Slider;
       m.sName = vs[1];
-      GV2.Register(m.gvnIntValue, vs[2]);
+      PV3.Register(m.gvnIntValue, vs[2]);
       int *a;
       a = ParseAndAllocate<int>(vs[3]);
       if(a)
@@ -211,7 +210,7 @@ void GLWindowMenu::Render(int nTop, int nHeight, int nWidth, GLWindow2 &glw)
 	  glColor4d(0,1,1,dAlpha);
 	  LineBox(nBase, nBase + *mgvnMenuItemWidth +1, mnMenuTop, mnMenuTop + mnMenuHeight);
 	  glw.PrintString(cv::Point( nBase + 3, mnMenuTop + *mgvnMenuTextOffset),
-			  i->sName + " " + GV2.StringValue(i->sParam, true));
+			  i->sName + " " + PV3::StringValue(i->sParam, true));
 	  break;
 	  
 	case Slider:

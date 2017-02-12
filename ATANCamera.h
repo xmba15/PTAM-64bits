@@ -43,7 +43,7 @@
 #pragma once
 
 #include <cmath>
-#include <gvars3/gvars3.h>
+#include "Persistence/PVars.h"
 #include "additionalUtility.h"
 
 using namespace additionalUtility;
@@ -56,7 +56,7 @@ class CameraCalibrator;
 class CalibImage;
 
 // The parameters are:
-// 0 - normalized x focal length
+// 0 - normalized x focal length 
 // 1 - normalized y focal length
 // 2 - normalized x offset
 // 3 - normalized y offset
@@ -186,7 +186,7 @@ class ATANCamera {
   double PixelAspectRatio() { return mvFocal[1] / mvFocal[0];}
     
  protected:
-  GVars3::gvar3<cv::Vec<double, NUMTRACKERCAMPARAMETERS> > mgvvCameraParams; //The actual camera parameters
+  Persistence::pvar3<cv::Vec<double, NUMTRACKERCAMPARAMETERS> > mpvvCameraParams; //The actual camera parameters
   cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> GetCamParamAnalyticalDerivs();
   cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> GetCameraParameterDerivs(); // 2x NUMTRACKERCAMPARAMETERS
   void UpdateParams(cv::Vec<double, NUMTRACKERCAMPARAMETERS> vUpdate);

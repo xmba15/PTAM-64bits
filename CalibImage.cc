@@ -1,14 +1,13 @@
-// Copyright 2008 Isis Innovation Limited
 #include "OpenGL.h"
 #include "CalibImage.h"
 #include <stdlib.h>
 #include <cmath>
-#include <gvars3/instances.h>
 #include "GCVD/GLHelpers.h"
 #include "FAST/fast_corner.h"
 
+#include "Persistence/instances.h"
+
 using namespace std;
-using namespace GVars3;
 using namespace FAST;
 using namespace RigidTransforms;
 using namespace GLXInterface;
@@ -97,10 +96,10 @@ cv::Vec2d GuessInitialAngles(cv::Mat_<uchar> &im, cv::Point irCenter)
 	}
 	return v2Ret;
 }
-
+ 
 bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 {
-	static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
+	static Persistence::pvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, Persistence::SILENT);
 	mvCorners.clear();
 	mvGridCorners.clear();
 
@@ -109,9 +108,9 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 
 	{
 		cv::Mat_<uchar> imBlurred = mim.clone();
-		//convolveGaussian(imBlurred, GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, SILENT));
-		int ksize = (int)ceil(GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, SILENT) * 3.0);
-		cv::GaussianBlur(imBlurred, imBlurred, cv::Size(ksize, ksize), GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, SILENT), 3.0);
+		//convolveGaussian(imBlurred, GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, Persistence::SILENT));
+		int ksize = (int)ceil(Persistence::PV3::get<double>("CameraCalibrator.BlurSigma", 1.0, Persistence::SILENT) * 3.0);
+		cv::GaussianBlur(imBlurred, imBlurred, cv::Size(ksize, ksize), Persistence::PV3::get<double>("CameraCalibrator.BlurSigma", 1.0, Persistence::SILENT), 3.0);
 
 		cv::Point irTopLeft(5, 5);
 		cv::Point irBotRight = cv::Point(mim.size()) - irTopLeft;
@@ -119,7 +118,7 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 		glPointSize(1);
 		glColor3f(1, 0, 1);
 		glBegin(GL_POINTS);
-		int nGate = GV2.GetInt("CameraCalibrator.MeanGate", 10, SILENT);
+		int nGate = Persistence::PV3::get<int>("CameraCalibrator.MeanGate", 10, Persistence::SILENT);
 
 		for (int i = irTopLeft.y; i < irBotRight.y; i++) {
 			for (int j = irTopLeft.x; j < irBotRight.x; j++) {
@@ -133,7 +132,7 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 		glEnd();
 	}
 
-	if ((int)mvCorners.size() < GV2.GetInt("CameraCalibrator.MinCornersForGrabbedImage", 20, SILENT))
+	if ((int)mvCorners.size() < Persistence::PV3::get<int>("CameraCalibrator.MinCornersForGrabbedImage", 20, Persistence::SILENT))
 		return false;
 
 	// Pick a central corner point...
@@ -196,7 +195,7 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 
 bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
 {
-	static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
+	static Persistence::pvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, Persistence::SILENT);
 	CalibGridCorner &gSrc = mvGridCorners[nSrc];
 
 	cv::Point irBest;
@@ -361,8 +360,8 @@ int CalibImage::NextToExpand()
 
 void CalibImage::ExpandByStep(int n)
 {
-  static gvar3<double> gvdMaxStepDistFraction("CameraCalibrator.ExpandByStepMaxDistFrac", 0.3, SILENT);
-  static gvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, SILENT);
+  static Persistence::pvar3<double> gvdMaxStepDistFraction("CameraCalibrator.ExpandByStepMaxDistFrac", 0.3, Persistence::SILENT);
+  static Persistence::pvar3<int> gvnCornerPatchSize("CameraCalibrator.CornerPatchPixelSize", 20, Persistence::SILENT);
   
   CalibGridCorner &gSrc = mvGridCorners[n];
   

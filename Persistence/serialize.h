@@ -1,6 +1,4 @@
-#ifndef PER_SERIALIZE_H
-#define PER_SERIALIZE_H
-
+#pragma once
 
 #include "default.h"
 
@@ -16,8 +14,6 @@ using namespace std;
 
 namespace Persistence
 {
-  
-	
 	namespace Serialize
 	{
 		/// Checks a stream and returns a status code
@@ -275,6 +271,3 @@ namespace Persistence
 
 	}
 }
-
-
-#endif

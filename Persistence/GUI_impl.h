@@ -1,10 +1,6 @@
+#pragma once
 
-
-#ifndef PER_GUI_IMPL_H
-#define PER_GUI_IMPL_H
-
-
-#include "GUI_readline.h"
+#include "GUI_non_readline.h"
 #include "GUI.h"
 
 #include <vector>
@@ -17,19 +13,13 @@
 #include <cctype>
 #include <sstream>
 #include <fstream>
-#include <unistd.h>
-#include <sys/wait.h>
 #include <stdlib.h>
 #include <algorithm>
 
-#include <readline/readline.h>
-#include <readline/history.h>
 
 
 namespace Persistence
 {
-	
-
 	class GUI_language;
 
 	class GUI_impl
@@ -114,5 +104,3 @@ namespace Persistence
 
 
 }
-
-#endif

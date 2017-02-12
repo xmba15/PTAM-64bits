@@ -4,11 +4,11 @@
 #include "GCVD/GLHelpers.h"
 
 #include <stdlib.h>
-#include <gvars3/GStringUtil.h>
-#include <gvars3/instances.h>
+#include "Persistence/GStringUtil.h"
+#include "Persistence/instances.h"
 
 using namespace std;
-using namespace GVars3;
+using namespace Persistence;
 using namespace GLXInterface;
 
 GLWindow2::GLWindow2(cv::Size irSize, string sTitle)

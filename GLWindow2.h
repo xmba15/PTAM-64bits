@@ -1,8 +1,6 @@
 #pragma once
 
 #include "GCVD/GLWindow.h"
-
-#include <TooN/TooN.h>
 #include "additionalUtility.h"
 
 using namespace additionalUtility;

@@ -7,7 +7,7 @@
 
 #include "CalibImage.h"
 #include "VideoSourceOpenCV.h"
-#include <gvars3/gvars3.h>
+#include "Persistence/PVars.h"
 #include <vector>
 #include "GLWindow2.h"
 #include "additionalUtility.h"
@@ -35,9 +35,9 @@ protected:
   void OptimizeOneStep();
   
   bool mbGrabNextFrame;
-  GVars3::gvar3<int> mgvnOptimizing;
-  GVars3::gvar3<int> mgvnShowImage;
-  GVars3::gvar3<int> mgvnDisableDistortion;
+  Persistence::pvar3<int> mgvnOptimizing;
+  Persistence::pvar3<int> mgvnShowImage;
+  Persistence::pvar3<int> mgvnDisableDistortion;
   double mdMeanPixelError;
 
   void GUICommandHandler(std::string sCommand, std::string sParams);
