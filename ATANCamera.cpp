@@ -1,4 +1,3 @@
-// Copyright 2008 Isis Innovation Limited
 #include "ATANCamera.h"
 #include <iostream>
 #include <algorithm>
@@ -6,6 +5,8 @@
 
 using namespace std;
 using namespace Persistence;
+
+cv::Vec<double, NUMTRACKERCAMPARAMETERS> ATANCamera::mvDefaultParams;
 
 ATANCamera::ATANCamera(string sName, const cv::Size imgsize)
 {
