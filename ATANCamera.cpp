@@ -11,12 +11,12 @@ ATANCamera::ATANCamera(string sName, const cv::Size imgsize)
 {
   // The camera name is used to find the camera's parameters in a GVar.
   msName = sName;
-  ATANCamera::mvDefaultParams = cv::Vec<double, NUMTRACKERCAMPARAMETERS>(0.5, 0.75, 0.5, 0.5, 0.1);
+  mvDefaultParams = cv::Vec<double, NUMTRACKERCAMPARAMETERS>(0.5, 0.75, 0.5, 0.5, 0.1);
 
   // The camera name is used to find the camera's parameters in a GVar.
   msName = sName;
   // Need to do a "get" in order to put the tag msName+".Parameters" in the list. value is loaded either from the file, or from the defaults
-  Persistence::PV3::get<cv::Vec<float, NUMTRACKERCAMPARAMETERS> >(msName + ".Parameters", ATANCamera::mvDefaultParams, Persistence::SILENT);
+  Persistence::PV3::get<cv::Vec<float, NUMTRACKERCAMPARAMETERS> >(msName + ".Parameters", mvDefaultParams, Persistence::SILENT);
   Persistence::PV3.Register(mpvvCameraParams, sName + ".Parameters", mvDefaultParams, HIDDEN | FATAL_IF_NOT_DEFINED);
   mvImageSize = imgsize;
   RefreshParams();
