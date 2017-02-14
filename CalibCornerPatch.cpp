@@ -195,7 +195,7 @@ void CalibCornerPatch::MakeSharedTemplate()
   const int nSideSize = 100;
   const int nHalf = nSideSize >> 1;
   
-  cv::resize(mimSharedSourceTemplate, mimSharedSourceTemplate, cv::Size(nSideSize, nSideSize));
+  mimSharedSourceTemplate.create(cv::Size(nSideSize, nSideSize));
 
   for (int x = 0; x < mimSharedSourceTemplate.rows; x++) {
 	  for (int y = 0; y < mimSharedSourceTemplate.cols; y++) {
