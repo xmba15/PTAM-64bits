@@ -46,6 +46,7 @@ void CalibCornerPatch::MakeTemplateWithCurrentParams()
 		0.5 * cv::Vec2d(imTwiceToBlur.cols - 1, imTwiceToBlur.rows - 1)
 		);
 	cv::pyrDown(imTwiceToBlur, imToBlur, imToBlur.size());
+	ksize += ksize % 2 == 0 ? 1 : 0;
 	cv::GaussianBlur(imToBlur, imToBlur, cv::Size(ksize, ksize), dBlurSigma, 3.0);
 	nOffset = (imToBlur.size().width - mimTemplate.size().width) / 2;
 	imToBlur(cv::Rect(nOffset, nOffset, mimTemplate.size().width, mimTemplate.size().height)).copyTo(mimTemplate);
