@@ -65,7 +65,7 @@ class CalibImage;
 class ATANCamera {
  public:
 
-	 static cv::Vec<double, NUMTRACKERCAMPARAMETERS> mvDefaultParams;
+	 static const cv::Vec<double, NUMTRACKERCAMPARAMETERS> mvDefaultParams;
 	 ATANCamera(std::string sName, const cv::Size imgsize = cv::Size(CAPTURE_SIZE_X, CAPTURE_SIZE_Y));
 
   // Image size get/set: updates the internal projection params to that target image size.
