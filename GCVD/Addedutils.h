@@ -105,16 +105,16 @@ inline cv::Vec<P, 3> pproject(const cv::Vec<P, 4> &v) {
 
 /// Round image location coordinates (nearest neighbor in a sense...)
 template<typename P>
-inline cv::Point2i roundIL(const cv::Vec<P, 2> &v) {
+inline cv::Point roundIL(const cv::Vec<P, 2> &v) {
 
-  return cv::Point2i((int)std::round(v[0]), std::round(v[1]) );
+  return cv::Point((int)std::round(v[0]), std::round(v[1]) );
 }
 
 /// TRUNCATE image location coordinates
 template<typename P>
-inline cv::Point2i IL(const cv::Vec<P, 2> &v) {
+inline cv::Point IL(const cv::Vec<P, 2> &v) {
 
-  return cv::Point2i((int)v[0], (int)v[1] );
+  return cv::Point((int)v[0], (int)v[1] );
 }
 
 
@@ -125,7 +125,7 @@ inline void sample(const cv::Mat_<Tin> &im,
 		    Tout &result    // location to bestow the (potentially) multichanneled samples
 		  );
 
-inline bool in_image_with_border(cv::Point2i pos, cv::Mat im, cv::Size2i border)
+inline bool in_image_with_border(cv::Point pos, cv::Mat im, cv::Size border)
 {
   return ( pos.x - border.width >= 0 ) && 
 	 ( pos.y - border.height >= 0 ) &&
