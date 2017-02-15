@@ -13,11 +13,6 @@ using namespace RigidTransforms;
 using namespace GLXInterface;
 using namespace CvUtils;
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-
 inline bool isCorner(cv::Mat_<uchar> &im, cv::Point ir, int nGate)
 {
 	int nSum = 0;
@@ -65,7 +60,7 @@ cv::Vec2d GuessInitialAngles(cv::Mat_<uchar> &im, cv::Point irCenter)
 	double dBestAngle = 0;
 	double dBestGradMag = 0;
 	double dGradAtBest = 0;
-	for (double dAngle = 0.0; dAngle < M_PI; dAngle += 0.1)
+	for (double dAngle = 0.0; dAngle < CV_PI; dAngle += 0.1)
 	{
 		cv::Vec2d v2Dirn;
 		v2Dirn[0] = cos(dAngle);      v2Dirn[1] = sin(dAngle);
@@ -88,11 +83,11 @@ cv::Vec2d GuessInitialAngles(cv::Mat_<uchar> &im, cv::Point irCenter)
 	cv::Vec2d v2Ret;
 	if (dGradAtBest < 0)
 	{
-		v2Ret[0] = dBestAngle; v2Ret[1] = dBestAngle + M_PI / 2.0;
+		v2Ret[0] = dBestAngle; v2Ret[1] = dBestAngle + CV_PI / 2.0;
 	}
 	else
 	{
-		v2Ret[1] = dBestAngle; v2Ret[0] = dBestAngle - M_PI / 2.0;
+		v2Ret[1] = dBestAngle; v2Ret[0] = dBestAngle - CV_PI / 2.0;
 	}
 	return v2Ret;
 }
@@ -213,7 +208,7 @@ bool CalibImage::ExpandByAngle(int nSrc, int nDirn)
 		if (v2Diff[0] * v2Diff[0] + v2Diff[1] * v2Diff[1] > dBestDist * dBestDist)
 			continue;
 		cv::Vec2d v2Dirn = cv::normalize(v2Diff);
-		if (v2Dirn[0] * v2TargetDirn[0] + v2Dirn[1] * v2TargetDirn[1] < cos(M_PI / 18.0))
+		if (v2Dirn[0] * v2TargetDirn[0] + v2Dirn[1] * v2TargetDirn[1] < cos(CV_PI / 18.0))
 			continue;
 		dBestDist = cv::norm(v2Diff);
 		irBest = mvCorners[i];

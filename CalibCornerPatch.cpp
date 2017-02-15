@@ -2,10 +2,6 @@
 #include "OpenGL.h"
 #include <math.h>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 using namespace additionalUtility;
 
 cv::Mat_<double> CalibCornerPatch::mimSharedSourceTemplate;
@@ -123,7 +119,7 @@ bool CalibCornerPatch::IterateOnImage(CalibCornerPatch::Params &params, cv::Mat_
 	}
 	if (dLastUpdate > 0.001)
 		return false;
-	if (fabs(sin(mParams.v2Angles[0] - mParams.v2Angles[1])) < sin(M_PI / 6.0))
+	if (fabs(sin(mParams.v2Angles[0] - mParams.v2Angles[1])) < sin(CV_PI / 6.0))
 		return false;
 	if (fabs(mParams.dGain) < 20.0)
 		return false;
@@ -205,7 +201,7 @@ void CalibCornerPatch::MakeSharedTemplate()
 CalibCornerPatch::Params::Params()
 {
   v2Angles[0] = 0.0;
-  v2Angles[1] = M_PI / 2.0;
+  v2Angles[1] = CV_PI / 2.0;
   dMean = 0.0;
   dGain = 1.0;
 }

@@ -1,5 +1,3 @@
-// Copyright 2008 Isis Innovation Limited
-
 #include "OpenGL.h"
 #include "GCVD/GLHelpers.h"
 #include "Persistence/instances.h"
