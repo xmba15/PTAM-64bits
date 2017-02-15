@@ -1,6 +1,3 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
-
 #pragma once
 
 #define NOMINMAX

@@ -1,11 +1,6 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
-
-#ifndef __CALIB_CORNER_PATCH_H
-#define __CALIB_CORNER_PATCH_H
+#pragma once
 
 #include <vector>
-
 #include "additionalUtility.h"
 
 using namespace additionalUtility;
@@ -16,7 +11,6 @@ public:
   struct Params
   {
     Params();
-    //TooN::Matrix<2> m2Warp();
 	cv::Matx<double, 2, 2> m2Warp();
     cv::Vec2d v2Pos;
     cv::Vec2d v2Angles;
@@ -43,5 +37,3 @@ public:
   static cv::Mat_<double> mimSharedSourceTemplate;
   double mdLastError;
 };
-#endif
-

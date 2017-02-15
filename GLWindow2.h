@@ -65,6 +65,4 @@ protected:
   // Storage for map viewer updates:
   cv::Vec<double, 6> mvMCPoseUpdate;
   cv::Vec<double, 6> mvLeftPoseUpdate;
-
 };
-

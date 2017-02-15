@@ -1,12 +1,17 @@
 #define WIN32_LEAN_AND_MEAN
 #include "VideoSourceOpenCV.h"
-#include <Windows.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 using namespace std;
 
 #define CAPTURE_SIZE_X	640
 #define CAPTURE_SIZE_Y	480
 #define FPS				30
+
+int tmpCount = 0;
 
 VideoSource::VideoSource()
 {
@@ -22,7 +27,13 @@ VideoSource::VideoSource()
 };
 
 
-void VideoSource::GetAndFillFrameBWandRGB(cv::Mat &imBW, cv::Mat &imRGB) {
+void VideoSource::GetAndFillFrameBWandRGB(cv::Mat &imBW, cv::Mat &imRGB) 
+{
+	std::stringstream ss;
+	ss << tmpCount;
+	std::cout << "frame" + ss.str() << std::endl;
+	tmpCount++;
+
 	cv::Mat frame;
 	cv::VideoCapture *cap = (cv::VideoCapture*) mptr;
 	*cap >> frame;

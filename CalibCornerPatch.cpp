@@ -1,4 +1,3 @@
-// Copyright 2008 Isis Innovation Limited
 #include "CalibCornerPatch.h"
 #include "OpenGL.h"
 #include <math.h>
@@ -6,6 +5,7 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
 using namespace additionalUtility;
 
 cv::Mat_<double> CalibCornerPatch::mimSharedSourceTemplate;
@@ -35,11 +35,6 @@ void CalibCornerPatch::MakeTemplateWithCurrentParams()
   int nOffset;
   {
     cv::Matx<double, 2, 2> m2Warp = mParams.m2Warp();
-	
-	/*additionalUtility::cv_transform(mimSharedSourceTemplate, imTwiceToBlur, 
-		additionalUtility::M2Inverse(m2Warp,
-			0.5 * mimSharedSourceTemplate.size());*/
-
 	additionalUtility::cv_transform(mimSharedSourceTemplate, imTwiceToBlur,
 		additionalUtility::M2Inverse(m2Warp),
 		0.5 * cv::Vec2d(mimSharedSourceTemplate.cols - 1, mimSharedSourceTemplate.rows - 1),

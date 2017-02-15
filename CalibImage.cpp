@@ -110,6 +110,7 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 		cv::Mat_<uchar> imBlurred = mim.clone();
 		//convolveGaussian(imBlurred, GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, Persistence::SILENT));
 		int ksize = (int)ceil(Persistence::PV3::get<double>("CameraCalibrator.BlurSigma", 1.0, Persistence::SILENT) * 3.0);
+		ksize += ksize % 2 == 0 ? 1 : 0;
 		cv::GaussianBlur(imBlurred, imBlurred, cv::Size(ksize, ksize), Persistence::PV3::get<double>("CameraCalibrator.BlurSigma", 1.0, Persistence::SILENT), 3.0);
 
 		cv::Point irTopLeft(5, 5);
