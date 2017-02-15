@@ -43,8 +43,6 @@ namespace additionalUtility
 
 	int cv_transform(cv::Mat& in, cv::Mat& out, const cv::Matx<double, 2, 2>& M, const cv::Vec2d& inOrig, const cv::Vec2d& outOrig, const double defaultValue = double());
 	int cv_transform(cv::Mat& in, cv::Mat& out, const cv::Matx<double, 2, 2>& M, const cv::Size& inOrig, const cv::Size& outOrig, const double defaultValue = double());
-	double getSubpix(const cv::Mat &img, cv::Point2d pt);
-	double getSubpix(const cv::Mat &img, cv::Vec2d vec);
 	inline unsigned int mag_squared(const cv::Point &pt)
 	{
 		return (pt.x * pt.x + pt.y * pt.y);

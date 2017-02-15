@@ -92,7 +92,7 @@ void CameraCalibrator::Run()
 	  GLXInterface::glDrawPixelsGRAY(imFrameBW);
 	  
 	  CalibImage c;
-	  if(c.MakeFromImage((cv::Mat_<uchar>) imFrameBW, imFrameRGB))
+	  if (c.MakeFromImage((cv::Mat_<uchar>) imFrameBW, imFrameRGB))
 	    {
 	      if(mbGrabNextFrame)
 		{

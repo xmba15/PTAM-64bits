@@ -392,8 +392,7 @@ GLXInterface::GLWindow::~GLWindow()
 #endif
 
 	windowMap.erase(state->hWnd);
-	//state = NULL;
-    delete state;
+	state = NULL;
 }
 
 cv::Size2i GLXInterface::GLWindow::size() const { return state->size; }

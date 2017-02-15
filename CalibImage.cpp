@@ -4,7 +4,7 @@
 #include <cmath>
 #include "GCVD/GLHelpers.h"
 #include "FAST/fast_corner.h"
-
+#include "GCVD/image_interpolate.h"
 #include "Persistence/instances.h"
 
 using namespace std;
@@ -60,35 +60,36 @@ cv::Vec2d GuessInitialAngles(cv::Mat_<uchar> &im, cv::Point irCenter)
 	double dBestAngle = 0;
 	double dBestGradMag = 0;
 	double dGradAtBest = 0;
-	for (double dAngle = 0.0; dAngle < CV_PI; dAngle += 0.1)
-	{
-		cv::Vec2d v2Dirn;
-		v2Dirn[0] = cos(dAngle);      v2Dirn[1] = sin(dAngle);
-		cv::Vec2d v2Perp;
-		v2Perp[1] = -v2Dirn[0];      v2Perp[0] = v2Dirn[1];
-		cv::Vec2d vec_irCenter(irCenter.x, irCenter.y);
-		double dG = getSubpix(im, vec_irCenter + v2Dirn * 3.0 + v2Perp * 0.1) -
-			getSubpix(im, vec_irCenter + v2Dirn * 3.0 - v2Perp * 0.1)
-			+ getSubpix(im, vec_irCenter - v2Dirn * 3.0 - v2Perp * 0.1) -
-			getSubpix(im, vec_irCenter - v2Dirn * 3.0 + v2Perp * 0.1);
 
-		if (fabs(dG) > dBestGradMag)
+	CvUtils::image_interpolate<CvUtils::Interpolate::Bilinear, uchar> imInterp(im);
+	cv::Vec2d irCenterv(irCenter.x, irCenter.y);
+	for (double dAngle = 0.0; dAngle < CV_PI; dAngle += 0.001) {
+
+
+		cv::Vec2d v2Dirn(cos(dAngle), sin(dAngle)); // horizontal principal axis
+		cv::Vec2d v2Perp(v2Dirn[1], -v2Dirn[0]);    // vertical principal axis
+
+		double response = 0;
+		for (int k = 0; k < 10; k++) {
+			// first criterion
+			cv::Vec4d dG4 = imInterp[irCenterv + (k + 1.0) * v2Dirn + k * sin(CV_PI * 10.0 / 180.0)  * v2Perp] -
+				imInterp[irCenterv + (k + 1.0) * v2Dirn - k * sin(CV_PI * 10.0 / 180.0)  * v2Perp] +
+				imInterp[irCenterv - (k + 1.0) * v2Dirn - k * sin(CV_PI * 10.0 / 180.0)  * v2Perp] -
+				imInterp[irCenterv - (k + 1.0) * v2Dirn + k * sin(CV_PI * 10.0 / 180.0)  * v2Perp];
+
+			response += dG4[0];
+		}
+
+		if (fabs(response) > dBestGradMag)
 		{
-			dBestGradMag = fabs(dG);
-			dGradAtBest = dG;
+			dBestGradMag = fabs(response);
+			dGradAtBest = response;
 			dBestAngle = dAngle;
 		};
 	}
 
-	cv::Vec2d v2Ret;
-	if (dGradAtBest < 0)
-	{
-		v2Ret[0] = dBestAngle; v2Ret[1] = dBestAngle + CV_PI / 2.0;
-	}
-	else
-	{
-		v2Ret[1] = dBestAngle; v2Ret[0] = dBestAngle - CV_PI / 2.0;
-	}
+	cv::Vec2d v2Ret(dGradAtBest < 0 ? dBestAngle : dBestAngle - CV_PI / 2.0,
+		dGradAtBest < 0 ? dBestAngle + CV_PI / 2.0 : dBestAngle);
 	return v2Ret;
 }
  
@@ -101,18 +102,18 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 	im.copyTo(mim);
 	rgbmim = cim;
 
+	cv::Point2d baryCenter(0, 0);
 	{
 		cv::Mat_<uchar> imBlurred = mim.clone();
-		//convolveGaussian(imBlurred, GV2.GetDouble("CameraCalibrator.BlurSigma", 1.0, Persistence::SILENT));
 		int ksize = (int)ceil(Persistence::PV3::get<double>("CameraCalibrator.BlurSigma", 1.0, Persistence::SILENT) * 3.0);
 		ksize += ksize % 2 == 0 ? 1 : 0;
 		cv::GaussianBlur(imBlurred, imBlurred, cv::Size(ksize, ksize), Persistence::PV3::get<double>("CameraCalibrator.BlurSigma", 1.0, Persistence::SILENT), 3.0);
-
 		cv::Point irTopLeft(5, 5);
 		cv::Point irBotRight = cv::Point(mim.size()) - irTopLeft;
 		cv::Point ir = irTopLeft;
 		glPointSize(1);
-		glColor3f(1, 0, 1);
+		//glColor3f(1, 0, 1);
+		glColor3f(0, 1, 1);
 		glBegin(GL_POINTS);
 		int nGate = Persistence::PV3::get<int>("CameraCalibrator.MeanGate", 10, Persistence::SILENT);
 
@@ -121,6 +122,7 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 				if (isCorner(imBlurred, cv::Point(j, i), nGate))
 				{
 					mvCorners.push_back(cv::Point(j, i));
+					baryCenter += cv::Point2d(j, i);
 					glVertex(cv::Point(j, i));
 				}
 			}
@@ -130,22 +132,22 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 
 	if ((int)mvCorners.size() < Persistence::PV3::get<int>("CameraCalibrator.MinCornersForGrabbedImage", 20, Persistence::SILENT))
 		return false;
-
 	// Pick a central corner point...
 	
-	cv::Point irCenterOfImage(mim.size() / 2);
+	//cv::Point irCenterOfImage(mim.size() / 2);
+	baryCenter /= (int)mvCorners.size();
 	cv::Point irBestCenterPos;
 	unsigned int nBestDistSquared = 99999999;
 	for (unsigned int i = 0; i < mvCorners.size(); i++)
 	{
-		unsigned int nDist = mag_squared(mvCorners[i] - irCenterOfImage);
+		unsigned int nDist = (mvCorners[i].x - baryCenter.x) * (mvCorners[i].x - baryCenter.x) +
+			                 (mvCorners[i].y - baryCenter.y) * (mvCorners[i].y - baryCenter.y);
 		if (nDist < nBestDistSquared)
 		{
 			nBestDistSquared = nDist;
 			irBestCenterPos = mvCorners[i];
 		}
 	}
-
 	// ... and try to fit a corner-patch to that.
 	CalibCornerPatch Patch(*gvnCornerPatchSize);
 	CalibCornerPatch::Params Params;
@@ -156,7 +158,6 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 
 	if (!Patch.IterateOnImageWithDrawing(Params, mim))
 		return false;
-
 	// The first found corner patch becomes the origin of the detected grid.
 	CalibGridCorner cFirst;
 	cFirst.Params = Params;
@@ -169,7 +170,6 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 		return false;
 	if (!(ExpandByAngle(0, 1) || ExpandByAngle(0, 3)))
 		return false;
-
 	mvGridCorners[1].mInheritedSteps = mvGridCorners[2].mInheritedSteps = mvGridCorners[0].GetSteps(mvGridCorners);
 
 	// The three initial grid elements are enough to find the rest of the grid.
@@ -183,10 +183,8 @@ bool CalibImage::MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim)
 	}
 	if (nSanityCounter == nSanityCounterLimit)
 		return false;
-
 	DrawImageGrid();
 	return true;
-
 }
 
 bool CalibImage::ExpandByAngle(int nSrc, int nDirn)

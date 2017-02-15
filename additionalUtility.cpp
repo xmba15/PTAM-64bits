@@ -78,15 +78,3 @@ int additionalUtility::cv_transform(cv::Mat& in, cv::Mat& out, const cv::Matx<do
 	return additionalUtility::cv_transform(in, out, M, vec_inOrig, vec_outOrig, defaultValue);
 }
 
-double additionalUtility::getSubpix(const cv::Mat &img, cv::Point2d pt)
-{
-	cv::Mat patch;
-	cv::getRectSubPix(img, cv::Size(1, 1), pt, patch);
-	return patch.ptr<double>(0)[0];
-}
-
-double additionalUtility::getSubpix(const cv::Mat &img, cv::Vec2d vec)
-{
-	cv::Point2d pt(vec[0], vec[1]);
-	return getSubpix(img, pt);
-}
