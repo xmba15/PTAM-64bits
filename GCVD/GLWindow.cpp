@@ -1,11 +1,6 @@
 #include "GLWindow.h"
 #include <exception>
 
-//#include <X11/Xlib.h>
-//#include <X11/keysym.h>
-//#include <GL/glx.h>
-
-
 GLXInterface::Exceptions::GLWindow::CreationError::CreationError(std::string w)
 {
     //what() = "GLWindow creation error: " + w;
