@@ -12,190 +12,6 @@ GLXInterface::Exceptions::GLWindow::RuntimeError::RuntimeError(std::string w)
     //what() = "GLWindow error: " + w;
 }
 
-//void GLXInterface::GLWindow::init(const cv::Size2i& size, int bpp, const std::string& title, const std::string& disp)
-//{
-//    Display* display = XOpenDisplay(disp == "" ? NULL : const_cast<char*>(disp.c_str()));
-//    if (display == 0)
-//	throw Exceptions::GLWindow::CreationError("Cannot open X display");
-//
-//    int visualAttributes[] = {
-//	GLX_RGBA,
-//	GLX_DOUBLEBUFFER,
-//	GLX_RED_SIZE,      bpp/3,
-//	GLX_GREEN_SIZE,    bpp/3,
-//	GLX_BLUE_SIZE,     bpp/3,
-//	GLX_DEPTH_SIZE,    8,
-//	GLX_STENCIL_SIZE, 8,
-//	None
-//    };
-//    XVisualInfo* visualInfo = glXChooseVisual(display, DefaultScreen(display),visualAttributes);
-//    if(visualAttributes == 0) {
-//	XCloseDisplay(display);
-//	throw Exceptions::GLWindow::CreationError("glXChooseVisual failed");
-//    }
-//
-//    Window rootWindow = RootWindow(display, visualInfo->screen);
-//    XWindowAttributes windowAttributes;
-//
-//    XGetWindowAttributes(display, rootWindow, &windowAttributes);
-//
-//    XSetWindowAttributes attributes;
-//    attributes.border_pixel = 0;
-//    attributes.colormap = XCreateColormap(display, rootWindow, visualInfo->visual, AllocNone);
-//    attributes.event_mask = KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | StructureNotifyMask | ExposureMask;
-//
-//    Window window = XCreateWindow(display,
-//				  rootWindow,
-//				  0, 0, size.width, size.height,
-//				  0, visualInfo->depth,
-//				  InputOutput,
-//				  visualInfo->visual,
-//				  CWBorderPixel | CWColormap | CWEventMask,
-//				  &attributes);
-//    XStoreName(display, window, title.c_str());
-//    XClassHint classHint;
-//	char res_name[] = "cvd";
-//    classHint.res_class = res_name;
-//    classHint.res_name = (char *)title.c_str();
-//    XSetClassHint(display, window, &classHint);
-//    XMapWindow(display, window);
-//    XEvent ev;
-//    do {
-//        XNextEvent(display,&ev);
-//    } while (ev.type != MapNotify);
-//
-//    Atom delete_atom = XInternAtom(display, "WM_DELETE_WINDOW", True);
-//    XSetWMProtocols(display, window, &delete_atom, 1);
-//
-//    GLXContext context = glXCreateContext(display, visualInfo, 0, True);
-//    if (context == 0) {
-//	XDestroyWindow(display, window);
-//	XCloseDisplay(display);
-//	throw Exceptions::GLWindow::CreationError("glXCreateContext failed");
-//    }
-//
-//    if (glXMakeCurrent(display, window, context) == False) {
-//	glXDestroyContext(display, context);
-//	XDestroyWindow(display, window);
-//	XCloseDisplay(display);
-//	throw Exceptions::GLWindow::CreationError("glXMakeCurrent failed");
-//    }
-//    glLoadIdentity();
-//    glViewport(0, 0, size.width, size.height);
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-//    glColor3f(1.0f,1.0f,1.0f);
-//    glRasterPos2f(-1, 1);
-//    glOrtho(-0.375, size.width-0.375, size.height-0.375, -0.375, -1 , 1); //offsets to make (0,0) the top left pixel (rather than off the display)
-//    glPixelZoom(1,-1);
-//
-//    XColor black = {0, 0, 0, 0, 0, 0};
-//    XFontStruct* fixed = XLoadQueryFont(display, "-misc-fixed-medium-r-*-*-12-*-*-*-*-*-*-1" );
-//    Cursor null_cursor = XCreateGlyphCursor(display, fixed->fid, fixed->fid, ' ', ' ', &black, &black);
-//    XFreeFont(display, fixed);
-//
-//    state = new State();
-//    state->size = size;
-//    state->title = title;
-//    state->display = display;
-//    state->window = window;
-//    state->delete_atom = delete_atom;
-//    state->null_cursor = null_cursor;
-//    state->context = context;
-//}
-//
-//void GLXInterface::GLWindow::init(const cv::Size2i& size, int bpp, const std::string& title, const std::string& disp)
-//{
-//    Display* display = XOpenDisplay(disp == "" ? NULL : const_cast<char*>(disp.c_str()));
-//    if (display == 0)
-//	throw Exceptions::GLWindow::CreationError("Cannot open X display");
-//
-//    int visualAttributes[] = {
-//	GLX_RGBA,
-//	GLX_DOUBLEBUFFER,
-//	GLX_RED_SIZE,      bpp/3,
-//	GLX_GREEN_SIZE,    bpp/3,
-//	GLX_BLUE_SIZE,     bpp/3,
-//	GLX_DEPTH_SIZE,    8,
-//	GLX_STENCIL_SIZE, 8,
-//	None
-//    };
-//    XVisualInfo* visualInfo = glXChooseVisual(display, DefaultScreen(display),visualAttributes);
-//    if(visualAttributes == 0) {
-//	XCloseDisplay(display);
-//	throw Exceptions::GLWindow::CreationError("glXChooseVisual failed");
-//    }
-//
-//    Window rootWindow = RootWindow(display, visualInfo->screen);
-//    XWindowAttributes windowAttributes;
-//
-//    XGetWindowAttributes(display, rootWindow, &windowAttributes);
-//
-//    XSetWindowAttributes attributes;
-//    attributes.border_pixel = 0;
-//    attributes.colormap = XCreateColormap(display, rootWindow, visualInfo->visual, AllocNone);
-//    attributes.event_mask = KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | StructureNotifyMask | ExposureMask;
-//
-//    Window window = XCreateWindow(display,
-//				  rootWindow,
-//				  0, 0, size.width, size.height,
-//				  0, visualInfo->depth,
-//				  InputOutput,
-//				  visualInfo->visual,
-//				  CWBorderPixel | CWColormap | CWEventMask,
-//				  &attributes);
-//    XStoreName(display, window, title.c_str());
-//    XClassHint classHint;
-//	char res_name[] = "cvd";
-//    classHint.res_class = res_name;
-//    classHint.res_name = (char *)title.c_str();
-//    XSetClassHint(display, window, &classHint);
-//    XMapWindow(display, window);
-//    XEvent ev;
-//    do {
-//        XNextEvent(display,&ev);
-//    } while (ev.type != MapNotify);
-//
-//    Atom delete_atom = XInternAtom(display, "WM_DELETE_WINDOW", True);
-//    XSetWMProtocols(display, window, &delete_atom, 1);
-//
-//    GLXContext context = glXCreateContext(display, visualInfo, 0, True);
-//    if (context == 0) {
-//	XDestroyWindow(display, window);
-//	XCloseDisplay(display);
-//	throw Exceptions::GLWindow::CreationError("glXCreateContext failed");
-//    }
-//
-//    if (glXMakeCurrent(display, window, context) == False) {
-//	glXDestroyContext(display, context);
-//	XDestroyWindow(display, window);
-//	XCloseDisplay(display);
-//	throw Exceptions::GLWindow::CreationError("glXMakeCurrent failed");
-//    }
-//    glLoadIdentity();
-//    glViewport(0, 0, size.width, size.height);
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-//    glColor3f(1.0f,1.0f,1.0f);
-//    glRasterPos2f(-1, 1);
-//    glOrtho(-0.375, size.width-0.375, size.height-0.375, -0.375, -1 , 1); //offsets to make (0,0) the top left pixel (rather than off the display)
-//    glPixelZoom(1,-1);
-//
-//    XColor black = {0, 0, 0, 0, 0, 0};
-//    XFontStruct* fixed = XLoadQueryFont(display, "-misc-fixed-medium-r-*-*-12-*-*-*-*-*-*-1" );
-//    Cursor null_cursor = XCreateGlyphCursor(display, fixed->fid, fixed->fid, ' ', ' ', &black, &black);
-//    XFreeFont(display, fixed);
-//
-//    state = new State();
-//    state->size = size;
-//    state->title = title;
-//    state->display = display;
-//    state->window = window;
-//    state->delete_atom = delete_atom;
-//    state->null_cursor = null_cursor;
-//    state->context = context;
-//}
-
 static std::map<HWND, GLXInterface::GLWindow::State> windowMap;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -398,22 +214,22 @@ void GLXInterface::GLWindow::set_size(const cv::Size2i &s_){
 	MoveWindow(state->hWnd, state->position.x + state->position_offset.x, state->position.y + state->position_offset.y, state->size.width + state->size_offset.width, state->size.height + state->size_offset.height, FALSE);
 }
 
-cv::Point2i GLXInterface::GLWindow::position() const { return state->position; }
+cv::Point GLXInterface::GLWindow::position() const { return state->position; }
 
-void GLXInterface::GLWindow::set_position(const cv::Point2i &p_){
+void GLXInterface::GLWindow::set_position(const cv::Point &p_){
     
     state->position = p_;
 	MoveWindow(state->hWnd, state->position.x + state->position_offset.x, state->position.y + state->position_offset.y, state->size.width + state->size_offset.width, state->size.height + state->size_offset.height, FALSE);
 }
 
-void GLXInterface::GLWindow::set_cursor_position(const cv::Point2i &where)
+void GLXInterface::GLWindow::set_cursor_position(const cv::Point &where)
 {
     //XWarpPointer(state->display, None, state->window, 0, 0, 0, 0, where.x, where.y);
 }
 
-cv::Point2i GLXInterface::GLWindow::cursor_position() const
+cv::Point GLXInterface::GLWindow::cursor_position() const
 {
-    cv::Point2i where;
+    cv::Point where;
 	POINT point;
 	GetCursorPos(&point);
 	where.x = point.x - state->position.x;
@@ -567,7 +383,7 @@ public:
 	events.push_back(e);
     }
 
-    void on_mouse_move(GLXInterface::GLWindow&, cv::Point2i where, int state) {
+    void on_mouse_move(GLXInterface::GLWindow&, cv::Point where, int state) {
 	GLXInterface::GLWindow::Event e;
 	e.type = GLXInterface::GLWindow::Event::MOUSE_MOVE;
 	e.state = state;
@@ -575,7 +391,7 @@ public:
 	events.push_back(e);
     }
 
-    void on_mouse_down(GLXInterface::GLWindow&, cv::Point2i where, int state, int button) {
+    void on_mouse_down(GLXInterface::GLWindow&, cv::Point where, int state, int button) {
 	GLXInterface::GLWindow::Event e;
 	e.type = GLXInterface::GLWindow::Event::MOUSE_DOWN;
 	e.state = state;
@@ -584,7 +400,7 @@ public:
 	events.push_back(e);
     }
 
-    void on_mouse_up(GLXInterface::GLWindow&, cv::Point2i where, int state, int button) {
+    void on_mouse_up(GLXInterface::GLWindow&, cv::Point where, int state, int button) {
 	GLXInterface::GLWindow::Event e;
 	e.type = GLXInterface::GLWindow::Event::MOUSE_UP;
 	e.state = state;
@@ -628,9 +444,9 @@ public:
 
     void on_key_down(GLXInterface::GLWindow&, int key) {	++summary.key_down[key]; }
     void on_key_up(GLXInterface::GLWindow&, int key) { ++summary.key_up[key]; }
-    void on_mouse_move(GLXInterface::GLWindow&, cv::Point2i where, int) { summary.cursor = where; summary.cursor_moved = true; }
-    void on_mouse_down(GLXInterface::GLWindow&, cv::Point2i where, int state, int button) { summary.mouse_down[button] = std::make_pair(where,state); }
-    void on_mouse_up(GLXInterface::GLWindow&, cv::Point2i where, int state, int button) { summary.mouse_up[button] = std::make_pair(where,state); }
+    void on_mouse_move(GLXInterface::GLWindow&, cv::Point where, int) { summary.cursor = where; summary.cursor_moved = true; }
+    void on_mouse_down(GLXInterface::GLWindow&, cv::Point where, int state, int button) { summary.mouse_down[button] = std::make_pair(where,state); }
+    void on_mouse_up(GLXInterface::GLWindow&, cv::Point where, int state, int button) { summary.mouse_up[button] = std::make_pair(where,state); }
     void on_event(GLXInterface::GLWindow&, int event) { ++summary.events[event]; }
 };
 

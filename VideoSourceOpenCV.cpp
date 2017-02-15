@@ -16,9 +16,7 @@ int tmpCount = 0;
 VideoSource::VideoSource()
 {
 	std::cout << "Opening Video Source" << std::endl;
-	mptr = new cv::VideoCapture(0);
-	//cv::VideoCapture cap(0);
-	cv::VideoCapture *cap = (cv::VideoCapture*) mptr;
+	cap = new cv::VideoCapture(0);
 	if (!cap->isOpened()) {
 		std::cerr << "Unable to get the camera!" << std::endl;
 		exit(-1);
@@ -35,7 +33,6 @@ void VideoSource::GetAndFillFrameBWandRGB(cv::Mat &imBW, cv::Mat &imRGB)
 	tmpCount++;
 
 	cv::Mat frame;
-	cv::VideoCapture *cap = (cv::VideoCapture*) mptr;
 	*cap >> frame;
 	cv::resize(frame, imRGB, VideoSource::size);
 	cv::cvtColor(imRGB, imBW, CV_BGR2GRAY);

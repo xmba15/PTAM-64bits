@@ -40,11 +40,12 @@ int main()
 CameraCalibrator::CameraCalibrator()
   :mGLWindow(mVideoSource.imgSize(), "Camera Calibrator"), mCamera("Camera")
 {
-  mbDone = false;
+  mbDone = false; 
   GUI.RegisterCommand("CameraCalibrator.GrabNextFrame", GUICommandCallBack, this);
   GUI.RegisterCommand("CameraCalibrator.Reset", GUICommandCallBack, this);
   GUI.RegisterCommand("CameraCalibrator.ShowNext", GUICommandCallBack, this);
   GUI.RegisterCommand("CameraCalibrator.SaveCalib", GUICommandCallBack, this);
+  GUI.RegisterCommand("CameraCalibrator.Optimize", GUICommandCallBack, this);
   GUI.RegisterCommand("quit", GUICommandCallBack, this);
   GUI.RegisterCommand("exit", GUICommandCallBack, this);
   PV3::Register(mgvnOptimizing, "CameraCalibrator.Optimize", 0, SILENT);
@@ -66,84 +67,83 @@ CameraCalibrator::CameraCalibrator()
 
 void CameraCalibrator::Run()
 {
-  while(!mbDone)
-    {
-      // We use two versions of each video frame:
-      // One black and white (for processing by the tracker etc)
-      // and one RGB, for drawing.
-
-	  cv::Mat imFrameRGB;
-	  cv::Mat imFrameBW;
-
-      // Grab new video frame...
-      mVideoSource.GetAndFillFrameBWandRGB(imFrameBW, imFrameRGB);  
-      
-      // Set up openGL
-      mGLWindow.SetupViewport();
-      mGLWindow.SetupVideoOrtho();
-      mGLWindow.SetupVideoRasterPosAndZoom();
-      
-      if(mvCalibImgs.size() < 1)
-	*mgvnOptimizing = 0;
-      
-      if(!*mgvnOptimizing)
+	while (!mbDone)
 	{
-	  GUI.ParseLine("CalibMenu.ShowMenu Live");
-	  GLXInterface::glDrawPixelsGRAY(imFrameBW);
-	  
-	  CalibImage c;
-	  if (c.MakeFromImage((cv::Mat_<uchar>) imFrameBW, imFrameRGB))
-	    {
-	      if(mbGrabNextFrame)
+		// We use two versions of each video frame:
+		// One black and white (for processing by the tracker etc)
+		// and one RGB, for drawing.
+
+		cv::Mat imFrameRGB;
+		cv::Mat imFrameBW;
+
+		// Grab new video frame...
+		mVideoSource.GetAndFillFrameBWandRGB(imFrameBW, imFrameRGB);
+		// Set up openGL
+		mGLWindow.SetupViewport();
+		mGLWindow.SetupVideoOrtho();
+		mGLWindow.SetupVideoRasterPosAndZoom();
+
+		if (mvCalibImgs.size() < 1)
+			*mgvnOptimizing = 0;
+
+		if (!*mgvnOptimizing)
 		{
-		  mvCalibImgs.push_back(c);
-		  mvCalibImgs.back().GuessInitialPose(mCamera);
-		  mvCalibImgs.back().Draw3DGrid(mCamera, false);
-		  mbGrabNextFrame = false;
-		};
-	    }
-	}
-      else
-	{
-	  OptimizeOneStep();
-      
-	  GUI.ParseLine("CalibMenu.ShowMenu Opti");
-	  int nToShow = *mgvnShowImage - 1;
-	  if(nToShow < 0)
-	    nToShow = 0;
-	  if(nToShow >= (int) mvCalibImgs.size())
-	    nToShow = mvCalibImgs.size()-1;
-	  *mgvnShowImage = nToShow + 1;
-	  GLXInterface::glDrawPixelsGRAY(mvCalibImgs[nToShow].mim);
-	  mvCalibImgs[nToShow].Draw3DGrid(mCamera,true);
-	}
-      
-      ostringstream ost;
-      ost << "Camera Calibration: Grabbed " << mvCalibImgs.size() << " images." << endl;
-      if(!*mgvnOptimizing)
-	{
-	  ost << "Take snapshots of the calib grid with the \"GrabFrame\" button," << endl;
-	  ost << "and then press \"Optimize\"." << endl;
-	  ost << "Take enough shots (4+) at different angles to get points " << endl;
-	  ost << "into all parts of the image (corners too.) The whole grid " << endl;
-	  ost << "doesn't need to be visible so feel free to zoom in." << endl;
-	}
-      else
-	{
-	  ost << "Current RMS pixel error is " << mdMeanPixelError << endl;
-	  ost << "Current camera params are  " << PV3::get_var("Camera.Parameters") << endl;
-	  ost << "(That would be a pixel aspect ratio of " 
-	      <<  mCamera.PixelAspectRatio() << ")" << endl;
-	  ost << "Check fit by looking through the grabbed images." << endl;
-	  ost << "RMS should go below 0.5, typically below 0.3 for a wide lens." << endl;
-	  ost << "Press \"save\" to save calibration to camera.cfg file and exit." << endl;
-	}
+			GUI.ParseLine("CalibMenu.ShowMenu Live");
+			GLXInterface::glDrawPixelsGRAY(imFrameBW);
 
-      mGLWindow.DrawCaption(ost.str());
-      mGLWindow.DrawMenus();
-      mGLWindow.HandlePendingEvents();
-      mGLWindow.swap_buffers();
-    }
+			CalibImage c;
+			if (c.MakeFromImage((cv::Mat_<uchar>) imFrameBW, imFrameRGB))
+			{
+				if (mbGrabNextFrame)
+				{
+					mvCalibImgs.push_back(c);
+					mvCalibImgs.back().GuessInitialPose(mCamera);
+					mvCalibImgs.back().Draw3DGrid(mCamera, false);
+					mbGrabNextFrame = false;
+				};
+			}
+		}
+		else
+		{
+			OptimizeOneStep();
+
+			GUI.ParseLine("CalibMenu.ShowMenu Opti");
+			int nToShow = *mgvnShowImage - 1;
+			if (nToShow < 0)
+				nToShow = 0;
+			if (nToShow >= (int)mvCalibImgs.size())
+				nToShow = mvCalibImgs.size() - 1;
+			*mgvnShowImage = nToShow + 1;
+			GLXInterface::glDrawPixelsGRAY(mvCalibImgs[nToShow].mim);
+			mvCalibImgs[nToShow].Draw3DGrid(mCamera, true);
+		}
+
+		ostringstream ost;
+		ost << "Camera Calibration: Grabbed " << mvCalibImgs.size() << " images." << endl;
+		if (!*mgvnOptimizing)
+		{
+			ost << "Take snapshots of the calib grid with the \"GrabFrame\" button," << endl;
+			ost << "and then press \"Optimize\"." << endl;
+			ost << "Take enough shots (4+) at different angles to get points " << endl;
+			ost << "into all parts of the image (corners too.) The whole grid " << endl;
+			ost << "doesn't need to be visible so feel free to zoom in." << endl;
+		}
+		else
+		{
+			ost << "Current RMS pixel error is " << mdMeanPixelError << endl;
+			ost << "Current camera params are  " << PV3::get_var("Camera.Parameters") << endl;
+			ost << "(That would be a pixel aspect ratio of "
+				<< mCamera.PixelAspectRatio() << ")" << endl;
+			ost << "Check fit by looking through the grabbed images." << endl;
+			ost << "RMS should go below 0.5, typically below 0.3 for a wide lens." << endl;
+			ost << "Press \"save\" to save calibration to camera.cfg file and exit." << endl;
+		}
+
+		mGLWindow.DrawCaption(ost.str());
+		mGLWindow.DrawMenus();
+		mGLWindow.HandlePendingEvents();
+		mGLWindow.swap_buffers();
+	}
 }
 
 void CameraCalibrator::Reset()
@@ -213,11 +213,6 @@ void CameraCalibrator::OptimizeOneStep()
   
   cv::Mat_<double> mJTJ = cv::Mat_<double>::eye(nDim, nDim); // a matrix vector... Smells like Least Squares....
   cv::Mat_<double> vJTe = cv::Mat_<double>::zeros(nDim, 1);
-
-  //Matrix<> mJTJ(nDim, nDim);
-  //Vector<> vJTe(nDim);
-  //mJTJ = Identity; // Weak stabilizing prior
-  //vJTe = Zeros;
 
   if(*mgvnDisableDistortion) mCamera.DisableRadialDistortion();
 

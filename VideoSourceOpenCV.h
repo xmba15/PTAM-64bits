@@ -20,6 +20,6 @@ public:
 
 private:
 	unsigned char *m_buffer;
-	void *mptr;
+	cv::VideoCapture *cap;
 	cv::Size size;
 };
