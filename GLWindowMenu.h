@@ -62,13 +62,3 @@ class GLWindowMenu
   int mnLeftMostCoord;
   
 };
-
-
-
-
-
-
-
-
-
-

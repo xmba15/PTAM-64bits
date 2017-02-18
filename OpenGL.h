@@ -1,6 +1,4 @@
-// Copyright 2008 Isis Innovation Limited
-#ifndef __OPENGL_INCLUDES_H
-#define __OPENGL_INCLUDES_H
+#pragma once
 
 #ifdef _LINUX
 #include <GL/gl.h>
@@ -15,6 +13,4 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <GL/glew.h>
-#endif
-
 #endif

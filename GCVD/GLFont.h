@@ -1,5 +1,4 @@
-#ifndef GLFONT_H
-#define GLFONT_H
+#pragma once
 
 #include <map>
 
@@ -18,8 +17,6 @@
 #include <GL/glew.h>
 #endif
 
-//#include <GL/gl.h>
-//#include <GL/glut.h>
 #include "GLHelpers.h"
 
 #include "FontStructs.h"
@@ -29,8 +26,6 @@
 #include "serif.h"
 
 namespace GLXInterface {
-
- 
 
 struct FontData {
 
@@ -52,9 +47,4 @@ struct FontData {
 };
 
 static struct FontData data;
-
-
-} // end namespace GLXInterface
-
-
-#endif
+}

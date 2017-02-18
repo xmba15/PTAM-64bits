@@ -1,21 +1,10 @@
-// George Terzakis 2016
-//
-// University of Portsmouth
-//
-// some simple additional utils that implement CVD funcationality 
-// and have to be added here...
-
 #pragma once
 
 #include "../OpenCV.h"
 #include "Operators.h"
 
-//#include "scalar_convert.h"
-
 namespace CvUtils {
-  
-  
-/// Decimate grayscale image a la Rosten...
+
 template <typename T>
 void halfSample(const cv::Mat_<T> &src, cv::Mat_<T> &dest) {
 
@@ -38,9 +27,6 @@ void halfSample(const cv::Mat_<T> &src, cv::Mat_<T> &dest) {
 	
 }
 
-
-// get the mean of an image/matrix
-// T better NOT be uchar 9see below for this case)
 template <typename T>
 double mavg(const cv::Mat_<T> &m) {
 
@@ -62,8 +48,6 @@ double mavg(const cv::Mat_<T> &m) {
 	
 }
 
-
-
 static void pause(cv::Mat img)
 {
   cv::namedWindow("pause");
@@ -71,46 +55,34 @@ static void pause(cv::Mat img)
   cv::waitKey(-1);
 }
 
-// After I gave it some thinking, i decided to add project/unproject functions for 2D and 3D vectors
-
-// here's toon's "unproject" for 2D vectors (BUT WITHOUT the dynamic stuff - that's why i fixed the size)
-// it should be as fast as it can be...
 template<typename P>
 inline cv::Vec<P, 3> backproject(const cv::Vec<P, 2> &v) {
   
   return cv::Vec<P, 3>(v[0], v[1], 1);
 }
-/// Returns the normalized homogeneous vector of the 2D coordinates
+
 template<typename P>
 inline cv::Vec<P, 4> backproject(const cv::Vec<P, 3> &v) {
   
   return cv::Vec<P, 4>(v[0], v[1], v[2], 1);
 }
 
-/// perspective projection of the lamest form.... (NOTE: NO division by zero povisions taken...)
 template<typename P>
 inline cv::Vec<P, 2> pproject(const cv::Vec<P, 3> &v) {
   
   return cv::Vec<P, 2>(v[0] / v[2], v[1] / v[2]);
 }
 
-/// perspective projection of the lamest form.... (NOTE: NO division by zero povisions are made...)
 template<typename P>
 inline cv::Vec<P, 3> pproject(const cv::Vec<P, 4> &v) {
-  
   return cv::Vec<P, 3>(v[0] / v[3], v[1] / v[3], v[2] / v[3]);
 }
 
-
-
-/// Round image location coordinates (nearest neighbor in a sense...)
 template<typename P>
 inline cv::Point roundIL(const cv::Vec<P, 2> &v) {
-
   return cv::Point((int)std::round(v[0]), std::round(v[1]) );
 }
 
-/// TRUNCATE image location coordinates
 template<typename P>
 inline cv::Point IL(const cv::Vec<P, 2> &v) {
 
@@ -623,6 +595,5 @@ const cv::Mat_<P> mat2Vec(const cv::Vec<P, Sz> &v) {
   
   return ret;
 }
-
 
 }

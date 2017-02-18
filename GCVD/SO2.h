@@ -1,5 +1,4 @@
-#ifndef SO2_H
-#define SO2_H
+#pragma once
 
 #include "Operators.h"
 #include "Addedutils.h"
@@ -245,7 +244,3 @@ inline cv::Matx<typename MyOperatorOverloads::MultiplyType<PM,P>::type, R, 2> op
 	
   return M * so2.get_matrix();
 }
-
-
-
-#endif

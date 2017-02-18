@@ -4,10 +4,7 @@
 // Copyright (C) 2005,2009 Tom Drummond (twd20@cam.ac.uk),
 // Ed Rosten (er258@cam.ac.uk), Gerhard Reitmayr (gr281@cam.ac.uk)
 
-
-
-#ifndef SE2_H
-#define SE2_H
+#pragma once
 
 #include "Operators.h"
 #include "SO2.h"
@@ -495,6 +492,3 @@ inline RigidTransforms::SE2<Precision> operator *(const RigidTransforms::SO2<Pre
 	
   return RigidTransforms::SE2<Precision>( so2*se2.get_rotation(), so2.get_matrix()*se2.get_translation() );
 }
-
-
-#endif

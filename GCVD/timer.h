@@ -9,8 +9,7 @@
 ////////////////////////////////////////////////////////
 
 
-#ifndef _CV_TIMER_H
-#define _CV_TIMER_H
+#pragma once
 
 #include <algorithm>
 #include <iostream>
@@ -175,5 +174,3 @@ class SimpleTimer
 };
 
 }
-
-#endif

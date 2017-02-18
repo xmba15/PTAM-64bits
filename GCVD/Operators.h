@@ -3,21 +3,15 @@
 // University of Portsmouth
 
 
-#ifndef OPERATORS_H
-#define OPERATORS_H
-
+#pragma once
 
 #include "../OpenCV.h"
-
 #include <limits.h>
 
 using namespace std;
 using namespace cv;
 
-
-
 namespace MyOperatorOverloads {
-
   
 // Rosten's clever way of deducting the type of a class
 template<class C> C gettype();
@@ -59,14 +53,6 @@ struct Divide{
   template<class A, class B, class C>   static A op(const B& b, const C& c){return b/c;}
   template<class P1, class P2> struct Return { typedef typename DivideType<P1,P2>::type Type;};
 };
-	
-	  
-	
-
-
-
-
-
 
 // ********************************** The general template for Operator ****************************
 // This is the class (struct) that does the actual computation
@@ -720,8 +706,3 @@ cv::Vec<typename MyOperatorOverloads::MultiplyType<PV, PM>::type, R> operator *(
 	
 	return M.t() * v;
 }*/
-
-
-
-
-#endif

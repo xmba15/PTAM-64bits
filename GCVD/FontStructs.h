@@ -1,5 +1,4 @@
-#ifndef __FONT_STRUCTS_H
-#define __FONT_STRUCTS_H
+#pragma once
 
 #ifdef _LINUX
 #include <GL/gl.h>
@@ -15,9 +14,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <GL/glew.h>
 #endif
-
-//#include <GL/gl.h>
-//#include <GL/glut.h>
 
 namespace GLXInterface {
 
@@ -86,5 +82,3 @@ struct Font {
 };
 
 }
-
-#endif

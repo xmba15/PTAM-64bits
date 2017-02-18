@@ -1,7 +1,6 @@
 
 // Font header file
-#ifndef MONO_FONT_HEADER
-#define MONO_FONT_HEADER
+#pragma once
 
 #include "FontStructs.h"
 
@@ -409,4 +408,3 @@ GLXInterface::Font::Char mono_chars[] = {
 
 GLXInterface::Font mono_font = { mono_vertices, mono_triangles, mono_lines, mono_chars, " $(,048<@DHLPTX\\`dhlptx|#'+/37;?CGKOSW[_cgkosw{\"&*.26:>BFJNRVZ^bfjnrvz~\t!%)-159=AEIMQUY]aeimquy}" };
 
-#endif

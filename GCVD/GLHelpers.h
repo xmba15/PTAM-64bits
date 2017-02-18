@@ -1,10 +1,6 @@
-#ifndef GLHELPERS_H
-#define GLHELPERS_H
-
 #include <iostream>
 #include <map>
 #include <utility>
-
 
 #ifdef WIN32
 #include <windows.h>
@@ -20,7 +16,6 @@
 #include "SO2.h"
 
 using namespace RigidTransforms;
-
 
 namespace GLXInterface
 {
@@ -62,7 +57,7 @@ namespace GLXInterface
 	
 	/// Specify the (x,y) co-ordinates of a vertex
 	/// @param i The vertex location
-	inline void glVertex(const cv::Point2i &i)
+	inline void glVertex(const cv::Point &i)
 	{
 		glVertex2i(i.x, i.y);
 	}
@@ -70,7 +65,7 @@ namespace GLXInterface
 	/// Specify the (s,t) texture co-ordinates
 	/// @param i The texture coordinates
 	///@ingroup gGL
-	inline void glTexCoord(const cv::Point2i &i)
+	inline void glTexCoord(const cv::Point &i)
 	{
 		glTexCoord2i(i.x, i.y);
 	}
@@ -79,7 +74,7 @@ namespace GLXInterface
 	/// Specify the (x,y) co-ordinates of the current raster position
 	/// @param i The raster position
 	///@ingroup gGL
-	inline void glRasterPos(const cv::Point2i &i)
+	inline void glRasterPos(const cv::Point &i)
 	{
 		glRasterPos2i(i.x, i.y);
 	}
@@ -88,7 +83,7 @@ namespace GLXInterface
 	/// @param p the first vertex
 	/// @param q the second vertex
 	/// @ingroup gGL
-	inline void glRect( const cv::Point2i &p, const cv::Point2i &q)
+	inline void glRect( const cv::Point &p, const cv::Point &q)
 	{
 	    glRecti(p.x, p.y, q.x, q.y);
 	}
@@ -207,15 +202,13 @@ namespace GLXInterface
 	        glNormal3d(n[0], n[1], n[2]);
 	}
 
-        /// add a translation specified by an cv::Point2i
+        /// add a translation specified by an cv::Point
         /// @param v the translation 
-	inline void glTranslate( const cv::Point2i  &v ) 
+	inline void glTranslate( const cv::Point  &v ) 
 	{
         
 	  glTranslatef( static_cast<GLfloat>(v.x), static_cast<GLfloat>(v.y), 0);
 	}
-
-	
 
 	/// add a translation specified from the first two coordinates of a 2-vector
 	/// z is set to zero here
@@ -224,7 +217,6 @@ namespace GLXInterface
 	{
 		glTranslated(v[0], v[1], 0);
 	}
-
 	
 	/// multiply a matrix onto the current matrix stack. Works for matrizes
 	/// of size n >= 4 and uses the upper left 4x4 submatrix. The matrix is also
@@ -317,9 +309,6 @@ namespace GLXInterface
 		glTranslate( se2.get_translation());
 		glMultMatrix2x2( se2.get_rotation().get_matrix() );
 	}
-
-	
-	
 	
 	/// Sets up an ortho projection suitable for drawing onto individual pixels of a
 	/// gl window (or video image.) glVertex2f(0.0,0.0) will be the top left pixel and
@@ -328,7 +317,7 @@ namespace GLXInterface
         /// n.b. You first need to set up the matrix environment yourself,
 	/// e.g. glMatrixMode(GL_PROJECTION); glLoadIdentity();
 	/// @param size ImageRef containing the size of the GL window.
-	inline void glOrtho( const cv::Size2i& size, const double nearPlane = -1.0, const double farPlane = 1.0)
+	inline void glOrtho( const cv::Size& size, const double nearPlane = -1.0, const double farPlane = 1.0)
 	{
 	    ::glOrtho( -0.375, size.width - 0.375, size.height - 0.375, -0.375, nearPlane, farPlane );
 	}
@@ -363,8 +352,6 @@ namespace GLXInterface
 		bottom = - nearPlane * ( height - params[3] ) / params[1];
 		::glFrustum( left, right, bottom, top, nearPlane, farPlane );
 	}
-
-	
 
 	/// Sets up an ortho projection from a simple Vector<6>
         /// n.b. You first need to set up the matrix environment yourself,
@@ -432,38 +419,6 @@ namespace GLXInterface
 		for(typename P::const_iterator v = list.begin(); v != list.end(); ++v)
 			glVertex(*v);
 	}
-
-
-	/*inline void glVertex( const std::vector<cv::Vec2f> &list )
-	{
-		
-		for( std::vector<cv::Vec2f>::const_iterator v = list.begin(); v != list.end(); ++v) glVertex(*v);
-	}
-	
-	inline void glVertex( const std::vector<cv::Vec3f> &list )
-	{
-		for(std::vector<cv::Vec3f>::const_iterator v = list.begin(); v != list.end(); ++v) glVertex(*v);
-	}
-	
-	inline void glVertex( const std::vector<cv::Vec4f> &list )
-	{
-		for(std::vector<cv::Vec4f>::const_iterator v = list.begin(); v != list.end(); ++v) glVertex(*v);
-	}
-	
-	inline void glVertex( const std::vector<cv::Vec2d> &list )
-	{
-		for(std::vector<cv::Vec2d>::const_iterator v = list.begin(); v != list.end(); ++v) glVertex(*v);
-	}
-	
-	inline void glVertex( const std::vector<cv::Vec3d> &list )
-	{
-		for(std::vector<cv::Vec3d>::const_iterator v = list.begin(); v != list.end(); ++v) glVertex(*v);
-	}
-	
-	inline void glVertex( const std::vector<cv::Vec4d> &list )
-	{
-		for(std::vector<cv::Vec4d>::const_iterator v = list.begin(); v != list.end(); ++v) glVertex(*v);
-	}*/
 	
 	/// Set the new colour to the red, green, blue components given
 	/// (where 0 represents zero intensity and 255 full intensity)
@@ -472,9 +427,6 @@ namespace GLXInterface
 	{
 		glColor3ub(c[0], c[1], c[2]);
 	}
-
- 	
- 	
  	
  	/// Set the new colour to the red, green, blue and alpha components given
 	/// (where 0 represents zero intensity and 255 full intensity)
@@ -498,7 +450,6 @@ namespace GLXInterface
 		else
 		  return 8;
 	}
-	
 
  	/// Draw an image to the frame buffer at the current raster position.
 	/// Use glRasterPos to set the current raster position
@@ -518,9 +469,6 @@ namespace GLXInterface
 		
 		
 	}
-	
-		
-	
 	
 	/// Draw an image to the frame buffer at the current raster position.
 	/// Use glRasterPos to set the current raster position
@@ -544,7 +492,7 @@ namespace GLXInterface
  	/// Read the current image from the colour buffer specified by glReadBuffer
 	/// @param im The image to write the image data into. This must already be initialised to be an BasicImage (or Image) of the right size.
 	/// @param origin The window co-ordinate of the first pixel to be read from the frame buffer
-	inline void glReadPixelsBGR(cv::Mat &im, cv::Point2i origin = cv::Point2i(0,0) )
+	inline void glReadPixelsBGR(cv::Mat &im, cv::Point origin = cv::Point(0,0) )
 	{
 		::glReadPixels(origin.x, origin.y, im.cols, im.rows, GL_BGR, GL_UNSIGNED_BYTE, im.data);
 	}
@@ -552,7 +500,7 @@ namespace GLXInterface
  	/// Read the current image from the colour buffer specified by glReadBuffer
 	/// @param size   The size of the area to read.
 	/// @param origin The window co-ordinate of the first pixel to be read from the frame buffer
-	inline cv::Mat glReadPixelsBGR(cv::Size2i size, cv::Point2i origin = cv::Point2i(0,0) )
+	inline cv::Mat glReadPixelsBGR(cv::Size size, cv::Point origin = cv::Point(0,0) )
 	{
 		cv::Mat img(size.height, size.width, CV_8UC3);
 		
@@ -563,7 +511,7 @@ namespace GLXInterface
 	}
 
 	
-	inline void glReadPixelsGRAY(cv::Mat &im, cv::Point2i origin = cv::Point2i(0,0) )
+	inline void glReadPixelsGRAY(cv::Mat &im, cv::Point origin = cv::Point(0,0) )
 	{
 		glReadPixels(origin.x, origin.y, im.cols, im.rows, GL_LUMINANCE, GL_UNSIGNED_BYTE, im.data);
 	}
@@ -571,7 +519,7 @@ namespace GLXInterface
  	/// Read the current image from the colour buffer specified by glReadBuffer
 	/// @param size   The size of the area to read.
 	/// @param origin The window co-ordinate of the first pixel to be read from the frame buffer
-	inline cv::Mat glReadPixelsGRAY(cv::Size2i size, cv::Point2i origin = cv::Point2i(0,0) )
+	inline cv::Mat glReadPixelsGRAY(cv::Size size, cv::Point origin = cv::Point(0,0) )
 	{
 		cv::Mat img(size.height, size.width, CV_8UC1);
 		
@@ -579,8 +527,6 @@ namespace GLXInterface
 		
 		return img;
 	}
-	
-	
 	
 	/// Sets an image as a texture sub region.
 	/// note the reordering of the various parameters to make better use of default parameters
@@ -621,13 +567,7 @@ namespace GLXInterface
 		::glPixelStorei(GL_UNPACK_ROW_LENGTH, img.step / img.elemSize());
 		::glTexImage2D(target, level, GL_BGR, img.cols, img.rows, border, GL_BGR, GL_UNSIGNED_BYTE, img.data);
 		::glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	
-	  
-		
-		
 	}
-	
-	
 
 	/// Prints the current errors on the gl error stack
 	inline void glPrintErrors(void) 
@@ -638,11 +578,4 @@ namespace GLXInterface
 	    std::cout << "GL:" << code << ":" << gluGetString(code) << std::endl;
 	 
 	}
-
-	
-
-	
 } // END namespace
-	
-
-#endif

@@ -1,6 +1,3 @@
-#ifndef GLWINDOW_H
-#define GLWINDOW_H
-
 #include <string>
 #include <vector>
 #include <map>
@@ -9,7 +6,6 @@
 #include <GL/GL.h>
 
 #include "../OpenCV.h"
-
 
 namespace GLXInterface {
 
@@ -61,13 +57,13 @@ namespace GLXInterface {
 	    /// Called for key release events
 	    virtual void on_key_up(GLWindow& /*win*/, int /*key*/) {}
 	    /// Called for mouse movement events
-	    virtual void on_mouse_move(GLWindow& /*win*/, cv::Point2i /*where*/, int /*state*/) {}
+	    virtual void on_mouse_move(GLWindow& /*win*/, cv::Point /*where*/, int /*state*/) {}
 	    /// Called for mouse button press events
-	    virtual void on_mouse_down(GLWindow& /*win*/, cv::Point2i /*where*/, int /*state*/, int /*button*/) {}
+	    virtual void on_mouse_down(GLWindow& /*win*/, cv::Point /*where*/, int /*state*/, int /*button*/) {}
 	    /// Called for mouse button release events
-	    virtual void on_mouse_up(GLWindow& /*win*/, cv::Point2i /*where*/, int /*state*/, int /*button*/) {}
+	    virtual void on_mouse_up(GLWindow& /*win*/, cv::Point /*where*/, int /*state*/, int /*button*/) {}
 	    /// Called for window resize events
-	    virtual void on_resize(GLWindow& /*win*/, cv::Size2i /*size*/) {}
+	    virtual void on_resize(GLWindow& /*win*/, cv::Size /*size*/) {}
 	    /// Called for general window events (such as EVENT_CLOSE)
 	    virtual void on_event(GLWindow& /*win*/, int /*event*/) {}
 	};
@@ -76,8 +72,8 @@ namespace GLXInterface {
 	    enum Type { KEY_DOWN, KEY_UP, MOUSE_MOVE, MOUSE_DOWN, MOUSE_UP, RESIZE, EVENT };
 	    Type type;
 	    int which, state;
-	    cv::Point2i where;
-	    cv::Size2i size;
+	    cv::Point where;
+	    cv::Size size;
 	};
 
 	/// A summary of multiple events
@@ -88,8 +84,8 @@ namespace GLXInterface {
 	    std::map<int,int> key_down, key_up;
 	    typedef std::map<int,int>::const_iterator key_iterator;
 	    /// button->frequency mapping for mouse presses and releases
-	    std::map<int,std::pair<cv::Point2i, int> > mouse_down, mouse_up;
-	    typedef std::map<int,std::pair<cv::Point2i,int> >::const_iterator mouse_iterator;
+	    std::map<int,std::pair<cv::Point, int> > mouse_down, mouse_up;
+	    typedef std::map<int,std::pair<cv::Point,int> >::const_iterator mouse_iterator;
 	    /// Generic window events -> frequency
 	    std::map<int,int> events;
 	    /// Reset the summary
@@ -97,7 +93,7 @@ namespace GLXInterface {
 	    /// Has escape been pressed or the close button pressed?
 	    bool should_quit() const;
 	    /// last seen cursor position from mouse_move
-	    cv::Point2i cursor;
+	    cv::Point cursor;
 	    /// was the cursor moved during the recording of the history
 	    bool cursor_moved;
 	};
@@ -108,27 +104,27 @@ namespace GLXInterface {
 	/// @param bpp     Colour depth
 	/// @param title   Window title
 	/// @param display X11 display string, passed to XOpenDisplay. "" Is used to indicate NULL. This is ignored for non X11 platforms. 
-	GLWindow(const cv::Size2i& size, int bpp=24, const std::string& title="GLWindow", const std::string& display="") {
+	GLWindow(const cv::Size& size, int bpp=24, const std::string& title="GLWindow", const std::string& display="") {
 	  init(size, bpp, title);
 	}
 	///@overload
-	GLWindow(const cv::Size2i& size, const std::string& title, int bpp=24, const std::string& display="") {
+	GLWindow(const cv::Size& size, const std::string& title, int bpp=24, const std::string& display="") {
 	  init(size, bpp, title);
 	}
 
 	~GLWindow();
 	/// Get the size
-	cv::Size2i size() const;
+	cv::Size size() const;
 	/// Set the size
-	void set_size(const cv::Size2i &);
+	void set_size(const cv::Size &);
 	/// Get the position
-	cv::Point2i position() const;
+	cv::Point position() const;
 	/// Set the position
-	void set_position(const cv::Point2i &);
+	void set_position(const cv::Point &);
 	/// Set the mouse cursor position
-	void set_cursor_position(const cv::Point2i& where);
+	void set_cursor_position(const cv::Point& where);
 	/// Get the mouse cursor position
-	cv::Point2i cursor_position() const;
+	cv::Point cursor_position() const;
 	/// Show (or hide) the cursor
 	void show_cursor(bool show=true);
 	/// Hide the cursor
@@ -153,33 +149,22 @@ namespace GLXInterface {
 	void make_current() { activate(); }
     
     struct State {
-      cv::Size2i size;
-      cv::Point2i position;
+      cv::Size size;
+      cv::Point position;
       std::string title;
-	  cv::Size2i size_offset;
-	  cv::Point2i position_offset;
+	  cv::Size size_offset;
+	  cv::Point position_offset;
 
 	  GLWindow * parent;
 
 	  HGLRC   hRC;
 	  HDC     hDC;
 	  HWND    hWnd;
-      //Display* display;
-      //Window window;
-      //Atom delete_atom;
-      //Cursor null_cursor;
-      //GLXContext context;
     };
 	   
     private:
 	State* state;
-	//void init(const cv::Size2i& sz, int bpp, const std::string& title, const std::string& display);
-	void init(const cv::Size2i& sz, int bpp, const std::string& title);
+	void init(const cv::Size& sz, int bpp, const std::string& title);
 
     };
-
-
 }
-
-
-#endif

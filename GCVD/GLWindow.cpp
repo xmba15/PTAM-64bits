@@ -20,7 +20,7 @@ static GLXInterface::GLWindow::EventHandler * currentHandler = NULL;
 
 static bool windowClassRegistered = false;
 
-void GLXInterface::GLWindow::init(const cv::Size2i& size, int bpp, const std::string& title)
+void GLXInterface::GLWindow::init(const cv::Size& size, int bpp, const std::string& title)
 {
 	GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 	WNDCLASS	wc;						// Windows Class Structure
@@ -206,9 +206,9 @@ GLXInterface::GLWindow::~GLWindow()
 	state = NULL;
 }
 
-cv::Size2i GLXInterface::GLWindow::size() const { return state->size; }
+cv::Size GLXInterface::GLWindow::size() const { return state->size; }
 
-void GLXInterface::GLWindow::set_size(const cv::Size2i &s_){
+void GLXInterface::GLWindow::set_size(const cv::Size &s_){
     // we don't set state->size here, so that it changes through the event system
     // and we react to it there
 	MoveWindow(state->hWnd, state->position.x + state->position_offset.x, state->position.y + state->position_offset.y, state->size.width + state->size_offset.width, state->size.height + state->size_offset.height, FALSE);
@@ -409,7 +409,7 @@ public:
 	events.push_back(e);
     }
 
-    void on_resize(GLXInterface::GLWindow&, cv::Size2i size) {
+    void on_resize(GLXInterface::GLWindow&, cv::Size size) {
 	
 	GLXInterface::GLWindow::Event e;
 	e.type = GLXInterface::GLWindow::Event::RESIZE;

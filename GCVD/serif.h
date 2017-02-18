@@ -1,6 +1,5 @@
 // Font header file
-#ifndef serif_FONT_HEADER
-#define serif_FONT_HEADER
+#pragma once
 
 #include "FontStructs.h"
 
@@ -408,5 +407,3 @@ GLXInterface::Font::Char serif_chars[] = {
 };
 
 GLXInterface::Font serif_font = { serif_vertices, serif_triangles, serif_lines, serif_chars, " $(,048<@DHLPTX\\`dhlptx|#'+/37;?CGKOSW[_cgkosw{\"&*.26:>BFJNRVZ^bfjnrvz~\t!%)-159=AEIMQUY]aeimquy}" };
-
-#endif
