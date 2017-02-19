@@ -10,7 +10,7 @@
 #include "Operators.h"
 
 
-#include "../OpenCV.h"
+#include <opencv2/opencv.hpp>
 
 
 

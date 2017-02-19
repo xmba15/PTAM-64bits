@@ -8,7 +8,7 @@
 #include <math.h>
 #include <iostream>
 
-#include "../OpenCV.h"
+#include <opencv2/opencv.hpp>
 
 using namespace CvUtils;
 using namespace MyOperatorOverloads;

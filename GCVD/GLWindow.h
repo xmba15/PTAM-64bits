@@ -5,7 +5,7 @@
 #include <windowsx.h>
 #include <GL/GL.h>
 
-#include "../OpenCV.h"
+#include <opencv2/opencv.hpp>
 
 namespace GLXInterface {
 

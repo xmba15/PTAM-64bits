@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../OpenCV.h"
+#include <opencv2/opencv.hpp>
 #include "Addedutils.h"
 #include <math.h>
 

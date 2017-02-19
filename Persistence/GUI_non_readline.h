@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-
 #include <pthread.h>
 
 namespace Persistence
