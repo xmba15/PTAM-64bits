@@ -1,6 +1,3 @@
-//-*- C++ -*-
-// Copyright 2008 Isis Innovation Limited
-// 
 // This header declares the Tracker class.
 // The Tracker is one of main components of the system,
 // and is responsible for determining the pose of a camera
@@ -18,36 +15,35 @@
 // TrackForInitialMap() or TrackMap() as appropriate.
 //
 
-#ifndef __TRACKER_H
-#define __TRACKER_H
+#pragma once
 
+#include "GCVD/SE3.h"
 #include "MapMaker.h"
 #include "ATANCamera.h"
 #include "MiniPatch.h"
 #include "Relocaliser.h"
-
 #include <sstream>
 #include <vector>
 #include <list>
-
+#include "additionalUtility.h"
 
 class TrackerData;
 struct Trail    // This struct is used for initial correspondences of the first stereo pair.
 {
   MiniPatch mPatch;
-  CVD::ImageRef irCurrentPos;
-  CVD::ImageRef irInitialPos;
+  cv::Point irCurrentPos;
+  cv::Point irInitialPos;
 };
 
 class Tracker
 {
 public:
-  Tracker(CVD::ImageRef irVideoSize, const ATANCamera &c, Map &m, MapMaker &mm);
+  Tracker(cv::Size irVideoSize, const ATANCamera &c, Map &m, MapMaker &mm);
   
   // TrackFrame is the main working part of the tracker: call this every frame.
-  void TrackFrame(CVD::Image<CVD::byte> &imFrame, bool bDraw); 
+  void TrackFrame(cv::Mat_<uchar> &imFrame, bool bDraw); 
 
-  inline SE3<> GetCurrentPose() { return mse3CamFromWorld;}
+  inline RigidTransforms::SE3<> GetCurrentPose() { return mse3CamFromWorld;}
   
   // Gets messages to be printed on-screen for the user.
   std::string GetMessageForUser();
@@ -61,7 +57,7 @@ protected:
   ATANCamera mCamera;             // Projection model
   Relocaliser mRelocaliser;       // Relocalisation module
 
-  CVD::ImageRef mirSize;          // Image size of whole image
+  cv::Size mirSize;          // Image size of whole image
   
   void Reset();                   // Restart from scratch. Also tells the mapmaker to reset itself.
   void RenderGrid();              // Draws the reference grid
@@ -85,12 +81,12 @@ protected:
   int SearchForPoints(std::vector<TrackerData*> &vTD, 
 		      int nRange, 
 		      int nFineIts);  // Finds points in the image
-  Vector<6> CalcPoseUpdate(std::vector<TrackerData*> vTD, 
+  cv::Vec<double, 6> CalcPoseUpdate(std::vector<TrackerData*> vTD, 
 			   double dOverrideSigma = 0.0, 
 			   bool bMarkOutliers = false); // Updates pose from found points.
-  SE3<> mse3CamFromWorld;           // Camera pose: this is what the tracker updates every frame.
-  SE3<> mse3StartPos;               // What the camera pose was at the start of the frame.
-  Vector<6> mv6CameraVelocity;    // Motion model
+  RigidTransforms::SE3<> mse3CamFromWorld;           // Camera pose: this is what the tracker updates every frame.
+  RigidTransforms::SE3<> mse3StartPos;               // What the camera pose was at the start of the frame.
+  cv::Vec<double, 6> mv6CameraVelocity;    // Motion model
   double mdVelocityMagnitude;     // Used to decide on coarse tracking 
   double mdMSDScaledVelocityMagnitude; // Velocity magnitude scaled by relative scene depth.
   bool mbDidCoarse;               // Did tracking use the coarse tracking stage?
@@ -116,7 +112,7 @@ protected:
   SmallBlurryImage *mpSBILastFrame;
   SmallBlurryImage *mpSBIThisFrame;
   void CalcSBIRotation();
-  Vector<6> mv6SBIRot;
+  cv::Vec<double, 6> mv6SBIRot;
   bool mbUseSBIInit;
   
   // User interaction for initial tracking:
@@ -127,13 +123,5 @@ protected:
   void GUICommandHandler(std::string sCommand, std::string sParams);
   static void GUICommandCallBack(void* ptr, std::string sCommand, std::string sParams);
   struct Command {std::string sCommand; std::string sParams; };
-  std::vector<Command> mvQueuedCommands;
+  std::vector<Tracker::Command> mvQueuedCommands;
 };
-
-#endif
-
-
-
-
-
-

@@ -1,10 +1,9 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
-#ifndef __TRACKERDATA_H
-#define __TRACKERDATA_H
+#pragma once
 
+#include "GCVD/SE3.h"
 #include "PatchFinder.h"
 #include "ATANCamera.h"
+#include "additionalUtility.h"
 
 // This class contains all the intermediate results associated with
 // a map-point that the tracker keeps up-to-date. TrackerData
@@ -23,10 +22,10 @@ TrackerData(MapPoint *pMapPoint)
   PatchFinder Finder;
   
   // Projection itermediates:
-  Vector<3> v3Cam;        // Coords in current cam frame
-  Vector<2> v2ImPlane;    // Coords in current cam z=1 plane
-  Vector<2> v2Image;      // Pixel coords in LEVEL0
-  Matrix<2> m2CamDerivs;  // Camera projection derivs
+  cv::Vec3d v3Cam;        // Coords in current cam frame
+  cv::Vec2d v2ImPlane;    // Coords in current cam z=1 plane
+  cv::Vec2d v2Image;      // Pixel coords in LEVEL0
+  cv::Matx<double, 2, 2> m2CamDerivs;  // Camera projection derivs
   bool bInImage;        
   bool bPotentiallyVisible;
   
@@ -34,25 +33,25 @@ TrackerData(MapPoint *pMapPoint)
   bool bSearched;
   bool bFound;
   bool bDidSubPix;
-  Vector<2> v2Found;      // Pixel coords of found patch (L0)
+  cv::Vec2d v2Found;      // Pixel coords of found patch (L0)
   double dSqrtInvNoise;   // Only depends on search level..
   
   
   // Stuff for pose update:
-  Vector<2> v2Error_CovScaled;
-  Matrix<2,6> m26Jacobian;   // Jacobian wrt camera position
+  cv::Vec2d v2Error_CovScaled;
+  cv::Matx<double, 2,6> m26Jacobian;   // Jacobian wrt camera position
   
   // Project point into image given certain pose and camera.
   // This can bail out at several stages if the point
   // will not be properly in the image.
-  inline void Project(const SE3<> &se3CFromW, ATANCamera &Cam)
+  inline void Project(const RigidTransforms::SE3<> &se3CFromW, ATANCamera &Cam)
   {
     bInImage = bPotentiallyVisible = false;
     v3Cam = se3CFromW * Point.v3WorldPos;
     if(v3Cam[2] < 0.001)
       return;
-    v2ImPlane = project(v3Cam);
-    if(v2ImPlane*v2ImPlane > Cam.LargestRadiusInImage() * Cam.LargestRadiusInImage())
+    v2ImPlane = CvUtils::pproject(v3Cam);
+    if(cv::norm(v2ImPlane) > Cam.LargestRadiusInImage())
       return;
     v2Image = Cam.Project(v2ImPlane);
     if(Cam.Invalid())
@@ -73,7 +72,7 @@ TrackerData(MapPoint *pMapPoint)
   }
   
   // Does projection and gets camera derivs all in one.
-  inline void ProjectAndDerivs(SE3<> &se3, ATANCamera &Cam)
+  inline void ProjectAndDerivs(RigidTransforms::SE3<> &se3, ATANCamera &Cam)
   {
     Project(se3, Cam);
     if(bFound)
@@ -85,34 +84,23 @@ TrackerData(MapPoint *pMapPoint)
   //         SE3New = SE3Motion * SE3Old
   inline void CalcJacobian()
   {
-    double dOneOverCameraZ = 1.0 / v3Cam[2];
-    for(int m=0; m<6; m++)
-      {
-	const Vector<4> v4Motion = SE3<>::generator_field(m, unproject(v3Cam));
-	Vector<2> v2CamFrameMotion;
-	v2CamFrameMotion[0] = (v4Motion[0] - v3Cam[0] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
-	v2CamFrameMotion[1] = (v4Motion[1] - v3Cam[1] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
-	m26Jacobian.T()[m] = m2CamDerivs * v2CamFrameMotion;
-      };
+	  double dOneOverCameraZ = 1.0 / v3Cam[2];
+	  for (int m = 0; m < 6; m++)
+	  {
+		  const cv::Vec<double, 4> v4Motion = RigidTransforms::SE3<>::generator_field(m, CvUtils::backproject(v3Cam));
+		  cv::Vec2d v2CamFrameMotion((v4Motion[0] - v3Cam[0] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ,
+			  (v4Motion[1] - v3Cam[1] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ);
+		  m26Jacobian(0, m) = m2CamDerivs(0, 0) * v2CamFrameMotion[0] + m2CamDerivs(0, 1) * v2CamFrameMotion[1];
+		  m26Jacobian(1, m) = m2CamDerivs(1, 0) * v2CamFrameMotion[0] + m2CamDerivs(1, 1) * v2CamFrameMotion[1];
+	  };
   }
   
   // Sometimes in tracker instead of reprojecting, just update the error linearly!
-  inline void LinearUpdate(const Vector<6> &v6)
+  inline void LinearUpdate(const cv::Vec<double, 6> &v6)
   {
     v2Image += m26Jacobian * v6;
   }
   
   // This static member is filled in by the tracker and allows in-image checks in this class above.
-  static CVD::ImageRef irImageSize;
+  static cv::Size irImageSize;
 };
-
-
-
-
-
-
-#endif
-
-
-
-

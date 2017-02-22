@@ -1,19 +1,13 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
-
-// MEstimator.h
-//
 // Defines various MEstimators which can be used by the Tracker and
 // the Bundle adjuster. Not that some of the inputs are square
 // quantities!
 
-#ifndef __MESTIMATOR_H
-#define __MESTIMATOR_H
-#include <TooN/TooN.h>
-using namespace TooN;
+#pragma once
+
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include "additionalUtility.h"
 
 struct Tukey
 {
@@ -72,7 +66,6 @@ inline double Tukey::ObjectiveScore(double dErrorSquared, const double dSigmaSqu
   return (1.0 - d*d*d);
 }
 
-
 inline double Tukey::FindSigmaSquared(std::vector<double> &vdErrorSquared)
 { 
   double dSigmaSquared; 
@@ -84,12 +77,6 @@ inline double Tukey::FindSigmaSquared(std::vector<double> &vdErrorSquared)
   dSigmaSquared = dSigma * dSigma;
   return dSigmaSquared;
 }
-
-
-///////////////////////////////////////
-///////////////////////////////////////
-///////////////////////////////////////
-///////////////////////////////////////
 
 inline double Cauchy::Weight(double dErrorSquared, double dSigmaSquared)
 {
@@ -106,7 +93,6 @@ inline double Cauchy::ObjectiveScore(double dErrorSquared, const double dSigmaSq
   return log(1.0 + dErrorSquared / dSigmaSquared);
 }
 
-
 inline double Cauchy::FindSigmaSquared(std::vector<double> &vdErrorSquared)
 { 
   double dSigmaSquared; 
@@ -118,12 +104,6 @@ inline double Cauchy::FindSigmaSquared(std::vector<double> &vdErrorSquared)
   dSigmaSquared = dSigma * dSigma;
   return dSigmaSquared;
 }
-
-
-///////////////////////////////////////
-///////////////////////////////////////
-///////////////////////////////////////
-///////////////////////////////////////
 
 inline double Huber::Weight(double dErrorSquared, double dSigmaSquared)
 {
@@ -163,11 +143,6 @@ inline double Huber::FindSigmaSquared(std::vector<double> &vdErrorSquared)
   return dSigmaSquared;
 }
 
-///////////////////////////////////////
-///////////////////////////////////////
-///////////////////////////////////////
-///////////////////////////////////////
-
 inline double LeastSquares::Weight(double dErrorSquared, double dSigmaSquared)
 {
   return 1.0;
@@ -193,16 +168,3 @@ inline double LeastSquares::FindSigmaSquared(std::vector<double> &vdErrorSquared
     dSum+=vdErrorSquared[i];
   return dSum / vdErrorSquared.size();
 }
-
-#endif
-
-
-
-
-
-
-
-
-
-
-

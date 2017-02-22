@@ -1,19 +1,14 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
-
 // LevelHelpers.h - a few handy tools to ease using levels.
 // The important thing is the XXXPos functions, which convert
 // image positions from one level to another. Use these whenever
 // transforming positions to ensure consistent operation!!
 
-#ifndef __LEVEL_HELPERS_H
-#define __LEVEL_HELPERS_H
-#include <TooN/TooN.h>
-using namespace TooN;
-#include <cvd/image_ref.h>
+#pragma once
+
+#include "additionalUtility.h"
 
 // Set of global colours useful for drawing stuff:
-extern Vector<3> gavLevelColors[];
+extern cv::Vec3d gavLevelColors[];
 // (These are filled in in KeyFrame.cc)
 
 // What is the scale of a level?
@@ -29,18 +24,16 @@ inline double LevelZeroPos(double dLevelPos, int nLevel)
 }
 
 // 2-D transforms to level zero:
-inline Vector<2> LevelZeroPos(Vector<2> v2LevelPos, int nLevel)
+inline cv::Vec2d LevelZeroPos(cv::Vec2d v2LevelPos, int nLevel)
 {
-  Vector<2> v2Ans;
-  v2Ans[0] = LevelZeroPos(v2LevelPos[0], nLevel);
-  v2Ans[1] = LevelZeroPos(v2LevelPos[1], nLevel);
+  cv::Vec2d v2Ans(LevelZeroPos(v2LevelPos[0], nLevel), 
+	              LevelZeroPos(v2LevelPos[1], nLevel));
   return v2Ans;
 }
-inline Vector<2> LevelZeroPos(CVD::ImageRef irLevelPos, int nLevel) 
+inline cv::Vec2d LevelZeroPos(cv::Point irLevelPos, int nLevel) 
 {
-  Vector<2> v2Ans;
-  v2Ans[0] = LevelZeroPos(irLevelPos.x, nLevel);
-  v2Ans[1] = LevelZeroPos(irLevelPos.y, nLevel);
+  cv::Vec2d v2Ans(LevelZeroPos(irLevelPos.x, nLevel),
+	              LevelZeroPos(irLevelPos.y, nLevel));
   return v2Ans;
 }
 
@@ -51,12 +44,9 @@ inline double LevelNPos(double dRootPos, int nLevel)
 }
 
 // 2-D transform from level zero to level N:
-inline Vector<2> LevelNPos(Vector<2> v2RootPos, int nLevel)
+inline cv::Vec2d LevelNPos(cv::Vec2d v2RootPos, int nLevel)
 {
-  Vector<2> v2Ans;
-  v2Ans[0] = LevelNPos(v2RootPos[0], nLevel);
-  v2Ans[1] = LevelNPos(v2RootPos[1], nLevel);
+  cv::Vec2d v2Ans(LevelNPos(v2RootPos[0], nLevel),
+                  LevelNPos(v2RootPos[1], nLevel));
   return v2Ans;
 }
-
-#endif

@@ -1,6 +1,3 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
-//
 // This header declares the Map class.
 // This is pretty light-weight: All it contains is
 // a vector of MapPoints and a vector of KeyFrames.
@@ -12,11 +9,11 @@
 // old pointers which other threads are using are not 
 // invalidated!
 
-#ifndef __MAP_H
-#define __MAP_H
+#pragma once
+
 #include <vector>
-#include <TooN/se3.h>
-#include <cvd/image.h>
+#include "GCVD/SE3.h"
+#include "additionalUtility.h"
 
 struct MapPoint;
 struct KeyFrame;
@@ -36,9 +33,3 @@ struct Map
 
   bool bGood;
 };
-
-
-
-
-#endif
-
