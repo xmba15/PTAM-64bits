@@ -1,16 +1,12 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
-
-#ifndef __GL_WINDOW_MENU_H
-#define __GL_WINDOW_MENU_H
-
-// A simple gvars-driven menu system for GLWindow2
-// N.b. each GLWindowMenu class internally contains sub-menus
+#pragma once
 
 #include <vector>
 #include <map>
-#include <gvars3/gvars3.h>
+#include "Persistence/PVars.h"
 #include "GLWindow2.h"
+#include "additionalUtility.h"
+
+using namespace additionalUtility;
 
 class GLWindowMenu
 {
@@ -38,7 +34,7 @@ class GLWindowMenu
     std::string sName;
     std::string sParam;
     std::string sNextMenu;
-    GVars3::gvar2_int gvnIntValue;  // Not used by all, but used by some
+    Persistence::pvar_int gvnIntValue;  // Not used by all, but used by some
     int min;
     int max;
   };
@@ -59,22 +55,10 @@ class GLWindowMenu
   int mnMenuHeight;
   int mnTextOffset;
   
-  GVars3::gvar2_int mgvnEnabled;
-  GVars3::gvar2_int mgvnMenuItemWidth;
-  GVars3::gvar2_int mgvnMenuTextOffset;
+  Persistence::pvar_int mgvnEnabled;
+  Persistence::pvar_int mgvnMenuItemWidth;
+  Persistence::pvar_int mgvnMenuTextOffset;
   
   int mnLeftMostCoord;
   
 };
-
-#endif
-
-
-
-
-
-
-
-
-
-

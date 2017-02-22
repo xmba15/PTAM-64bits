@@ -1,12 +1,9 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
+#pragma once
 
-#ifndef __CALIB_CORNER_PATCH_H
-#define __CALIB_CORNER_PATCH_H
-#include <TooN/TooN.h>
-using namespace TooN;
-#include <cvd/image.h>
-#include <cvd/byte.h>
+#include <vector>
+#include "additionalUtility.h"
+
+using namespace additionalUtility;
 
 class CalibCornerPatch
 {
@@ -14,33 +11,29 @@ public:
   struct Params
   {
     Params();
-    Matrix<2> m2Warp();
-    Vector<2> v2Pos;
-    Vector<2> v2Angles;
+	cv::Matx<double, 2, 2> m2Warp();
+    cv::Vec2d v2Pos;
+    cv::Vec2d v2Angles;
     double dMean;
     double dGain;
   };
-  
+
   CalibCornerPatch(int nSideSize = 8);
-  bool IterateOnImage(Params &params, CVD::Image<CVD::byte> &im);
-  bool IterateOnImageWithDrawing(Params &params, CVD::Image<CVD::byte> &im);
+  bool IterateOnImage(Params &params, cv::Mat_<uchar> &im);
+  bool IterateOnImageWithDrawing(Params &params, cv::Mat_<uchar> &im);
 
  protected:
-  void MakeTemplateWithCurrentParams();
-  void FillTemplate(CVD::Image<float> &im, Params params);
-  double Iterate(CVD::Image<CVD::byte> &im);
-  Params mParams;
-  CVD::Image<float> mimTemplate;
-  CVD::Image<Vector<2> > mimGradients;
-  CVD::Image<Vector<2> > mimAngleJacs;
-  
-  void MakeSharedTemplate();
-  static CVD::Image<float> mimSharedSourceTemplate;
 
+  void MakeTemplateWithCurrentParams();
+  void FillTemplate(cv::Mat_<double> &im, Params params);
+  double Iterate(cv::Mat_<uchar> &im);
+
+  Params mParams;
+  cv::Mat_<double> mimTemplate;
+  cv::Mat_<cv::Vec2d> mimGradients;
+  cv::Mat_<cv::Vec2d> mimAngleJacs;
+
+  void MakeSharedTemplate();
+  static cv::Mat_<double> mimSharedSourceTemplate;
   double mdLastError;
 };
-
-
-
-
-#endif
