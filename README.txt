@@ -1,0 +1,4 @@
+- Modified model of PTAM to use OpenCV on Windows.
+- This has been developed based on the following source of PTAM:
+       - https://github.com/ethz-asl/ethzasl_ptam
+       - https://github.com/terzakig/gptam
