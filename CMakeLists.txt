@@ -9,25 +9,30 @@ find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 #pthread
-include_directories("C:/workSpace/environment64/pthreads/include")
-link_directories("C:/workSpace/environment64/pthreads/x64/lib")
-file(GLOB_RECURSE 3rdparty ${3rdparty} "C:/workSpace/environment64/pthreads/x64/lib/*.lib")
+set(pthreadSrc "C:/workSpace/environment64/pthreads")
+# include_directories("C:/workSpace/environment64/pthreads/include")
+include_directories(${pthreadSrc}/include)
+link_directories(${pthreadSrc}/x64/lib)
+file(GLOB_RECURSE 3rdparty ${3rdparty} ${pthreadSrc}/x64/lib/*.lib)
 
 #glew
-include_directories("C:/workSpace/environment64/glew-2.0.0/include")
-link_directories("C:/workSpace/environment64/glew-2.0.0/lib")
-file(GLOB_RECURSE 3rdparty ${3rdparty} "C:/workSpace/environment64/glew-2.0.0/lib/*.lib")
+set(glewSrc "C:/workSpace/environment64/glew-2.0.0")
+include_directories(${glewSrc}/include)
+link_directories(${glewSrc}/lib)
+file(GLOB_RECURSE 3rdparty ${3rdparty} ${glewSrc}/lib/*.lib)
 
 #blas, lapack
-include_directories("C:/workSpace/environment64/lapack/include")
-link_directories("C:/workSpace/environment64/lapack/lib")
-file(GLOB_RECURSE 3rdparty ${3rdparty} "C:/workSpace/environment64/lapack/lib/*.lib")
+set(lapackSrc "C:/workSpace/environment64/lapack")
+include_directories(${lapackSrc}/include)
+link_directories(${lapackSrc}/lib)
+file(GLOB_RECURSE 3rdparty ${3rdparty} ${lapackSrc}/lib/*.lib)
 
 set(3rdparty ${3rdparty} opengl32.lib)
 
+message(${3rdparty})
+
 # source code
 set(camCalib
-  
    OpenGL.h
    OpenCV.h
    GLWindowMenu.h
