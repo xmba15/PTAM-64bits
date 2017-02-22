@@ -10,7 +10,6 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 #pthread
 set(pthreadSrc "C:/workSpace/environment64/pthreads")
-# include_directories("C:/workSpace/environment64/pthreads/include")
 include_directories(${pthreadSrc}/include)
 link_directories(${pthreadSrc}/x64/lib)
 file(GLOB_RECURSE 3rdparty ${3rdparty} ${pthreadSrc}/x64/lib/*.lib)
