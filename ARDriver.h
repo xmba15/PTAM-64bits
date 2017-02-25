@@ -19,6 +19,8 @@ class ARDriver
 {
  public:
   ARDriver(const ATANCamera &cam, cv::Size irFrameSize, GLWindow2 &glw);
+  ARDriver(const ATANCamera &cam, GLWindow2 &glw);
+
   void Render(cv::Mat &imFrame, RigidTransforms::SE3<> se3CamFromWorld);
   void Reset();
   void Init();
