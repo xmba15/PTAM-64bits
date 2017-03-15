@@ -69,8 +69,9 @@ struct KeyFrame
   inline KeyFrame()
   {
     pSBI = NULL;
+	bFixed = false;
   }
-  RigidTransforms::SE3<> RigidTransformsCfromW;    // The coordinate frame of this key-frame as a Camera-From-World transformation
+  RigidTransforms::SE3<> se3CfromW;    // The coordinate frame of this key-frame as a Camera-From-World transformation
   bool bFixed;      // Is the coordinate frame of this keyframe fixed? (only true for first KF!)
   Level aLevels[LEVELS];  // Images, corners, etc lives in this array of pyramid levels
   std::map<MapPoint*, Measurement> mMeasurements;           // All the measurements associated with the keyframe

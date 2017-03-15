@@ -30,6 +30,7 @@ inline cv::Vec2d LevelZeroPos(cv::Vec2d v2LevelPos, int nLevel)
 	              LevelZeroPos(v2LevelPos[1], nLevel));
   return v2Ans;
 }
+
 inline cv::Vec2d LevelZeroPos(cv::Point irLevelPos, int nLevel) 
 {
   cv::Vec2d v2Ans(LevelZeroPos(irLevelPos.x, nLevel),

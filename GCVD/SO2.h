@@ -21,7 +21,8 @@ template<typename Precision> inline std::istream & operator >> (std::istream&, S
 /// Class to represent a two-dimensional rotation matrix. Two-dimensional rotation
 /// matrices are members of the Special Orthogonal Lie group SO2. This group can be parameterised with
 /// one number (the rotation angle).
-template<typename Precision = float>
+//template<typename Precision = float>
+template<typename Precision = double>
 class SO2 {
 	friend std::istream& operator>> <Precision>(std::istream&, SO2& );
 	friend std::istream& operator>> <Precision>(std::istream&, SE2<Precision>& );

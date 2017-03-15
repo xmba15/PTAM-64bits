@@ -76,7 +76,6 @@ void EyeGame::DrawStuff(cv::Vec3d v3CameraPos)
 	glDisable(GL_CULL_FACE);
 }
 
-
 void EyeGame::Reset()
 {
 	for (int i = 0; i < 4; i++)

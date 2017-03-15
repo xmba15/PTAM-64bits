@@ -30,11 +30,7 @@ inline int MiniPatch::SSDAtPoint(cv::Mat_<uchar> &im, const cv::Point &ir)
 // Find a patch by searching at FAST corners in an input image
 // If available, a row-corner LUT is used to speed up search through the
 // FAST corners
-bool MiniPatch::FindPatch(cv::Point &irPos,
-	cv::Mat_<uchar> &im,
-	int nRange,
-	std::vector<cv::Point> &vCorners,
-	std::vector<int> *pvRowLUT)
+bool MiniPatch::FindPatch(cv::Point &irPos, cv::Mat_<uchar> &im, int nRange, std::vector<cv::Point> &vCorners, std::vector<int> *pvRowLUT)
 {
 	cv::Point irCenter = irPos;
 	cv::Point irBest;

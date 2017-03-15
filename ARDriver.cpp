@@ -6,9 +6,8 @@
 static bool CheckFramebufferStatus();
 
 ARDriver::ARDriver(const ATANCamera &cam, cv::Size irFrameSize, GLWindow2 &glw)
-	:mCamera(cam), mGLWindow(glw)
+	:mCamera(cam), mGLWindow(glw), mirFrameSize(irFrameSize)
 {
-	mirFrameSize = irFrameSize;
 	mCamera.SetImageSize(mirFrameSize);
 	mbInitialised = false;
 }
@@ -33,7 +32,7 @@ void ARDriver::Init()
 		GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	MakeFrameBuffer();
 	mGame.Init();
-};
+}
 
 void ARDriver::Reset()
 {
@@ -69,13 +68,11 @@ void ARDriver::Render(cv::Mat &imFrame, RigidTransforms::SE3<> se3CfromW)
 	GLXInterface::glMultMatrix(se3CfromW);
 
 	DrawFadingGrid();
-
 	mGame.DrawStuff(se3CfromW.inverse().get_translation());
 
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_BLEND);
-
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
@@ -131,7 +128,7 @@ static bool CheckFramebufferStatus()
   
   cout << "glCheckFrameBufferStatusExt returned an error." << endl;
   return false;
-};
+}
 
 void ARDriver::DrawFBBackGround()
 {
@@ -273,5 +270,5 @@ void ARDriver::DrawFadingGrid()
 		for (int j = 0; j < nTot; j++)
 			glVertex(aaVertex[j][i]);
 		glEnd();
-	};
-};
+	}
+}

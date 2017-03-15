@@ -26,7 +26,8 @@ namespace RigidTransforms {
 /// three numbers (in the space of the Lie Algebra). In this class, the first two parameters are a
 /// translation vector while the third is the amount of rotation in the plane as for SO2.
 
-template <typename Precision = float>
+//template <typename Precision = float>
+template <typename Precision = double>
 class SE2 {
 private:
 	SO2<Precision> R_;
