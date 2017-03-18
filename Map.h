@@ -14,9 +14,13 @@
 #include <vector>
 #include "GCVD/SE3.h"
 #include "additionalUtility.h"
+#include <boost/shared_ptr.hpp>
 
 struct MapPoint;
 struct KeyFrame;
+
+typedef boost::shared_ptr<MapPoint> MapPointPtr;
+typedef boost::shared_ptr<KeyFrame> KeyFramePtr;
 
 struct Map
 {
@@ -27,9 +31,9 @@ struct Map
   void MoveBadPointsToTrash();
   void EmptyTrash();
   
-  std::vector<MapPoint*> vpPoints;
-  std::vector<MapPoint*> vpPointsTrash;
-  std::vector<KeyFrame*> vpKeyFrames;
+  std::vector<MapPointPtr> vpPoints;
+  std::vector<MapPointPtr> vpPointsTrash;
+  std::vector<KeyFramePtr> vpKeyFrames;
 
   bool bGood;
 };

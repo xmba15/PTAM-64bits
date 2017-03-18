@@ -117,7 +117,7 @@ std::pair<RigidTransforms::SE2<>, double> SmallBlurryImage::IteratePosRelToTarge
 		v10Triangle = cv::Vec<double, 10>::all(0); // Holds the bottom-left triangle of JTJ
 		cv::Vec4d v4Jac;
 		v4Jac[3] = 1.0;
-
+		
 		RigidTransforms::SE2<> se2XForm = se2WfromC * se2CtoC * se2WfromC.inverse();
 
 		// Make the warped current image template:
@@ -150,7 +150,6 @@ std::pair<RigidTransforms::SE2<>, double> SmallBlurryImage::IteratePosRelToTarge
 				v4Jac[0] = v2SumGrad[0];
 				v4Jac[1] = v2SumGrad[1];
 				v4Jac[2] = -(i - irCenter.y) * v2SumGrad[0] + (j - irCenter.x) * v2SumGrad[1];
-				v4Jac[3] = 1.0;
 
 				double dDiff = here - other.mimTemplate.ptr<double>(i)[j] + dMeanOffset;
 				dFinalScore += dDiff * dDiff;
@@ -181,6 +180,7 @@ std::pair<RigidTransforms::SE2<>, double> SmallBlurryImage::IteratePosRelToTarge
 		m4(2, 0) = m4(0, 2) = v10Triangle[2]; m4(2, 2) = v10Triangle[7]; m4(2, 3) = m4(3, 2) = v10Triangle[8];
 		m4(3, 0) = m4(0, 3) = v10Triangle[3]; m4(3, 3) = v10Triangle[9];
 
+		cv::solve(m4, v4Accum, v4Update, cv::DECOMP_CHOLESKY);
 		RigidTransforms::SE2<> se2Update;
 		se2Update.get_translation() = cv::Vec2d(-v4Update[0], -v4Update[1]);
 		se2Update.get_rotation() = RigidTransforms::SO2<>::exp(-v4Update[2]);
@@ -242,9 +242,8 @@ RigidTransforms::SE3<> SmallBlurryImage::SE3fromSE2(RigidTransforms::SE2<> se2, 
 			for (int m = 0; m < 3; m++)
 			{
 				const cv::Vec3d v3Motion = RigidTransforms::SO3<>::generator_field(m, v3Cam);
-				cv::Vec2d v2CamFrameMotion;
-				v2CamFrameMotion[0] = (v3Motion[0] - v3Cam[0] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
-				v2CamFrameMotion[1] = (v3Motion[1] - v3Cam[1] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ;
+				cv::Vec2d v2CamFrameMotion((v3Motion[0] - v3Cam[0] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ,
+					(v3Motion[1] - v3Cam[1] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ);
 				m23Jacobian(0, m) = m2CamDerivs(0, 0) * v2CamFrameMotion[0]
 					+ m2CamDerivs(0, 1) * v2CamFrameMotion[1];
 				m23Jacobian(1, m) = m2CamDerivs(1, 0) * v2CamFrameMotion[0]
@@ -259,10 +258,10 @@ RigidTransforms::SE3<> SmallBlurryImage::SE3fromSE2(RigidTransforms::SE2<> se2, 
 		};
 
 		// solve the linear system
-		cv::Vec<double, 3> v3Res;
+		cv::Vec3d v3Res;
 		cv::solve(m3Omega, v3ksi, v3Res, cv::DECOMP_CHOLESKY);
 		so3 = RigidTransforms::SO3<>::exp(v3Res) * so3;
-	};
+	}
 
 	RigidTransforms::SE3<> se3Result;
 	se3Result.get_rotation() = so3;

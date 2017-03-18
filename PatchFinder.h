@@ -71,7 +71,7 @@ public:
   // This is the raison d'etre of the class: finds the patch in the current input view,
   // centered around ir, Searching around FAST corner locations only within a radius nRange only.
   // Inputs are given in level-zero coordinates! Returns true if the patch was found.
-  bool FindPatchCoarse(cv::Mat ir, KeyFrame &kf, unsigned int nRange);  
+  bool FindPatchCoarse(cv::Point ir, KeyFrame &kf, unsigned int nRange);  
   int ZMSSDAtPoint(const cv::Mat_<uchar> &im, const cv::Point &ir); // This evaluates the score at one location
   // Results from step 3:
   // All positions are in the scale of level 0.
