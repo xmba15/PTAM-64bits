@@ -3,5 +3,5 @@
 #include "additionalUtility.h"
 
 double FindShiTomasiScoreAtPoint(cv::Mat_<uchar> &image,
-				 int nHalfBoxSize,
-				 cv::Point irCenter);
+	int nHalfBoxSize,
+	cv::Point irCenter);

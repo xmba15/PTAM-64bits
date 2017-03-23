@@ -1,19 +1,12 @@
-// Copyright 2008 Isis Innovation Limited
 #include "MapMaker.h"
 #include "MapPoint.h"
 #include "Bundle.h"
 #include "PatchFinder.h"
-#include "SmallMatrixOpts.h"
 #include "HomographyInit.h"
 
-#include <cvd/vector_image_ref.h>
-#include <cvd/vision.h>
-#include <cvd/image_interpolate.h>
+#include "GCVD/image_interpolate.h"
+#include "Persistence/instances.h"
 
-#include <TooN/SVD.h>
-#include <TooN/SymEigen.h>
-
-#include <gvars3/instances.h>
 #include <fstream>
 #include <algorithm>
 
@@ -21,10 +14,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
-
-using namespace CVD;
-using namespace std;
-using namespace GVars3;
 
 // Constructor sets up internal reference variable to Map.
 // Most of the intialisation is done by Reset()..

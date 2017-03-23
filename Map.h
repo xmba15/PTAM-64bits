@@ -19,9 +19,6 @@
 struct MapPoint;
 struct KeyFrame;
 
-typedef boost::shared_ptr<MapPoint> MapPointPtr;
-typedef boost::shared_ptr<KeyFrame> KeyFramePtr;
-
 struct Map
 {
   Map();
@@ -31,9 +28,9 @@ struct Map
   void MoveBadPointsToTrash();
   void EmptyTrash();
   
-  std::vector<MapPointPtr> vpPoints;
-  std::vector<MapPointPtr> vpPointsTrash;
-  std::vector<KeyFramePtr> vpKeyFrames;
+  std::vector<MapPoint::Ptr> vpPoints;
+  std::vector<MapPoint::Ptr> vpPointsTrash;
+  std::vector<KeyFrame::Ptr> vpKeyFrames;
 
   bool bGood;
 };

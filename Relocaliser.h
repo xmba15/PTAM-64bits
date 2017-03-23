@@ -17,16 +17,16 @@
 class Relocaliser
 {
 public:
-  Relocaliser(Map &map, ATANCamera &camera);
-  bool AttemptRecovery(KeyFrame &k);
-  RigidTransforms::SE3<> BestPose();
-  
+	Relocaliser(Map &map, ATANCamera &camera);
+	bool AttemptRecovery(KeyFrame &k);
+	RigidTransforms::SE3<> BestPose();
+
 protected:
-  void ScoreKFs(KeyFrame &kCurrentF);
-  Map &mMap;
-  ATANCamera mCamera;
-  int mnBest;
-  double mdBestScore;
-  RigidTransforms::SE2<> mse2;
-  RigidTransforms::SE3<> mse3Best;
+	void ScoreKFs(KeyFrame &kCurrentF);
+	Map &mMap;
+	ATANCamera mCamera;
+	int mnBest;
+	double mdBestScore;
+	RigidTransforms::SE2<> mse2;
+	RigidTransforms::SE3<> mse3Best;
 };

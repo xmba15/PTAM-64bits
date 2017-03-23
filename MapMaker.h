@@ -17,17 +17,20 @@
 #include "ATANCamera.h"
 #include <queue>
 #include "additionalUtility.h"
-
+#include <boost/shared_ptr.hpp>
 
 // Each MapPoint has an associated MapMakerData class
 // Where the mapmaker can store extra information
  
 struct MapMakerData
 {
-  std::set<KeyFrame*> sMeasurementKFs;   // Which keyframes has this map point got measurements in?
-  std::set<KeyFrame*> sNeverRetryKFs;    // Which keyframes have measurements failed enough so I should never retry?
-  inline int GoodMeasCount()            
-  {  return sMeasurementKFs.size(); }
+	typedef std::shared_ptr<MapMakerData> Ptr;
+	std::set<KeyFrame::Ptr> sMeasurementKFs;   // Which keyframes has this map point got measurements in?
+	std::set<KeyFrame::Ptr> sNeverRetryKFs;    // Which keyframes have measurements failed enough so I should never retry?
+	inline int GoodMeasCount()
+	{
+		return sMeasurementKFs.size();
+	}
 };
 
 // MapMaker dervives from CVD::Thread, so everything in void run() is its own thread.

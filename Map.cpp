@@ -1,4 +1,3 @@
-// Copyright 2008 Isis Innovation Limited
 #include "Map.h"
 #include "MapPoint.h"
 
@@ -36,7 +35,3 @@ void Map::EmptyTrash()
 {
 	vpPointsTrash.clear();
 }
-
-
-
-
