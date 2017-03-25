@@ -37,6 +37,7 @@
 #include "MapPoint.h"
 #include "LevelHelpers.h"
 #include "additionalUtility.h"
+#include <boost/shared_ptr.hpp>
 
 class PatchFinder
 {
@@ -51,17 +52,17 @@ public:
   // It also calculates which pyramid level we should search in, and this is
   // returned as an int. Negative level returned denotes an inappropriate 
   // transformation.
-  int CalcSearchLevelAndWarpMatrix(MapPoint &p, RigidTransforms::SE3<> se3CFromW, cv::Matx<double, 2, 2> &m2CamDerivs);
+  int CalcSearchLevelAndWarpMatrix(MapPoint::Ptr p, RigidTransforms::SE3<> se3CFromW, cv::Matx<double, 2, 2> &m2CamDerivs);
   inline int GetLevel() { return mnSearchLevel; }
   inline int GetLevelScale() { return LevelScale(mnSearchLevel); }
   
   // Step 2 Functions
   // Generates the NxN search template either from the pre-calculated warping matrix,
   // or an identity transformation.
-  void MakeTemplateCoarseCont(MapPoint &p); // If the warping matrix has already been pre-calced, use this.
-  void MakeTemplateCoarse(MapPoint &p, RigidTransforms::SE3<> se3CFromW, cv::Matx<double, 2, 2> &m2CamDerivs); // This also calculates the warp.
-  void MakeTemplateCoarseNoWarp(MapPoint &p);  // Identity warp: just copies pixels from the source KF.
-  void MakeTemplateCoarseNoWarp(KeyFrame &k, int nLevel, cv::Point irLevelPos); // Identity warp if no MapPoint struct exists yet.
+  void MakeTemplateCoarseCont(MapPoint::Ptr p); // If the warping matrix has already been pre-calced, use this.
+  void MakeTemplateCoarse(MapPoint::Ptr p, RigidTransforms::SE3<> se3CFromW, cv::Matx<double, 2, 2> &m2CamDerivs); // This also calculates the warp.
+  void MakeTemplateCoarseNoWarp(MapPoint::Ptr p);  // Identity warp: just copies pixels from the source KF.
+  void MakeTemplateCoarseNoWarp(boost::shared_ptr<KeyFrame> k, int nLevel, cv::Point irLevelPos); // Identity warp if no MapPoint struct exists yet.
 
   // If the template making failed (i.e. it needed pixels outside the source image),
   // this bool will return false.
@@ -71,7 +72,7 @@ public:
   // This is the raison d'etre of the class: finds the patch in the current input view,
   // centered around ir, Searching around FAST corner locations only within a radius nRange only.
   // Inputs are given in level-zero coordinates! Returns true if the patch was found.
-  bool FindPatchCoarse(cv::Point ir, KeyFrame &kf, unsigned int nRange);  
+  bool FindPatchCoarse(cv::Point ir, boost::shared_ptr<KeyFrame> kf, unsigned int nRange);  
   int ZMSSDAtPoint(const cv::Mat_<uchar> &im, const cv::Point &ir); // This evaluates the score at one location
   // Results from step 3:
   // All positions are in the scale of level 0.
@@ -82,8 +83,8 @@ public:
   void MakeSubPixTemplate();  // Generate the inverse composition template and jacobians
   
   // Step 5 Functions
-  bool IterateSubPixToConvergence(KeyFrame &kf, int nMaxIts);  // Run inverse composition till convergence
-  double IterateSubPix(KeyFrame &kf);     // Single iteration of IC. Returns sum-squared pixel update dist, or negative if out of imag
+  bool IterateSubPixToConvergence(boost::shared_ptr<KeyFrame> kf, int nMaxIts);  // Run inverse composition till convergence
+  double IterateSubPix(boost::shared_ptr<KeyFrame> kf);     // Single iteration of IC. Returns sum-squared pixel update dist, or negative if out of imag
   inline cv::Vec2d GetSubPixPos()  { return mv2SubPixPos;   }  // Get result
   void SetSubPixPos(cv::Vec2d v2)  { mv2SubPixPos = v2;     }  // Set starting point
   
@@ -121,6 +122,6 @@ protected:
   bool mbTemplateBad;         // Error during template generation?
 
   // Some cached values to avoid duplicating work if the camera is stopped:
-  MapPoint *mpLastTemplateMapPoint;  // Which was the last map point this PatchFinder used?
+  MapPoint::Ptr mpLastTemplateMapPoint;  // Which was the last map point this PatchFinder used?
   cv::Matx<double, 2, 2> mm2LastWarpMatrix;       // What was the last warp matrix this PatchFinder used?
 };

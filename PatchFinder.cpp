@@ -22,17 +22,17 @@ PatchFinder::PatchFinder(int nPatchSize)
 }
 
 // Find the warping matrix and search level
-int PatchFinder::CalcSearchLevelAndWarpMatrix(MapPoint &p,
+int PatchFinder::CalcSearchLevelAndWarpMatrix(MapPoint::Ptr p,
 RigidTransforms::SE3<> se3CFromW, cv::Matx<double, 2, 2> &m2CamDerivs)
 {
 	// Calc point pos in new view camera frame
 	// Slightly dumb that we re-calculate this here when the tracker's already done this!
-	cv::Vec3d v3Cam = se3CFromW * p.v3WorldPos;
+	cv::Vec3d v3Cam = se3CFromW * p->v3WorldPos;
 	double dOneOverCameraZ = 1.0 / v3Cam[2];
 
 	// Project the source keyframe's one-pixel-right and one-pixel-down vectors into the current view
-	cv::Vec3d v3MotionRight = se3CFromW.get_rotation() * p.v3PixelRight_W;
-	cv::Vec3d v3MotionDown = se3CFromW.get_rotation() * p.v3PixelDown_W;
+	cv::Vec3d v3MotionRight = se3CFromW.get_rotation() * p->v3PixelRight_W;
+	cv::Vec3d v3MotionDown = se3CFromW.get_rotation() * p->v3PixelDown_W;
 	// Calculate in-image derivatives of source image pixel motions:
 	double invDepthRight = 1.0 / (v3Cam[2] + v3MotionRight[2]);
 	double invDepthDown  = 1.0 / (v3Cam[2] + v3MotionDown[2]);
@@ -72,7 +72,7 @@ RigidTransforms::SE3<> se3CFromW, cv::Matx<double, 2, 2> &m2CamDerivs)
 
 // This is just a convenience function wich caluclates the warp matrix and generates
 // the template all in one call.
-void PatchFinder::MakeTemplateCoarse(MapPoint &p,
+void PatchFinder::MakeTemplateCoarse(MapPoint::Ptr p,
 	RigidTransforms::SE3<> se3CFromW,
 	cv::Matx<double, 2, 2> &m2CamDerivs)
 {
@@ -81,7 +81,7 @@ void PatchFinder::MakeTemplateCoarse(MapPoint &p,
 }
 
 // This function generates the warped search template.
-void PatchFinder::MakeTemplateCoarseCont(MapPoint &p)
+void PatchFinder::MakeTemplateCoarseCont(MapPoint::Ptr p)
 {
 	// Get the warping matrix appropriate for use with CVD::transform...
 	cv::Matx<double, 2, 2> m2 = CvUtils::M2Inverse(mm2WarpInverse) * LevelScale(mnSearchLevel);
@@ -95,7 +95,7 @@ void PatchFinder::MakeTemplateCoarseCont(MapPoint &p)
 
 	bool bNeedToRefreshTemplate = false;
 
-	if (&p != mpLastTemplateMapPoint) bNeedToRefreshTemplate = true;
+	if (p != mpLastTemplateMapPoint) bNeedToRefreshTemplate = true;
 	// Still the same map point? Then compare warping matrix..
 	for (int i = 0; !bNeedToRefreshTemplate && i < 2; i++)
 	{
@@ -111,10 +111,10 @@ void PatchFinder::MakeTemplateCoarseCont(MapPoint &p)
 	{
 		int nOutside;  // Use CVD::transform to warp the patch according the the warping matrix m2
 					   // This returns the number of pixels outside the source image hit, which should be zero.
-		nOutside = CvUtils::transform(p.pPatchSourceKF->aLevels[p.nSourceLevel].im,
+		nOutside = CvUtils::transform(p->pPatchSourceKF->aLevels[p->nSourceLevel].im,
 			                          mimTemplate,
 			                          m2,
-			                          cv::Vec2d(p.irCenter.x, p.irCenter.y),
+			                          cv::Vec2d(p->irCenter.x, p->irCenter.y),
 			                          cv::Vec2d(mirCenter.x, mirCenter.y));
 
 		if (nOutside)
@@ -134,10 +134,10 @@ void PatchFinder::MakeTemplateCoarseCont(MapPoint &p)
 // This makes a template without warping. Used for epipolar search, where we don't really know 
 // what the warping matrix should be. (Although to be fair, I should do rotation for epipolar,
 // which we could approximate without knowing patch depth!)
-void PatchFinder::MakeTemplateCoarseNoWarp(KeyFrame &k, int nLevel, cv::Point irLevelPos)
+void PatchFinder::MakeTemplateCoarseNoWarp(boost::shared_ptr<KeyFrame> k, int nLevel, cv::Point irLevelPos)
 {
 	mnSearchLevel = nLevel;
-	cv::Mat_<uchar> im = k.aLevels[nLevel].im;
+	cv::Mat_<uchar> im = k->aLevels[nLevel].im;
 	if (!CvUtils::in_image_with_border(irLevelPos.x, irLevelPos.y, im, mnPatchSize / 2 + 1, mnPatchSize / 2 + 1))
 	{
 		mbTemplateBad = true;
@@ -155,9 +155,9 @@ void PatchFinder::MakeTemplateCoarseNoWarp(KeyFrame &k, int nLevel, cv::Point ir
 }
 
 // Convenient wrapper for the above
-void PatchFinder::MakeTemplateCoarseNoWarp(MapPoint &p)
+void PatchFinder::MakeTemplateCoarseNoWarp(MapPoint::Ptr p)
 {
-	MakeTemplateCoarseNoWarp(*p.pPatchSourceKF, p.nSourceLevel, p.irCenter);
+	MakeTemplateCoarseNoWarp(p->pPatchSourceKF, p->nSourceLevel, p->irCenter);
 }
 
 // Finds the sum, and sum-squared, of template pixels. These sums are used
@@ -182,7 +182,7 @@ inline void PatchFinder::MakeTemplateSums()
 // the target keyframe to try and find the template. Looks only at FAST corner points
 // which are within radius nRange of the center. (Params are supplied in Level0
 // coords.) Returns true on patch found.
-bool PatchFinder::FindPatchCoarse(cv::Point irPos, KeyFrame &kf, unsigned int nRange)
+bool PatchFinder::FindPatchCoarse(cv::Point irPos, boost::shared_ptr<KeyFrame> kf, unsigned int nRange)
 {
 	mbFound = false;
 
@@ -199,12 +199,12 @@ bool PatchFinder::FindPatchCoarse(cv::Point irPos, KeyFrame &kf, unsigned int nR
 	int nRight = irPos.x + nRange;
 
 	// Ref variable for the search level
-	Level &L = kf.aLevels[mnSearchLevel];
+	Level &L = kf->aLevels[mnSearchLevel];
 
 	// Some bounds checks on the bounding box..
 	if (nTop < 0)
 		nTop = 0;
-	if (nTop >= L.im.size().y)
+	if (nTop >= L.im.rows - 1)
 		return false;
 	if (nBottomPlusOne <= 0)
 		return false;
@@ -318,7 +318,7 @@ void PatchFinder::MakeSubPixTemplate()
 // Iterate inverse composition until convergence. Since it should never have 
 // to travel more than a pixel's distance, set a max number of iterations; 
 // if this is exceeded, consider the IC to have failed.
-bool PatchFinder::IterateSubPixToConvergence(KeyFrame &kf, int nMaxIts)
+bool PatchFinder::IterateSubPixToConvergence(boost::shared_ptr<KeyFrame> kf, int nMaxIts)
 {
 	const double dConvLimit = 0.03;
 	bool bConverged = false;
@@ -338,11 +338,11 @@ bool PatchFinder::IterateSubPixToConvergence(KeyFrame &kf, int nMaxIts)
 // template image to floating point positions in the target keyframe. Interpolation is
 // bilinear, and performed manually (rather than using CVD::image_interpolate) since 
 // this is a special case where the mixing fractions for each pixel are identical.
-double PatchFinder::IterateSubPix(KeyFrame &kf)
+double PatchFinder::IterateSubPix(boost::shared_ptr<KeyFrame> kf)
 {
 	// Search level pos of patch center
 	cv::Vec2d v2Center = LevelNPos(mv2SubPixPos, mnSearchLevel);
-	cv::Mat_<uchar> im = kf.aLevels[mnSearchLevel].im;
+	cv::Mat_<uchar> im = kf->aLevels[mnSearchLevel].im;
 	if (!CvUtils::in_image_with_border(std::round(v2Center[0]), std::round(v2Center[1]),
 		im, mnPatchSize / 2 + 1, mnPatchSize / 2 + 1))
 		return -1.0;       // Negative return value indicates off edge of image 

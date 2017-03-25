@@ -40,7 +40,7 @@ public:
 	bool bBad;
 
 	// What pixels should be used to search for this point?
-	KeyFrame *pPatchSourceKF; // The KeyFrame the point was originally made in
+	boost::shared_ptr<KeyFrame> pPatchSourceKF; // The KeyFrame the point was originally made in
 	int nSourceLevel;         // Pyramid level in source KeyFrame
 	cv::Point irCenter;   // This is in level-coords in the source pyramid level
 
@@ -58,10 +58,10 @@ public:
 	void RefreshPixelVectors();        // Calculates above two vectors
 
 	// Info for the Mapmaker (not to be trashed by the tracker:)
-	MapMakerData *pMMData;
+	boost::shared_ptr<MapMakerData> pMMData;
 
 	// Info for the Tracker (not to be trashed by the MapMaker:)
-	TrackerData *pTData;
+	boost::shared_ptr<TrackerData> pTData;
 
 	// Info provided by the tracker for the mapmaker:
 	int nMEstimatorOutlierCount;

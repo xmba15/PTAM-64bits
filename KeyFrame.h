@@ -78,9 +78,9 @@ public:
 	RigidTransforms::SE3<> se3CfromW;    // The coordinate frame of this key-frame as a Camera-From-World transformation
 	bool bFixed;      // Is the coordinate frame of this keyframe fixed? (only true for first KF!)
 	Level aLevels[LEVELS];  // Images, corners, etc lives in this array of pyramid levels
-	std::map<MapPoint*, Measurement> mMeasurements;           // All the measurements associated with the keyframe
+	std::map<boost::shared_ptr<MapPoint>, Measurement> mMeasurements;           // All the measurements associated with the keyframe
 
-	void MakeKeyFrame_Lite(cv::Mat_<uchar> &im);   // This takes an image and calculates pyramid levels etc to fill the 
+	void MakeKeyFrame_Lite(cv::Mat_<uchar> &im);   // This takkes an image and calculates pyramid levels etc to fill the 
 															  // keyframe data structures with everything that's needed by the tracker..
 	void MakeKeyFrame_Rest();                                 // ... while this calculates the rest of the data which the mapmaker needs.
 
@@ -90,4 +90,4 @@ public:
 	SmallBlurryImage *pSBI; // The relocaliser uses this
 };
 
-typedef std::map<MapPoint*, Measurement>::iterator meas_it;  // For convenience, and to work around an emacs paren-matching bug
+typedef std::map<boost::shared_ptr<MapPoint>, Measurement>::iterator meas_it;  // For convenience, and to work around an emacs paren-matching bug
