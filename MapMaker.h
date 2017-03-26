@@ -100,7 +100,7 @@ protected:
 	// General Maintenance/Utility:
 	void Reset();
 	void HandleBadPoints();
-	//double DistToNearestKeyFrame(KeyFrame &kCurrent);
+	double DistToNearestKeyFrame(KeyFrame::Ptr kCurrent);
 
 	double KeyFrameLinearDist(KeyFrame::Ptr k1, KeyFrame::Ptr k2);
 	KeyFrame::Ptr ClosestKeyFrame(KeyFrame::Ptr k);

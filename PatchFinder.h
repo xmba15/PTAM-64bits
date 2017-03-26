@@ -73,6 +73,10 @@ public:
   // centered around ir, Searching around FAST corner locations only within a radius nRange only.
   // Inputs are given in level-zero coordinates! Returns true if the patch was found.
   bool FindPatchCoarse(cv::Point ir, boost::shared_ptr<KeyFrame> kf, unsigned int nRange);  
+  bool FindPatchCoarse(cv::Vec2d ir, boost::shared_ptr<KeyFrame> kf, unsigned int nRange) {
+	  return FindPatchCoarse(cv::Point(ir[0], ir[1]), kf, nRange);
+  }
+
   int ZMSSDAtPoint(const cv::Mat_<uchar> &im, const cv::Point &ir); // This evaluates the score at one location
   // Results from step 3:
   // All positions are in the scale of level 0.
