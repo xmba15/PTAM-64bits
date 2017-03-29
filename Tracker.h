@@ -41,7 +41,7 @@ public:
   Tracker(cv::Size irVideoSize, const ATANCamera &c, Map &m, MapMaker &mm);
   
   // TrackFrame is the main working part of the tracker: call this every frame.
-  void TrackFrame(cv::Mat_<uchar> &imFrame, bool bDraw); 
+  void TrackFrame(cv::Mat_<uchar> &imFrame, bool bDraw, cv::Mat &rgbFrame); 
 
   inline RigidTransforms::SE3<> GetCurrentPose() { return mse3CamFromWorld;}
   
@@ -49,7 +49,7 @@ public:
   std::string GetMessageForUser();
   
 protected:
-  KeyFrame mCurrentKF;            // The current working frame as a keyframe struct
+  KeyFrame::Ptr mCurrentKF;            // The current working frame as a keyframe struct
   
   // The major components to which the tracker needs access:
   Map &mMap;                      // The map, consisting of points and keyframes
@@ -70,18 +70,18 @@ protected:
   void TrailTracking_Start();     // First frame of initial trail tracking. Called by TrackForInitialMap.
   int  TrailTracking_Advance();   // Steady-state of initial trail tracking. Called by TrackForInitialMap.
   std::list<Trail> mlTrails;      // Used by trail tracking
-  KeyFrame mFirstKF;              // First of the stereo pair
-  KeyFrame mPreviousFrameKF;      // Used by trail tracking to check married matches
+  KeyFrame::Ptr mFirstKF;              // First of the stereo pair
+  KeyFrame::Ptr mPreviousFrameKF;      // Used by trail tracking to check married matches
   
   // Methods for tracking the map once it has been made:
   void TrackMap();                // Called by TrackFrame if there is a map.
   void AssessTrackingQuality();   // Heuristics to choose between good, poor, bad.
   void ApplyMotionModel();        // Decaying velocity motion model applied prior to TrackMap
   void UpdateMotionModel();       // Motion model is updated after TrackMap
-  int SearchForPoints(std::vector<TrackerData*> &vTD, 
+  int SearchForPoints(std::vector<TrackerData::Ptr> &vTD, 
 		      int nRange, 
 		      int nFineIts);  // Finds points in the image
-  cv::Vec<double, 6> CalcPoseUpdate(std::vector<TrackerData*> vTD, 
+  cv::Vec<double, 6> CalcPoseUpdate(std::vector<TrackerData::Ptr> vTD, 
 			   double dOverrideSigma = 0.0, 
 			   bool bMarkOutliers = false); // Updates pose from found points.
   RigidTransforms::SE3<> mse3CamFromWorld;           // Camera pose: this is what the tracker updates every frame.

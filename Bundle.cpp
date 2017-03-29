@@ -618,14 +618,14 @@ double Bundle::FindNewError()
 // This is faster than a std::map lookup.
 void Bundle::GenerateMeasLUTs()
 {
-  mvMeasLUTs.clear();
-  for(unsigned int nCam = 0; nCam < mvCameras.size(); nCam++)
-    {
-      mvMeasLUTs.push_back(vector<Meas*>());
-      mvMeasLUTs.back().resize(mvPoints.size(), NULL);
-    };
-  for(list<Meas>::iterator it = mMeasList.begin(); it!=mMeasList.end(); it++)
-    mvMeasLUTs[it->c][it->p] =  &(*it);
+	mvMeasLUTs.clear();
+	for (unsigned int nCam = 0; nCam < mvCameras.size(); nCam++)
+	{
+		mvMeasLUTs.push_back(std::vector<Meas*>());
+		mvMeasLUTs.back().resize(mvPoints.size(), NULL);
+	}
+	for (std::list<Meas>::iterator it = mMeasList.begin(); it != mMeasList.end(); it++)
+		mvMeasLUTs[it->c][it->p] = &(*it);
 }
 
 // Optimisation: make a per-point list of all
@@ -633,74 +633,74 @@ void Bundle::GenerateMeasLUTs()
 // scanned to make the off-diagonal elements of matrix S
 void Bundle::GenerateOffDiagScripts()
 {
-  for(unsigned int i=0; i<mvPoints.size(); i++)
-    {
-      BAPoint &p = mvPoints[i];
-      p.vOffDiagonalScript.clear();
-      for(set<int>::iterator it_j = p.sCameras.begin(); it_j!=p.sCameras.end(); it_j++)
+	for (unsigned int i = 0; i < mvPoints.size(); i++)
 	{
-	  int j = *it_j;
-	  if(mvCameras[j].bFixed)
-	    continue;
-	  Meas *pMeas_j = mvMeasLUTs[j][i];
-	  assert(pMeas_j != NULL);
-	  
-	  for(set<int>::iterator it_k = p.sCameras.begin(); it_k!=it_j; it_k++)
-	    {
-	      int k = *it_k;
-	      if(mvCameras[k].bFixed)
-		continue;
-	      
-	      Meas *pMeas_k = mvMeasLUTs[k][i];
-	      assert(pMeas_k != NULL);
-	      
-	      OffDiagScriptEntry e;
-	      e.j = j;
-	      e.k = k;
-	      p.vOffDiagonalScript.push_back(e);
-	    }
+		BAPoint &p = mvPoints[i];
+		p.vOffDiagonalScript.clear();
+		for (std::set<int>::iterator it_j = p.sCameras.begin(); it_j != p.sCameras.end(); it_j++)
+		{
+			int j = *it_j;
+			if (mvCameras[j].bFixed)
+				continue;
+			Meas *pMeas_j = mvMeasLUTs[j][i];
+			assert(pMeas_j != NULL);
+
+			for (std::set<int>::iterator it_k = p.sCameras.begin(); it_k != it_j; it_k++)
+			{
+				int k = *it_k;
+				if (mvCameras[k].bFixed)
+					continue;
+
+				Meas *pMeas_k = mvMeasLUTs[k][i];
+				assert(pMeas_k != NULL);
+
+				OffDiagScriptEntry e;
+				e.j = j;
+				e.k = k;
+				p.vOffDiagonalScript.push_back(e);
+			}
+		}
 	}
-    }
 }
 
 void Bundle::ModifyLambda_GoodStep()
 {
-  mdLambdaFactor = 2.0;
-  mdLambda *= 0.3;
-};
+	mdLambdaFactor = 2.0;
+	mdLambda *= 0.3;
+}
 
 void Bundle::ModifyLambda_BadStep()
 {
-  mdLambda = mdLambda * mdLambdaFactor;
-  mdLambdaFactor = mdLambdaFactor * 2;
-};
-
-
-Vector<3> Bundle::GetPoint(int n)
-{
-  return mvPoints.at(n).v3Pos;
+	mdLambda = mdLambda * mdLambdaFactor;
+	mdLambdaFactor = mdLambdaFactor * 2;
 }
 
-SE3<> Bundle::GetCamera(int n)
+
+cv::Vec3d Bundle::GetPoint(int n)
 {
-  return mvCameras.at(n).se3CfW;
+	return mvPoints.at(n).v3Pos;
 }
 
-set<int> Bundle::GetOutliers()
+RigidTransforms::SE3<> Bundle::GetCamera(int n)
 {
-  set<int> sOutliers;
-  set<int>::iterator hint = sOutliers.begin();
-  for(unsigned int i=0; i<mvPoints.size(); i++)
-    {
-      Point &p = mvPoints[i];
-      if(p.nMeasurements > 0 && p.nMeasurements == p.nOutliers)
-	hint = sOutliers.insert(hint, i);
-    }
-  return sOutliers;
-};
+	return mvCameras.at(n).se3CfW;
+}
 
-
-vector<pair<int, int> > Bundle::GetOutlierMeasurements()
+std::set<int> Bundle::GetOutliers()
 {
-  return mvOutlierMeasurementIdx;
+	std::set<int> sOutliers;
+	std::set<int>::iterator hint = sOutliers.begin();
+	for (unsigned int i = 0; i < mvPoints.size(); i++)
+	{
+		BAPoint &p = mvPoints[i];
+		if (p.nMeasurements > 0 && p.nMeasurements == p.nOutliers)
+			hint = sOutliers.insert(hint, i);
+	}
+
+	return sOutliers;
+}
+
+std::vector<std::pair<int, int> > Bundle::GetOutlierMeasurements()
+{
+	return mvOutlierMeasurementIdx;
 }

@@ -13,11 +13,14 @@
 #include "GCVD/timer.h"
 #include <set>
 #include "additionalUtility.h"
+#include "TrackerData.h"
 #include <boost/shared_ptr.hpp>
 
 class KeyFrame;
 class TrackerData;
 class MapMakerData;
+
+extern CvUtils::Timer timer;
 
 struct MapPoint
 {
@@ -58,10 +61,12 @@ public:
 	void RefreshPixelVectors();        // Calculates above two vectors
 
 	// Info for the Mapmaker (not to be trashed by the tracker:)
-	boost::shared_ptr<MapMakerData> pMMData;
+	//boost::shared_ptr<MapMakerData> pMMData;
+	TrackerData::Ptr pMMData;
 
 	// Info for the Tracker (not to be trashed by the MapMaker:)
-	boost::shared_ptr<TrackerData> pTData;
+	//boost::shared_ptr<TrackerData> pTData;
+	TrackerData::Ptr pTData;
 
 	// Info provided by the tracker for the mapmaker:
 	int nMEstimatorOutlierCount;

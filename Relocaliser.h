@@ -18,11 +18,11 @@ class Relocaliser
 {
 public:
 	Relocaliser(Map &map, ATANCamera &camera);
-	bool AttemptRecovery(KeyFrame &k);
+	bool AttemptRecovery(KeyFrame::Ptr k);
 	RigidTransforms::SE3<> BestPose();
 
 protected:
-	void ScoreKFs(KeyFrame &kCurrentF);
+	void ScoreKFs(KeyFrame::Ptr kCurrentF);
 	Map &mMap;
 	ATANCamera mCamera;
 	int mnBest;

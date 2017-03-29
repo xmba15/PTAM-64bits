@@ -1,47 +1,31 @@
-// Copyright 2008 Isis Innovation Limited
-// This is the main extry point for PTAM
 #include <stdlib.h>
 #include <iostream>
-#include <gvars3/instances.h>
+#include "Persistence/instances.h"
 #include "System.h"
-
-
-using namespace std;
-using namespace GVars3;
 
 int main()
 {
-  cout << "  Welcome to PTAM " << endl;
-  cout << "  --------------- " << endl;
-  cout << "  Parallel tracking and mapping for Small AR workspaces" << endl;
-  cout << "  Copyright (C) Isis Innovation Limited 2008 " << endl;  
-  cout << endl;
-  cout << "  Parsing settings.cfg ...." << endl;
-  GUI.LoadFile("settings.cfg");
-  
-  GUI.StartParserThread(); // Start parsing of the console input
-  atexit(GUI.StopParserThread); 
-  
-  try
-    {
-      System s;
-      s.Run();
-    }
-  catch(CVD::Exceptions::All e)
-    {
-      cout << endl;
-      cout << "!! Failed to run system; got exception. " << endl;
-      cout << "   Exception was: " << endl;
-      cout << e.what << endl;
-    }
+	std::cout << "  Welcome to PTAM " << std::endl;
+	std::cout << "  --------------- " << std::endl;
+	std::cout << "  Parallel tracking and mapping for Small AR workspaces" << std::endl;
+	std::cout << "  Copyright (C) Isis Innovation Limited 2008 " << std::endl;
+	std::cout << std::endl;
+	std::cout << "  Parsing settings.cfg ...." << std::endl;
+	Persistence::GUI.LoadFile("settings.cfg");
+
+	Persistence::GUI.StartParserThread(); // Start parsing of the console input
+	atexit(Persistence::GUI.StopParserThread);
+
+	try
+	{
+		System s;
+		s.Run();
+	}
+	catch (cv::Exception e)
+	{
+		std::cout << std::endl;
+		std::cout << "!! Failed to run system; got exception. " << std::endl;
+		std::cout << "   Exception was: " << std::endl;
+		std::cout << e.what << endl;
+	}
 }
-
-
-
-
-
-
-
-
-
-

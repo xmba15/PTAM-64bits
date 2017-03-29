@@ -526,192 +526,192 @@ void MapMaker::AddKeyFrame(KeyFrame::Ptr k)
 // Mapmaker's code to handle incoming key-frames.
 void MapMaker::AddKeyFrameFromTopOfQueue()
 {
-  if(mvpKeyFrameQueue.size() == 0)
-    return;
-  
-  KeyFrame::Ptr pK = mvpKeyFrameQueue[0];
-  mvpKeyFrameQueue.erase(mvpKeyFrameQueue.begin());
-  pK->MakeKeyFrame_Rest();
-  mMap.vpKeyFrames.push_back(pK);
-  // Any measurements? Update the relevant point's measurement counter status map
-  for(meas_it it = pK->mMeasurements.begin();
-      it!=pK->mMeasurements.end();
-      it++)
-    {
-      it->first->pMMData->sMeasurementKFs.insert(pK);
-      it->second.Source = Measurement::SRC_TRACKER;
-    }
-  
-  // And maybe we missed some - this now adds to the map itself, too.
-  ReFindInSingleKeyFrame(pK);
-  
-  AddSomeMapPoints(3);       // .. and add more map points by epipolar search.
-  AddSomeMapPoints(0);
-  AddSomeMapPoints(1);
-  AddSomeMapPoints(2);
-  
-  mbBundleConverged_Full = false;
-  mbBundleConverged_Recent = false;
+	if (mvpKeyFrameQueue.size() == 0)
+		return;
+
+	KeyFrame::Ptr pK = mvpKeyFrameQueue[0];
+	mvpKeyFrameQueue.erase(mvpKeyFrameQueue.begin());
+	pK->MakeKeyFrame_Rest();
+	mMap.vpKeyFrames.push_back(pK);
+	// Any measurements? Update the relevant point's measurement counter status map
+	for (meas_it it = pK->mMeasurements.begin();
+		it != pK->mMeasurements.end();
+		it++)
+	{
+		it->first->pMMData->sMeasurementKFs.insert(pK);
+		it->second.Source = Measurement::SRC_TRACKER;
+	}
+
+	// And maybe we missed some - this now adds to the map itself, too.
+	ReFindInSingleKeyFrame(pK);
+
+	AddSomeMapPoints(3);       // .. and add more map points by epipolar search.
+	AddSomeMapPoints(0);
+	AddSomeMapPoints(1);
+	AddSomeMapPoints(2);
+
+	mbBundleConverged_Full = false;
+	mbBundleConverged_Recent = false;
 }
 
 // Tries to make a new map point out of a single candidate point
 // by searching for that point in another keyframe, and triangulating
 // if a match is found.
-bool MapMaker::AddPointEpipolar(KeyFrame::Ptr kSrc, 
-				KeyFrame::Ptr kTarget, 
-				int nLevel,
-				int nCandidate)
+bool MapMaker::AddPointEpipolar(KeyFrame::Ptr kSrc,
+	KeyFrame::Ptr kTarget,
+	int nLevel,
+	int nCandidate)
 {
-  static cv::Mat_<cv::Vec2d> imUnProj;
-  static bool bMadeCache = false;
-  if (!bMadeCache)
-  {
-	  imUnProj.create(kSrc->aLevels[0].im.size());
-	  for (int i = 0; i < imUnProj.rows; i++)
-		  for (int j = 0; j < imUnProj.cols; j++) {
-			  imUnProj.ptr<Vec2d>(i)[j] = mCamera.UnProject(j, i);
-		  }
-	  bMadeCache = true;
-  }
-  
-  int nLevelScale = LevelScale(nLevel);
-  Candidate &candidate = kSrc->aLevels[nLevel].vCandidates[nCandidate];
-  cv::Point irLevelPos = candidate.irLevelPos;
-  cv::Vec2d v2RootPos = LevelZeroPos(irLevelPos, nLevel);
-  
-  cv::Vec3d v3Ray_SC = CvUtils::backproject(mCamera.UnProject(v2RootPos));
-  v3Ray_SC = CvUtils::normalize(v3Ray_SC);
-  cv::Vec3d v3LineDirn_TC = kTarget->se3CfromW.get_rotation() * (kSrc->se3CfromW.get_rotation().inverse() * v3Ray_SC);
+	static cv::Mat_<cv::Vec2d> imUnProj;
+	static bool bMadeCache = false;
+	if (!bMadeCache)
+	{
+		imUnProj.create(kSrc->aLevels[0].im.size());
+		for (int i = 0; i < imUnProj.rows; i++)
+			for (int j = 0; j < imUnProj.cols; j++) {
+				imUnProj.ptr<Vec2d>(i)[j] = mCamera.UnProject(j, i);
+			}
+		bMadeCache = true;
+	}
 
-  // Restrict epipolar search to a relatively narrow depth range
-  // to increase reliability
-  double dMean = kSrc->dSceneDepthMean;
-  double dSigma = kSrc->dSceneDepthSigma;
-  double dStartDepth = max(mdWiggleScale, dMean - dSigma);
-  double dEndDepth = min(40 * mdWiggleScale, dMean + dSigma);
-  
-  cv::Vec3d v3CamCenter_TC = kTarget->se3CfromW * kSrc->se3CfromW.inverse().get_translation(); // The camera end
-  cv::Vec3d v3RayStart_TC = v3CamCenter_TC + dStartDepth * v3LineDirn_TC;                               // the far-away end
-  cv::Vec3d v3RayEnd_TC = v3CamCenter_TC + dEndDepth * v3LineDirn_TC;                               // the far-away end
+	int nLevelScale = LevelScale(nLevel);
+	Candidate &candidate = kSrc->aLevels[nLevel].vCandidates[nCandidate];
+	cv::Point irLevelPos = candidate.irLevelPos;
+	cv::Vec2d v2RootPos = LevelZeroPos(irLevelPos, nLevel);
 
-  
-  if(v3RayEnd_TC[2] <= v3RayStart_TC[2])  // it's highly unlikely that we'll manage to get anything out if we're facing backwards wrt the other camera's view-ray
-    return false;
-  if(v3RayEnd_TC[2] <= 0.0 )  return false;
-  if(v3RayStart_TC[2] <= 0.0)
-    v3RayStart_TC += v3LineDirn_TC * (0.001 - v3RayStart_TC[2] / v3LineDirn_TC[2]);
-  
-  cv::Vec2d v2A = CvUtils::pproject(v3RayStart_TC);
-  cv::Vec2d v2B = CvUtils::pproject(v3RayEnd_TC);
-  cv::Vec2d v2AlongProjectedLine = v2A-v2B;
-  
-  if (v2AlongProjectedLine.dot(v2AlongProjectedLine) < 0.00000001)
-  {
-	  std::cout << "v2AlongProjectedLine too small." << std::endl;
-	  return false;
-  }
+	cv::Vec3d v3Ray_SC = CvUtils::backproject(mCamera.UnProject(v2RootPos));
+	v3Ray_SC = CvUtils::normalize(v3Ray_SC);
+	cv::Vec3d v3LineDirn_TC = kTarget->se3CfromW.get_rotation() * (kSrc->se3CfromW.get_rotation().inverse() * v3Ray_SC);
 
-  v2AlongProjectedLine = CvUtils:: normalize(v2AlongProjectedLine);
-  cv::Vec2d v2Normal(v2AlongProjectedLine[1], -v2AlongProjectedLine[0]);
-  
-  double dNormDist = v2A.dot(v2Normal);
-  if(fabs(dNormDist) > mCamera.LargestRadiusInImage() )
-    return false;
-	
-  double dMinLen = min(v2AlongProjectedLine.dot(v2A), v2AlongProjectedLine.dot(v2B)) - 0.05;
-  double dMaxLen = max(v2AlongProjectedLine.dot(v2A), v2AlongProjectedLine.dot(v2B)) + 0.05;
-  if(dMinLen < -2.0)  dMinLen = -2.0;
-  if(dMaxLen < -2.0)  dMaxLen = -2.0;
-  if(dMinLen > 2.0)   dMinLen = 2.0;
-  if(dMaxLen > 2.0)   dMaxLen = 2.0;
+	// Restrict epipolar search to a relatively narrow depth range
+	// to increase reliability
+	double dMean = kSrc->dSceneDepthMean;
+	double dSigma = kSrc->dSceneDepthSigma;
+	double dStartDepth = max(mdWiggleScale, dMean - dSigma);
+	double dEndDepth = min(40 * mdWiggleScale, dMean + dSigma);
 
-  // Find current-frame corners which might match this
-  PatchFinder Finder;
-  Finder.MakeTemplateCoarseNoWarp(kSrc, nLevel, irLevelPos);
-  if(Finder.TemplateBad())  return false;
-  
-  std::vector<cv::Vec2d > &vv2Corners = kTarget->aLevels[nLevel].vImplaneCorners;
-  std::vector<cv::Point> &vIR = kTarget->aLevels[nLevel].vCorners;
-  if (!kTarget->aLevels[nLevel].bImplaneCornersCached)
-  {
-	  for (unsigned int i = 0; i < vIR.size(); i++) {  // over all corners in target img..
-		  cv::Point p2LevelPos = CvUtils::IL(LevelZeroPos(vIR[i], nLevel));
-		  vv2Corners.push_back(imUnProj(p2LevelPos.y, p2LevelPos.x));
-	  }
-	  kTarget->aLevels[nLevel].bImplaneCornersCached = true;
+	cv::Vec3d v3CamCenter_TC = kTarget->se3CfromW * kSrc->se3CfromW.inverse().get_translation(); // The camera end
+	cv::Vec3d v3RayStart_TC = v3CamCenter_TC + dStartDepth * v3LineDirn_TC;                               // the far-away end
+	cv::Vec3d v3RayEnd_TC = v3CamCenter_TC + dEndDepth * v3LineDirn_TC;                               // the far-away end
 
-  }
 
-  int nBest = -1;
-  int nBestZMSSD = Finder.mnMaxSSD + 1;
-  double dMaxDistDiff = mCamera.OnePixelDist() * (4.0 + 1.0 * nLevelScale);
-  double dMaxDistSq = dMaxDistDiff * dMaxDistDiff;
-  
-  for (unsigned int i = 0; i < vv2Corners.size(); i++)   // over all corners in target img..
-  {
-	  cv::Vec2d v2Im = vv2Corners[i];
-	  double dDistDiff = dNormDist - v2Im.dot(v2Normal);
-	  if (dDistDiff * dDistDiff > dMaxDistSq)	continue; // skip if not along epi line
-	  if (v2Im.dot(v2AlongProjectedLine) < dMinLen)	continue; // skip if not far enough along line
-	  if (v2Im.dot(v2AlongProjectedLine) > dMaxLen)	continue; // or too far
-	  int nZMSSD = Finder.ZMSSDAtPoint(kTarget->aLevels[nLevel].im, vIR[i]);
-	  if (nZMSSD < nBestZMSSD)
-	  {
-		  nBest = i;
-		  nBestZMSSD = nZMSSD;
-	  }
-  }
-  
-  if(nBest == -1)   return false;   // Nothing found.
-  
-  //  Found a likely candidate along epipolar ray
-  Finder.MakeSubPixTemplate();
-  Finder.SetSubPixPos(LevelZeroPos(vIR[nBest], nLevel));
-  bool bSubPixConverges = Finder.IterateSubPixToConvergence(kTarget,10);
-  if(!bSubPixConverges)
-    return false;
-  
-  // Now triangulate the 3d point...
-  cv::Vec3d v3New;
-  v3New = kTarget->se3CfromW.inverse() *  
-    ReprojectPoint(kSrc->se3CfromW * kTarget->se3CfromW.inverse(),
-		   mCamera.UnProject(v2RootPos), 
-		   mCamera.UnProject(Finder.GetSubPixPos()));
-  
-  MapPoint::Ptr pNew(new MapPoint);
-  pNew->v3WorldPos = v3New;
-  pNew->pMMData.reset(new MapMakerData());
-  
-  // Patch source stuff:
-  pNew->pPatchSourceKF = kSrc;
-  pNew->nSourceLevel = nLevel;
-  pNew->v3Normal_NC = cv::Vec3d( 0,0,-1);
-  pNew->irCenter = irLevelPos;
-  pNew->v3Center_NC = CvUtils::backproject(mCamera.UnProject(v2RootPos));
-  pNew->v3OneRightFromCenter_NC = CvUtils::backproject(mCamera.UnProject(v2RootPos[0] + nLevelScale, v2RootPos[1]));
-  pNew->v3OneDownFromCenter_NC  = CvUtils::backproject(mCamera.UnProject(v2RootPos[0], v2RootPos[1] + nLevelScale));
-  
-  pNew->v3Center_NC = CvUtils::normalize(pNew->v3Center_NC);
-  pNew->v3OneDownFromCenter_NC = CvUtils::normalize(pNew->v3OneDownFromCenter_NC);
-  pNew->v3OneRightFromCenter_NC = CvUtils::normalize(pNew->v3OneRightFromCenter_NC);
-  
-  pNew->RefreshPixelVectors();
-    
-  mMap.vpPoints.push_back(pNew);
-  mqNewQueue.push(pNew);
-  Measurement m;
-  m.Source = Measurement::SRC_ROOT;
-  m.v2RootPos = v2RootPos;
-  m.nLevel = nLevel;
-  m.bSubPix = true;
-  kSrc->mMeasurements[pNew] = m;
+	if (v3RayEnd_TC[2] <= v3RayStart_TC[2])  // it's highly unlikely that we'll manage to get anything out if we're facing backwards wrt the other camera's view-ray
+		return false;
+	if (v3RayEnd_TC[2] <= 0.0)  return false;
+	if (v3RayStart_TC[2] <= 0.0)
+		v3RayStart_TC += v3LineDirn_TC * (0.001 - v3RayStart_TC[2] / v3LineDirn_TC[2]);
 
-  m.Source = Measurement::SRC_EPIPOLAR;
-  m.v2RootPos = Finder.GetSubPixPos();
-  kTarget->mMeasurements[pNew] = m;
-  pNew->pMMData->sMeasurementKFs.insert(kSrc);
-  pNew->pMMData->sMeasurementKFs.insert(kTarget);
-  return true;
+	cv::Vec2d v2A = CvUtils::pproject(v3RayStart_TC);
+	cv::Vec2d v2B = CvUtils::pproject(v3RayEnd_TC);
+	cv::Vec2d v2AlongProjectedLine = v2A - v2B;
+
+	if (v2AlongProjectedLine.dot(v2AlongProjectedLine) < 0.00000001)
+	{
+		std::cout << "v2AlongProjectedLine too small." << std::endl;
+		return false;
+	}
+
+	v2AlongProjectedLine = CvUtils::normalize(v2AlongProjectedLine);
+	cv::Vec2d v2Normal(v2AlongProjectedLine[1], -v2AlongProjectedLine[0]);
+
+	double dNormDist = v2A.dot(v2Normal);
+	if (fabs(dNormDist) > mCamera.LargestRadiusInImage())
+		return false;
+
+	double dMinLen = min(v2AlongProjectedLine.dot(v2A), v2AlongProjectedLine.dot(v2B)) - 0.05;
+	double dMaxLen = max(v2AlongProjectedLine.dot(v2A), v2AlongProjectedLine.dot(v2B)) + 0.05;
+	if (dMinLen < -2.0)  dMinLen = -2.0;
+	if (dMaxLen < -2.0)  dMaxLen = -2.0;
+	if (dMinLen > 2.0)   dMinLen = 2.0;
+	if (dMaxLen > 2.0)   dMaxLen = 2.0;
+
+	// Find current-frame corners which might match this
+	PatchFinder Finder;
+	Finder.MakeTemplateCoarseNoWarp(kSrc, nLevel, irLevelPos);
+	if (Finder.TemplateBad())  return false;
+
+	std::vector<cv::Vec2d > &vv2Corners = kTarget->aLevels[nLevel].vImplaneCorners;
+	std::vector<cv::Point> &vIR = kTarget->aLevels[nLevel].vCorners;
+	if (!kTarget->aLevels[nLevel].bImplaneCornersCached)
+	{
+		for (unsigned int i = 0; i < vIR.size(); i++) {  // over all corners in target img..
+			cv::Point p2LevelPos = CvUtils::IL(LevelZeroPos(vIR[i], nLevel));
+			vv2Corners.push_back(imUnProj(p2LevelPos.y, p2LevelPos.x));
+		}
+		kTarget->aLevels[nLevel].bImplaneCornersCached = true;
+
+	}
+
+	int nBest = -1;
+	int nBestZMSSD = Finder.mnMaxSSD + 1;
+	double dMaxDistDiff = mCamera.OnePixelDist() * (4.0 + 1.0 * nLevelScale);
+	double dMaxDistSq = dMaxDistDiff * dMaxDistDiff;
+
+	for (unsigned int i = 0; i < vv2Corners.size(); i++)   // over all corners in target img..
+	{
+		cv::Vec2d v2Im = vv2Corners[i];
+		double dDistDiff = dNormDist - v2Im.dot(v2Normal);
+		if (dDistDiff * dDistDiff > dMaxDistSq)	continue; // skip if not along epi line
+		if (v2Im.dot(v2AlongProjectedLine) < dMinLen)	continue; // skip if not far enough along line
+		if (v2Im.dot(v2AlongProjectedLine) > dMaxLen)	continue; // or too far
+		int nZMSSD = Finder.ZMSSDAtPoint(kTarget->aLevels[nLevel].im, vIR[i]);
+		if (nZMSSD < nBestZMSSD)
+		{
+			nBest = i;
+			nBestZMSSD = nZMSSD;
+		}
+	}
+
+	if (nBest == -1)   return false;   // Nothing found.
+
+	//  Found a likely candidate along epipolar ray
+	Finder.MakeSubPixTemplate();
+	Finder.SetSubPixPos(LevelZeroPos(vIR[nBest], nLevel));
+	bool bSubPixConverges = Finder.IterateSubPixToConvergence(kTarget, 10);
+	if (!bSubPixConverges)
+		return false;
+
+	// Now triangulate the 3d point...
+	cv::Vec3d v3New;
+	v3New = kTarget->se3CfromW.inverse() *
+		ReprojectPoint(kSrc->se3CfromW * kTarget->se3CfromW.inverse(),
+			mCamera.UnProject(v2RootPos),
+			mCamera.UnProject(Finder.GetSubPixPos()));
+
+	MapPoint::Ptr pNew(new MapPoint);
+	pNew->v3WorldPos = v3New;
+	pNew->pMMData.reset(new MapMakerData());
+
+	// Patch source stuff:
+	pNew->pPatchSourceKF = kSrc;
+	pNew->nSourceLevel = nLevel;
+	pNew->v3Normal_NC = cv::Vec3d(0, 0, -1);
+	pNew->irCenter = irLevelPos;
+	pNew->v3Center_NC = CvUtils::backproject(mCamera.UnProject(v2RootPos));
+	pNew->v3OneRightFromCenter_NC = CvUtils::backproject(mCamera.UnProject(v2RootPos[0] + nLevelScale, v2RootPos[1]));
+	pNew->v3OneDownFromCenter_NC = CvUtils::backproject(mCamera.UnProject(v2RootPos[0], v2RootPos[1] + nLevelScale));
+
+	pNew->v3Center_NC = CvUtils::normalize(pNew->v3Center_NC);
+	pNew->v3OneDownFromCenter_NC = CvUtils::normalize(pNew->v3OneDownFromCenter_NC);
+	pNew->v3OneRightFromCenter_NC = CvUtils::normalize(pNew->v3OneRightFromCenter_NC);
+
+	pNew->RefreshPixelVectors();
+
+	mMap.vpPoints.push_back(pNew);
+	mqNewQueue.push(pNew);
+	Measurement m;
+	m.Source = Measurement::SRC_ROOT;
+	m.v2RootPos = v2RootPos;
+	m.nLevel = nLevel;
+	m.bSubPix = true;
+	kSrc->mMeasurements[pNew] = m;
+
+	m.Source = Measurement::SRC_EPIPOLAR;
+	m.v2RootPos = Finder.GetSubPixPos();
+	kTarget->mMeasurements[pNew] = m;
+	pNew->pMMData->sMeasurementKFs.insert(kSrc);
+	pNew->pMMData->sMeasurementKFs.insert(kTarget);
+	return true;
 }
 
 double MapMaker::KeyFrameLinearDist(KeyFrame::Ptr k1, KeyFrame::Ptr k2)
@@ -1132,7 +1132,7 @@ void MapMaker::ReFindFromFailureQueue()
 // Is the tracker's camera pose in cloud-cuckoo land?
 bool MapMaker::IsDistanceToNearestKeyFrameExcessive(KeyFrame::Ptr kCurrent)
 {
-  return DistToNearestKeyFrame(kCurrent) > mdWiggleScale * 10.0;
+	return DistToNearestKeyFrame(kCurrent) > mdWiggleScale * 10.0;
 }
 
 // Find a dominant plane in the map, find an SE3<> to put it as the z=0 plane
