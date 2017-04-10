@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\gltext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\GLWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\Addedutils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\FontStructs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\GLFont.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\GLHelpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\GLWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\GraphSLAM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\image_interpolate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\mono.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\Operators.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\sans.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\SE2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\SE3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\serif.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\SO2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\SO3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\workSpace\dev\PTAM64bits\temp\PTAM-64bits\GCVD\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{E61B09BF-2AE8-3721-B9EC-BEF734246E11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{81AD7234-8860-3D0B-8F2F-F98943241823}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

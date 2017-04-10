@@ -9,7 +9,6 @@
 #include <limits.h>
 
 using namespace std;
-using namespace cv;
 
 namespace MyOperatorOverloads {
   

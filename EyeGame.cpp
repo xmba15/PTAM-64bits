@@ -2,8 +2,6 @@
 #include "OpenGL.h"
 #include "GCVD/GLHelpers.h"
 
-using namespace cv;
-
 EyeGame::EyeGame()
 {
   mdEyeRadius = 0.1;
