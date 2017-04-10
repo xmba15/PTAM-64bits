@@ -29,6 +29,11 @@ file(GLOB_RECURSE 3rdparty ${3rdparty} ${lapackSrc}/lib/*.lib)
 
 set(3rdparty ${3rdparty} opengl32.lib)
 
+set(BOOST_DIR "C:/Mylib/boost_1_60_0")
+include_directories(${BOOST_DIR})
+link_directories(${BOOST_DIR}/stage/x64/lib)
+file(GLOB BOOST_LIBS ${BOOST_DIR}/stage/x64/lib/.*lib)
+
 message(${3rdparty})
 
 # source code
@@ -90,4 +95,4 @@ add_subdirectory(Persistence)
 
 message(${ptamLib})
 add_executable(${PROJECT_NAME} ${ptamLib})
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${3rdparty} FAST GCVD Persistence)
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${BOOST_LIBS} ${3rdparty} FAST GCVD Persistence)
