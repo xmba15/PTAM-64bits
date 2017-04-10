@@ -15,7 +15,7 @@
 
 struct TrackerData
 {
-	typedef std::shared_ptr<TrackerData> Ptr;
+	typedef boost::shared_ptr<TrackerData> Ptr;
 	TrackerData(MapPoint::Ptr pMapPoint) : Point(pMapPoint) {};
 
 	MapPoint::Ptr Point;
@@ -57,7 +57,7 @@ struct TrackerData
 		if (Cam.Invalid())
 			return;
 
-		if (v2Image[0] < 0 || v2Image[1] < 0 || v2Image[0] > irImageSize[0] || v2Image[1] > irImageSize[1])
+		if (v2Image[0] < 0 || v2Image[1] < 0 || v2Image[0] > irImageSize.width-1 || v2Image[1] > irImageSize.height-1)
 			return;
 		bInImage = true;
 	}

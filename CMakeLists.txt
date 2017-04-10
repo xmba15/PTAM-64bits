@@ -55,6 +55,7 @@ set(ptamLib
    MapMaker.h
    LevelHelpers.h
    Tracker.h
+   TrackerData.h
    Relocaliser.h
    HomographyInit.h
    Bundle.h

@@ -5,8 +5,8 @@
 #include "Operators.h"
 #include "Addedutils.h"
 
+#define _USE_MATH_DEFINES
 #include <math.h>
-#include <iostream>
 
 #include <opencv2/opencv.hpp>
 

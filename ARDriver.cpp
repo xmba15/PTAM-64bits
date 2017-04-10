@@ -96,7 +96,7 @@ void ARDriver::MakeFrameBuffer()
 	glGenTextures(1, &mnFrameBufferTex);
 	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, mnFrameBufferTex);
 	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0,
-		GL_RGBA, mirFBSize.x, mirFBSize.y, 0,
+		GL_RGBA, mirFBSize.width, mirFBSize.height, 0,
 		GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -104,7 +104,7 @@ void ARDriver::MakeFrameBuffer()
 	GLuint DepthBuffer;
 	glGenRenderbuffersEXT(1, &DepthBuffer);
 	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, DepthBuffer);
-	glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, mirFBSize.x, mirFBSize.y);
+	glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, mirFBSize.width, mirFBSize.height);
 
 	glGenFramebuffersEXT(1, &mnFrameBuffer);
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, mnFrameBuffer);

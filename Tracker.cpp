@@ -647,49 +647,48 @@ void Tracker::TrackMap()
     vIterationSet.push_back(vNextToSearch[i]);
   
   // Again, ten gauss-newton pose update iterations.
-  Vector<6> v6LastUpdate;
-  v6LastUpdate = Zeros;
-  for(int iter = 0; iter<10; iter++)
-    {
-      bool bNonLinearIteration; // For a bit of time-saving: don't do full nonlinear
-                                // reprojection at every iteration - it really isn't necessary!
-      if(iter == 0 || iter == 4 || iter == 9)
-	bNonLinearIteration = true;   // Even this is probably overkill, the reason we do many
-      else                            // iterations is for M-Estimator convergence rather than 
-	bNonLinearIteration = false;  // linearisation effects.
-      
-      if(iter != 0)   // Either way: first iteration doesn't need projection update.
-        {
-	  if(bNonLinearIteration)
-	    {
-	      for(unsigned int i=0; i<vIterationSet.size(); i++)
-		if(vIterationSet[i]->bFound)
-		  vIterationSet[i]->ProjectAndDerivs(mse3CamFromWorld, mCamera);
-	    }
-	  else
-	    {
-	      for(unsigned int i=0; i<vIterationSet.size(); i++)
-		if(vIterationSet[i]->bFound)
-		  vIterationSet[i]->LinearUpdate(v6LastUpdate);
-	    };
-	}
-      
-      if(bNonLinearIteration)
-	for(unsigned int i=0; i<vIterationSet.size(); i++)
-	  if(vIterationSet[i]->bFound)
-	    vIterationSet[i]->CalcJacobian();
+  cv::Vec6d v6LastUpdate(0, 0, 0, 0, 0, 0);
+  for (int iter = 0; iter < 10; iter++)
+  {
+	  bool bNonLinearIteration; // For a bit of time-saving: don't do full nonlinear
+								// reprojection at every iteration - it really isn't necessary!
+	  if (iter == 0 || iter == 4 || iter == 9)
+		  bNonLinearIteration = true;   // Even this is probably overkill, the reason we do many
+	  else                            // iterations is for M-Estimator convergence rather than 
+		  bNonLinearIteration = false;  // linearisation effects.
 
-      // Again, an M-Estimator hack beyond the fifth iteration.
-      double dOverrideSigma = 0.0;
-      if(iter > 5)
-	dOverrideSigma = 16.0;
-      
-      // Calculate and update pose; also store update vector for linear iteration updates.
-      Vector<6> v6Update = 
-	CalcPoseUpdate(vIterationSet, dOverrideSigma, iter==9);
-      mse3CamFromWorld = SE3<>::exp(v6Update) * mse3CamFromWorld;
-      v6LastUpdate = v6Update;
-    };
+	  if (iter != 0)   // Either way: first iteration doesn't need projection update.
+	  {
+		  if (bNonLinearIteration)
+		  {
+			  for (unsigned int i = 0; i < vIterationSet.size(); i++)
+				  if (vIterationSet[i]->bFound)
+					  vIterationSet[i]->ProjectAndDerivs(mse3CamFromWorld, mCamera);
+		  }
+		  else
+		  {
+			  for (unsigned int i = 0; i < vIterationSet.size(); i++)
+				  if (vIterationSet[i]->bFound)
+					  vIterationSet[i]->LinearUpdate(v6LastUpdate);
+		  };
+	  }
+
+	  if (bNonLinearIteration)
+		  for (unsigned int i = 0; i < vIterationSet.size(); i++)
+			  if (vIterationSet[i]->bFound)
+				  vIterationSet[i]->CalcJacobian();
+
+	  // Again, an M-Estimator hack beyond the fifth iteration.
+	  double dOverrideSigma = 0.0;
+	  if (iter > 5)
+		  dOverrideSigma = 16.0;
+
+	  // Calculate and update pose; also store update vector for linear iteration updates.
+	  cv::Vec6d v6Update =
+		  CalcPoseUpdate(vIterationSet, dOverrideSigma, iter == 9);
+	  mse3CamFromWorld = RigidTransforms::SE3<>::exp(v6Update) * mse3CamFromWorld;
+	  v6LastUpdate = v6Update;
+  }
   
   if(mbDraw)
     {

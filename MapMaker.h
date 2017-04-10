@@ -19,6 +19,8 @@
 #include "additionalUtility.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
+#include "MapPoint.h"
+#include <set>
 
 // Each MapPoint has an associated MapMakerData class
 // Where the mapmaker can store extra information

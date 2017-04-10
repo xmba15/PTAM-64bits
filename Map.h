@@ -27,10 +27,10 @@ struct Map
   
   void MoveBadPointsToTrash();
   void EmptyTrash();
-  
-  std::vector<MapPoint::Ptr> vpPoints;
-  std::vector<MapPoint::Ptr> vpPointsTrash;
-  std::vector<KeyFrame::Ptr> vpKeyFrames;
+
+  std::vector<boost::shared_ptr<MapPoint> > vpPoints;
+  std::vector<boost::shared_ptr<MapPoint> > vpPointsTrash;
+  std::vector<boost::shared_ptr<KeyFrame> > vpKeyFrames;
 
   bool bGood;
 };

@@ -25,6 +25,7 @@ extern CvUtils::Timer timer;
 struct MapPoint
 {
 public:
+
 	typedef boost::shared_ptr<MapPoint> Ptr;
 	// Constructor inserts sensible defaults and zeros pointers.
 	inline MapPoint()

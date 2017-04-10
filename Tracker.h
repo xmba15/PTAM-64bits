@@ -78,10 +78,10 @@ protected:
   void AssessTrackingQuality();   // Heuristics to choose between good, poor, bad.
   void ApplyMotionModel();        // Decaying velocity motion model applied prior to TrackMap
   void UpdateMotionModel();       // Motion model is updated after TrackMap
-  int SearchForPoints(std::vector<TrackerData::Ptr> &vTD, 
+  int SearchForPoints(std::vector<boost::shared_ptr<TrackerData> > &vTD, 
 		      int nRange, 
 		      int nFineIts);  // Finds points in the image
-  cv::Vec<double, 6> CalcPoseUpdate(std::vector<TrackerData::Ptr> vTD, 
+  cv::Vec<double, 6> CalcPoseUpdate(std::vector<boost::shared_ptr<TrackerData> > vTD, 
 			   double dOverrideSigma = 0.0, 
 			   bool bMarkOutliers = false); // Updates pose from found points.
   RigidTransforms::SE3<> mse3CamFromWorld;           // Camera pose: this is what the tracker updates every frame.
