@@ -1,7 +1,0 @@
-C:/workSpace/dev/PTAM64bits/temp/PTAM-64bits/build/CMakeFiles/PTAM.dir
-C:/workSpace/dev/PTAM64bits/temp/PTAM-64bits/build/CMakeFiles/ALL_BUILD.dir
-C:/workSpace/dev/PTAM64bits/temp/PTAM-64bits/build/CMakeFiles/ZERO_CHECK.dir
-C:/workSpace/dev/PTAM64bits/temp/PTAM-64bits/build/FAST/CMakeFiles/FAST.dir
-C:/workSpace/dev/PTAM64bits/temp/PTAM-64bits/build/FAST/CMakeFiles/ALL_BUILD.dir
-C:/workSpace/dev/PTAM64bits/temp/PTAM-64bits/build/GCVD/CMakeFiles/GCVD.dir
-C:/workSpace/dev/PTAM64bits/temp/PTAM-64bits/build/Persistence/CMakeFiles/Persistence.dir
