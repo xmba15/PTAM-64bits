@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __TRACKERDATA_H
+#define __TRACKERDATA_H
 
 #include "GCVD/SE3.h"
 #include "PatchFinder.h"
@@ -104,3 +105,5 @@ struct TrackerData
 	// This static member is filled in by the tracker and allows in-image checks in this class above.
 	static cv::Size irImageSize;
 };
+
+#endif

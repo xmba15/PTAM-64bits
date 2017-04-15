@@ -7,7 +7,9 @@
 // (notably stereo init) are called by the tracker and run in the 
 // tracker's thread.
 
-#pragma once
+#ifndef __MAPMAKER_H
+#define __MAPMAKER_H
+
 
 #include <thread>
 
@@ -24,6 +26,7 @@
 // Each MapPoint has an associated MapMakerData class
 // Where the mapmaker can store extra information
  
+
 struct MapMakerData
 {
 	typedef boost::shared_ptr<MapMakerData> Ptr;
@@ -136,3 +139,5 @@ protected:
 	bool mbBundleRunning;             // Bundle adjustment is running
 	bool mbBundleRunningIsRecent;     //    ... and it's a local bundle adjustment.
 };
+
+#endif

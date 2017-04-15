@@ -10,7 +10,8 @@
 // However, the tracker also stores its current frame as a half-populated
 // KeyFrame struct.
 
-#pragma once
+#ifndef __KEYFRAME_H
+#define __KEYFRAME_H
 
 #include "GCVD/SE3.h"
 #include <vector>
@@ -22,7 +23,7 @@
 struct MapPoint;
 class SmallBlurryImage;
 
-#define LEVELS 4
+static const int LEVELS = 4;
 
 // Candidate: a feature in an image which could be made into a map point
 struct Candidate
@@ -91,3 +92,6 @@ public:
 };
 
 typedef std::map<boost::shared_ptr<MapPoint>, Measurement>::iterator meas_it;  // For convenience, and to work around an emacs paren-matching bug
+
+
+#endif

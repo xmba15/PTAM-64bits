@@ -8,12 +8,13 @@
 // Also stores stuff like inlier/outlier counts, and privat information for 
 // both Tracker and MapMaker.
 
-#pragma once
+#ifndef __MAP_POINT_H
+#define __MAP_POINT_H
 
 #include "GCVD/timer.h"
 #include <set>
 #include "additionalUtility.h"
-#include "TrackerData.h"
+#include <memory>
 #include <boost/shared_ptr.hpp>
 
 struct KeyFrame;
@@ -76,3 +77,5 @@ public:
 	// Random junk (e.g. for visualisation)
 	double dCreationTime; //timer.get_time() time of creation
 };
+
+#endif

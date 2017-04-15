@@ -31,7 +31,8 @@
 // at construction), the use of 8x8 pixel templates (the default) is highly 
 // recommended, as the coarse search for this size is SSE-optimised.
 
-#pragma once
+#ifndef __PATCHFINDER_H
+#define __PATCHFINDER_H
 
 #include "GCVD/SE3.h"
 #include "MapPoint.h"
@@ -42,90 +43,92 @@
 class PatchFinder
 {
 public:
-  // Constructor defines size of search patch.
-  PatchFinder(int nPatchSize = 8);
-  
-  // Step 1 Function.
-  // This calculates the warping matrix appropriate for observing point p
-  // from the current view (described as an SE3.) This also needs the camera
-  // projection derivates at level zero for the point's projection in the new view.
-  // It also calculates which pyramid level we should search in, and this is
-  // returned as an int. Negative level returned denotes an inappropriate 
-  // transformation.
-  int CalcSearchLevelAndWarpMatrix(MapPoint::Ptr p, RigidTransforms::SE3<> se3CFromW, cv::Matx<double, 2, 2> &m2CamDerivs);
-  inline int GetLevel() { return mnSearchLevel; }
-  inline int GetLevelScale() { return LevelScale(mnSearchLevel); }
-  
-  // Step 2 Functions
-  // Generates the NxN search template either from the pre-calculated warping matrix,
-  // or an identity transformation.
-  void MakeTemplateCoarseCont(MapPoint::Ptr p); // If the warping matrix has already been pre-calced, use this.
-  void MakeTemplateCoarse(MapPoint::Ptr p, RigidTransforms::SE3<> se3CFromW, cv::Matx<double, 2, 2> &m2CamDerivs); // This also calculates the warp.
-  void MakeTemplateCoarseNoWarp(MapPoint::Ptr p);  // Identity warp: just copies pixels from the source KF.
-  void MakeTemplateCoarseNoWarp(boost::shared_ptr<KeyFrame> k, int nLevel, cv::Point irLevelPos); // Identity warp if no MapPoint struct exists yet.
+	// Constructor defines size of search patch.
+	PatchFinder(int nPatchSize = 8);
 
-  // If the template making failed (i.e. it needed pixels outside the source image),
-  // this bool will return false.
-  inline bool TemplateBad()      { return mbTemplateBad;} 
-  
-  // Step 3 Functions
-  // This is the raison d'etre of the class: finds the patch in the current input view,
-  // centered around ir, Searching around FAST corner locations only within a radius nRange only.
-  // Inputs are given in level-zero coordinates! Returns true if the patch was found.
-  bool FindPatchCoarse(cv::Point ir, boost::shared_ptr<KeyFrame> kf, unsigned int nRange);  
-  bool FindPatchCoarse(cv::Vec2d ir, boost::shared_ptr<KeyFrame> kf, unsigned int nRange) {
-	  return FindPatchCoarse(cv::Point(ir[0], ir[1]), kf, nRange);
-  }
+	// Step 1 Function.
+	// This calculates the warping matrix appropriate for observing point p
+	// from the current view (described as an SE3.) This also needs the camera
+	// projection derivates at level zero for the point's projection in the new view.
+	// It also calculates which pyramid level we should search in, and this is
+	// returned as an int. Negative level returned denotes an inappropriate 
+	// transformation.
+	int CalcSearchLevelAndWarpMatrix(MapPoint::Ptr p, RigidTransforms::SE3<> se3CFromW, cv::Matx<double, 2, 2> &m2CamDerivs);
+	inline int GetLevel() { return mnSearchLevel; }
+	inline int GetLevelScale() { return LevelScale(mnSearchLevel); }
 
-  int ZMSSDAtPoint(const cv::Mat_<uchar> &im, const cv::Point &ir); // This evaluates the score at one location
-  // Results from step 3:
-  // All positions are in the scale of level 0.
-  inline cv::Point GetCoarsePos() { return cv::Point((int) mv2CoarsePos[0], (int) mv2CoarsePos[1]);} 
-  inline cv::Vec2d GetCoarsePosAsVector() { return mv2CoarsePos; }
-  
-  // Step 4
-  void MakeSubPixTemplate();  // Generate the inverse composition template and jacobians
-  
-  // Step 5 Functions
-  bool IterateSubPixToConvergence(boost::shared_ptr<KeyFrame> kf, int nMaxIts);  // Run inverse composition till convergence
-  double IterateSubPix(boost::shared_ptr<KeyFrame> kf);     // Single iteration of IC. Returns sum-squared pixel update dist, or negative if out of imag
-  inline cv::Vec2d GetSubPixPos()  { return mv2SubPixPos;   }  // Get result
-  void SetSubPixPos(cv::Vec2d v2)  { mv2SubPixPos = v2;     }  // Set starting point
-  
-  // Get the uncertainty estimate of a found patch;
-  // This for just returns an appropriately-scaled identity!
-  inline cv::Matx<double, 2, 2> GetCov() // returns 2x2 matrix
-  {
-	  return LevelScale(mnSearchLevel) * cv::Matx<double, 2, 2>::eye();
-  }
-  
-  int mnMaxSSD; // This is the max ZMSSD for a valid match. It's set in the constructor.
+	// Step 2 Functions
+	// Generates the NxN search template either from the pre-calculated warping matrix,
+	// or an identity transformation.
+	void MakeTemplateCoarseCont(MapPoint::Ptr p); // If the warping matrix has already been pre-calced, use this.
+	void MakeTemplateCoarse(MapPoint::Ptr p, RigidTransforms::SE3<> se3CFromW, cv::Matx<double, 2, 2> &m2CamDerivs); // This also calculates the warp.
+	void MakeTemplateCoarseNoWarp(MapPoint::Ptr p);  // Identity warp: just copies pixels from the source KF.
+	void MakeTemplateCoarseNoWarp(boost::shared_ptr<KeyFrame> k, int nLevel, cv::Point irLevelPos); // Identity warp if no MapPoint struct exists yet.
+
+	// If the template making failed (i.e. it needed pixels outside the source image),
+	// this bool will return false.
+	inline bool TemplateBad() { return mbTemplateBad; }
+
+	// Step 3 Functions
+	// This is the raison d'etre of the class: finds the patch in the current input view,
+	// centered around ir, Searching around FAST corner locations only within a radius nRange only.
+	// Inputs are given in level-zero coordinates! Returns true if the patch was found.
+	bool FindPatchCoarse(cv::Point ir, boost::shared_ptr<KeyFrame> kf, unsigned int nRange);
+	bool FindPatchCoarse(cv::Vec2d ir, boost::shared_ptr<KeyFrame> kf, unsigned int nRange) {
+		return FindPatchCoarse(cv::Point(ir[0], ir[1]), kf, nRange);
+	}
+
+	int ZMSSDAtPoint(const cv::Mat_<uchar> &im, const cv::Point &ir); // This evaluates the score at one location
+	// Results from step 3:
+	// All positions are in the scale of level 0.
+	inline cv::Point GetCoarsePos() { return cv::Point((int)mv2CoarsePos[0], (int)mv2CoarsePos[1]); }
+	inline cv::Vec2d GetCoarsePosAsVector() { return mv2CoarsePos; }
+
+	// Step 4
+	void MakeSubPixTemplate();  // Generate the inverse composition template and jacobians
+
+	// Step 5 Functions
+	bool IterateSubPixToConvergence(boost::shared_ptr<KeyFrame> kf, int nMaxIts);  // Run inverse composition till convergence
+	double IterateSubPix(boost::shared_ptr<KeyFrame> kf);     // Single iteration of IC. Returns sum-squared pixel update dist, or negative if out of imag
+	inline cv::Vec2d GetSubPixPos() { return mv2SubPixPos; }  // Get result
+	void SetSubPixPos(cv::Vec2d v2) { mv2SubPixPos = v2; }  // Set starting point
+
+	// Get the uncertainty estimate of a found patch;
+	// This for just returns an appropriately-scaled identity!
+	inline cv::Matx<double, 2, 2> GetCov() // returns 2x2 matrix
+	{
+		return LevelScale(mnSearchLevel) * cv::Matx<double, 2, 2>::eye();
+	}
+
+	int mnMaxSSD; // This is the max ZMSSD for a valid match. It's set in the constructor.
 
 protected:
- 
-  int mnPatchSize; // Size of one side of the matching template.
-  
-  // Some values stored for the coarse template:
-  int mnTemplateSum;    // Cached pixel-sum of the coarse template
-  int mnTemplateSumSq;  // Cached pixel-squared sum of the coarse template
-  inline void MakeTemplateSums(); // Calculate above values
-  
-  cv::Mat_<uchar> mimTemplate;   // The matching template
-  cv::Mat_<cv::Vec2d> mimJacs;  // Inverse composition jacobians; stored as floats to save a bit of space.
-  
-  cv::Matx<double, 2, 2> mm2WarpInverse;   // Warping matrix
-  int mnSearchLevel;          // Search level in input pyramid
-  cv::Matx<double, 3, 3> mm3HInv;          // Inverse composition JtJ^-1
-  cv::Vec2d mv2SubPixPos;     // In the scale of level 0
-  double mdMeanDiff;          // Updated during inverse composition
-  
-  cv::Point mirPredictedPos;  // Search center location of FindPatchCoarse in L0
-  cv::Vec2d mv2CoarsePos;     // In the scale of level 0; hence the use of vector rather than ImageRef
-  cv::Point mirCenter;    // Quantized location of the center pixel of the NxN pixel template
-  bool mbFound;               // Was the patch found?
-  bool mbTemplateBad;         // Error during template generation?
 
-  // Some cached values to avoid duplicating work if the camera is stopped:
-  MapPoint::Ptr mpLastTemplateMapPoint;  // Which was the last map point this PatchFinder used?
-  cv::Matx<double, 2, 2> mm2LastWarpMatrix;       // What was the last warp matrix this PatchFinder used?
+	int mnPatchSize; // Size of one side of the matching template.
+
+	// Some values stored for the coarse template:
+	int mnTemplateSum;    // Cached pixel-sum of the coarse template
+	int mnTemplateSumSq;  // Cached pixel-squared sum of the coarse template
+	inline void MakeTemplateSums(); // Calculate above values
+
+	cv::Mat_<uchar> mimTemplate;   // The matching template
+	cv::Mat_<cv::Vec2d> mimJacs;  // Inverse composition jacobians; stored as floats to save a bit of space.
+
+	cv::Matx<double, 2, 2> mm2WarpInverse;   // Warping matrix
+	int mnSearchLevel;          // Search level in input pyramid
+	cv::Matx<double, 3, 3> mm3HInv;          // Inverse composition JtJ^-1
+	cv::Vec2d mv2SubPixPos;     // In the scale of level 0
+	double mdMeanDiff;          // Updated during inverse composition
+
+	cv::Point mirPredictedPos;  // Search center location of FindPatchCoarse in L0
+	cv::Vec2d mv2CoarsePos;     // In the scale of level 0; hence the use of vector rather than ImageRef
+	cv::Point mirCenter;    // Quantized location of the center pixel of the NxN pixel template
+	bool mbFound;               // Was the patch found?
+	bool mbTemplateBad;         // Error during template generation?
+
+	// Some cached values to avoid duplicating work if the camera is stopped:
+	MapPoint::Ptr mpLastTemplateMapPoint;  // Which was the last map point this PatchFinder used?
+	cv::Matx<double, 2, 2> mm2LastWarpMatrix;       // What was the last warp matrix this PatchFinder used?
 };
+
+#endif

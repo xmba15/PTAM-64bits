@@ -15,7 +15,8 @@
 // TrackForInitialMap() or TrackMap() as appropriate.
 //
 
-#pragma once
+#ifndef __TRACKER_H
+#define __TRACKER_H
 
 #include "GCVD/SE3.h"
 #include "MapMaker.h"
@@ -126,3 +127,5 @@ protected:
   struct Command {std::string sCommand; std::string sParams; };
   std::vector<Tracker::Command> mvQueuedCommands;
 };
+
+#endif
