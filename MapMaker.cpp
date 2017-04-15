@@ -569,7 +569,7 @@ bool MapMaker::AddPointEpipolar(KeyFrame::Ptr kSrc,
 		imUnProj.create(kSrc->aLevels[0].im.size());
 		for (int i = 0; i < imUnProj.rows; i++)
 			for (int j = 0; j < imUnProj.cols; j++) {
-				imUnProj.ptr<Vec2d>(i)[j] = mCamera.UnProject(j, i);
+				imUnProj.ptr<cv::Vec2d>(i)[j] = mCamera.UnProject(j, i);
 			}
 		bMadeCache = true;
 	}
@@ -1060,7 +1060,7 @@ bool MapMaker::ReFind_Common(KeyFrame::Ptr k, MapPoint::Ptr p)
 	{
 		m.v2RootPos = Finder.GetCoarsePosAsVector();
 		m.bSubPix = false;
-	};
+	}
 
 	if (k->mMeasurements.count(p))
 	{

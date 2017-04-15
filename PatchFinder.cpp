@@ -126,7 +126,7 @@ void PatchFinder::MakeTemplateCoarseCont(MapPoint::Ptr p)
 
 		// Store the parameters which allow us to determine if we need to re-calculate
 		// the patch next time round.
-		mpLastTemplateMapPoint = &p;
+		mpLastTemplateMapPoint = p;
 		mm2LastWarpMatrix = m2;
 	}
 }

@@ -19,7 +19,6 @@
 #include "additionalUtility.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
-#include "MapPoint.h"
 #include <set>
 
 // Each MapPoint has an associated MapMakerData class
@@ -27,7 +26,7 @@
  
 struct MapMakerData
 {
-	typedef std::shared_ptr<MapMakerData> Ptr;
+	typedef boost::shared_ptr<MapMakerData> Ptr;
 	std::set<KeyFrame::Ptr> sMeasurementKFs;   // Which keyframes has this map point got measurements in?
 	std::set<KeyFrame::Ptr> sNeverRetryKFs;    // Which keyframes have measurements failed enough so I should never retry?
 	inline int GoodMeasCount()

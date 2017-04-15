@@ -485,7 +485,7 @@ void Tracker::TrackMap()
 	  TData->GetDerivsUnsafe(mCamera);
 
 	  // And check what the PatchFinder (included in TrackerData) makes of the mappoint in this view..
-	  TData->nSearchLevel = TData->Finder.CalcSearchLevelAndWarpMatrix(TData->Point, mse3CamFromWorld, TData.m2CamDerivs);
+	  TData->nSearchLevel = TData->Finder.CalcSearchLevelAndWarpMatrix(TData->Point, mse3CamFromWorld, TData->m2CamDerivs);
 	  if (TData->nSearchLevel == -1)
 		  continue;   // a negative search pyramid level indicates an inappropriate warp for this view, so skip.
 
@@ -625,7 +625,7 @@ void Tracker::TrackMap()
   
   // But we haven't got CPU to track _all_ patches in the map - arbitrarily limit 
   // ourselves to 1000, and choose these randomly.
-  static gvar3<int> gvnMaxPatchesPerFrame("Tracker.MaxPatchesPerFrame", 1000, SILENT);
+  static Persistence::pvar3<int> gvnMaxPatchesPerFrame("Tracker.MaxPatchesPerFrame", 1000, Persistence::SILENT);
   int nFinePatchesToUse = *gvnMaxPatchesPerFrame - vIterationSet.size();
   if(nFinePatchesToUse < 0)
     nFinePatchesToUse = 0;
@@ -697,14 +697,14 @@ void Tracker::TrackMap()
       glEnable(GL_POINT_SMOOTH);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glBegin(GL_POINTS);
-      for(vector<TrackerData*>::reverse_iterator it = vIterationSet.rbegin();
+      for(std::vector<TrackerData::Ptr>::reverse_iterator it = vIterationSet.rbegin();
 	  it!= vIterationSet.rend(); 
 	  it++)
 	{
 	  if(! (*it)->bFound)
 	    continue;
-	  glColor(gavLevelColors[(*it)->nSearchLevel]);
-	  glVertex((*it)->v2Image);
+	  glColor3d(gavLevelColors[(*it)->nSearchLevel][0], gavLevelColors[(*it)->nSearchLevel][1], gavLevelColors[(*it)->nSearchLevel][2]);
+	  GLXInterface::glVertex((*it)->v2Image);
 	}
       glEnd();
       glDisable(GL_BLEND);
@@ -718,7 +718,7 @@ void Tracker::TrackMap()
   
   // Record successful measurements. Use the KeyFrame-Measurement struct for this.
   mCurrentKF->mMeasurements.clear();
-  for(vector<TrackerData*>::iterator it = vIterationSet.begin();
+  for(std::vector<TrackerData::Ptr>::iterator it = vIterationSet.begin();
       it!= vIterationSet.end(); 
       it++)
     {
@@ -728,7 +728,7 @@ void Tracker::TrackMap()
       m.v2RootPos = (*it)->v2Found;
       m.nLevel = (*it)->nSearchLevel;
       m.bSubPix = (*it)->bDidSubPix; 
-      mCurrentKF->mMeasurements[& ((*it)->Point)] = m;
+      mCurrentKF->mMeasurements[(*it)->Point] = m;
     }
   
   // Finally, find the mean scene depth from tracked features
@@ -736,7 +736,7 @@ void Tracker::TrackMap()
     double dSum = 0;
     double dSumSq = 0;
     int nNum = 0;
-    for(vector<TrackerData*>::iterator it = vIterationSet.begin();
+    for(std::vector<TrackerData::Ptr>::iterator it = vIterationSet.begin();
 	it!= vIterationSet.end(); 
 	it++)
       if((*it)->bFound)

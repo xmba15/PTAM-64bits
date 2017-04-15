@@ -21,11 +21,11 @@ int main()
 		System s;
 		s.Run();
 	}
-	catch (cv::Exception e)
+	catch (cv::Exception &e)
 	{
 		std::cout << std::endl;
 		std::cout << "!! Failed to run system; got exception. " << std::endl;
 		std::cout << "   Exception was: " << std::endl;
-		std::cout << e.what << endl;
+		std::cout << e.what << std::endl;
 	}
 }

@@ -285,7 +285,7 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 			meas.m23B(0, m) = meas.dSqrtInvNoise * (m2CamDerivs(0, 0) * v2CamFrameMotion[0] +
 				m2CamDervis(0, 1) * v2CamFrameMotion[1]);
 			meas.m23B(1, m) = meas.dSqrtInvNoise * (m2CamDervis(1, 0) * v2CamFrameMotion[0] +
-				m2CamDervis(1, 1) * v2CamFrameMotion[1);
+				m2CamDervis(1, 1) * v2CamFrameMotion[1]);
 		}
 		// Update the accumulators
 		if (!cam.bFixed)
@@ -476,32 +476,32 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 				if (pMeas == NULL || pMeas->bBad)
 					continue;
 
-				for (_c = 0; _c < 3; _c++)
+				for (int _c = 0; _c < 3; _c++) {
 					v3Sum[_c] += pMea->m63W(0, _c) * vCamerasUpdate(cam.nStartRow + 0, 0) +
-					pMeas->m63W(1, _c) * mvCamerasUpdate(cam.nStartRow + 1, 0) +
-					pMeas->m63W(2, _c) * mvCamerasUpdate(cam.nStartRow + 2, 0) +
-					pMeas->m63W(3, _c) * mvCamerasUpdate(cam.nStartRow + 3, 0) +
-					pMeas->m63W(4, _c) * mvCamerasUpdate(cam.nStartRow + 4, 0) +
-					pMeas->m63W(5, _c) * mvCamerasUpdate(cam.nStartRow + 5, 0);
+						pMeas->m63W(1, _c) * mvCamerasUpdate(cam.nStartRow + 1, 0) +
+						pMeas->m63W(2, _c) * mvCamerasUpdate(cam.nStartRow + 2, 0) +
+						pMeas->m63W(3, _c) * mvCamerasUpdate(cam.nStartRow + 3, 0) +
+						pMeas->m63W(4, _c) * mvCamerasUpdate(cam.nStartRow + 4, 0) +
+						pMeas->m63W(5, _c) * mvCamerasUpdate(cam.nStartRow + 5, 0);
+				}
+
+				cv::Vec3d v3 = mvPoints[i].v3EpsilonB - v3Sum;
+
+				vMapUpdates(i * 3 + 0, 0) = mvPoints[i].m3VStarInv(0, 0) * v3[0] + mvPoints[i].m3VStarInv(0, 1) * v3[1]
+					+ mvPoints[i].m3VStarInv(0, 2) * v3[2];
+				vMapUpdates(i * 3 + 1, 0) = mvPoints[i].m3VStarInv(1, 0) * v3[0] + mvPoints[i].m3VStarInv(1, 1) * v3[1]
+					+ mvPoints[i].m3VStarInv(1, 2) * v3[2];
+				vMapUpdates(i * 3 + 2, 0) = mvPoints[i].m3VStarInv(2, 0) * v3[0] + mvPoints[i].m3VStarInv(2, 1) * v3[1]
+					+ mvPoints[i].m3VStarInv(2, 2) * v3[2];
+
+				if (isnan(vMapUpdates(i * 3 + 0, 0) * vMapUpdates(i * 3 + 0, 0) +
+					vMapUpdates(i * 3 + 1, 0) * vMapUpdates(i * 3 + 1, 0) +
+					vMapUpdates(i * 3 + 2, 0) * vMapUpdates(i * 3 + 2, 0)))
+				{
+					std::cerr << "NANNERY! " << std::endl;
+					std::cerr << mvPoints[i].m3VStarInv << std::endl;
+				}
 			}
-
-			cv::Vec3d v3 = mvPoints[i].v3EpsilonB - v3Sum;
-
-			vMapUpdates(i * 3 + 0, 0) = mvPoints[i].m3VStarInv(0, 0) * v3[0] + mvPoints[i].m3VStarInv(0, 1) * v3[1]
-				+ mvPoints[i].m3VStarInv(0, 2) * v3[2];
-			vMapUpdates(i * 3 + 1, 0) = mvPoints[i].m3VStarInv(1, 0) * v3[0] + mvPoints[i].m3VStarInv(1, 1) * v3[1]
-				+ mvPoints[i].m3VStarInv(1, 2) * v3[2];
-			vMapUpdates(i * 3 + 2, 0) = mvPoints[i].m3VStarInv(2, 0) * v3[0] + mvPoints[i].m3VStarInv(2, 1) * v3[1]
-				+ mvPoints[i].m3VStarInv(2, 2) * v3[2];
-
-			if (isnan(vMapUpdates(i * 3 + 0, 0) * vMapUpdates(i * 3 + 0, 0) +
-				vMapUpdates(i * 3 + 1, 0) * vMapUpdates(i * 3 + 1, 0) +
-				vMapUpdates(i * 3 + 2, 0) * vMapUpdates(i * 3 + 2, 0)))
-			{
-				std::cerr << "NANNERY! " << std::endl;
-				std::cerr << mvPoints[i].m3VStarInv << std::endl;
-			}
-		}
 
 		// OK, got the two update vectors.
 		// First check for convergence..

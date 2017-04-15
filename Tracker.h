@@ -28,6 +28,7 @@
 #include "additionalUtility.h"
 
 class TrackerData;
+
 struct Trail    // This struct is used for initial correspondences of the first stereo pair.
 {
   MiniPatch mPatch;

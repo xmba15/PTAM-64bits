@@ -19,7 +19,7 @@
 #include <boost/shared_ptr.hpp>
 #include "additionalUtility.h"
 
-class MapPoint;
+struct MapPoint;
 class SmallBlurryImage;
 
 #define LEVELS 4

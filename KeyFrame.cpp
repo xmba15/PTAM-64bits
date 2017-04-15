@@ -60,7 +60,7 @@ void KeyFrame::MakeKeyFrame_Rest()
 	// Fills the rest of the keyframe structure needed by the mapmaker:
 	// FAST nonmax suppression, generation of the list of candidates for further map points,
 	// creation of the relocaliser's SmallBlurryImage.
-	static Persistence::pvar3<double> pvdCandidateMinSTScore("MapMaker.CandidateMinShiTomasiScore", 70, SILENT);
+	static Persistence::pvar3<double> pvdCandidateMinSTScore("MapMaker.CandidateMinShiTomasiScore", 70, Persistence::SILENT);
 
 	// For each level...
 	for (int l = 0; l < LEVELS; l++)

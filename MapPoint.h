@@ -16,9 +16,9 @@
 #include "TrackerData.h"
 #include <boost/shared_ptr.hpp>
 
-class KeyFrame;
-class TrackerData;
-class MapMakerData;
+struct KeyFrame;
+struct TrackerData;
+struct MapMakerData;
 
 extern CvUtils::Timer timer;
 
@@ -63,7 +63,7 @@ public:
 
 	// Info for the Mapmaker (not to be trashed by the tracker:)
 	//boost::shared_ptr<MapMakerData> pMMData;
-	TrackerData::Ptr pMMData;
+	MapMakerData::Ptr pMMData;
 
 	// Info for the Tracker (not to be trashed by the MapMaker:)
 	//boost::shared_ptr<TrackerData> pTData;

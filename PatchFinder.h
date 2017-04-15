@@ -38,7 +38,6 @@
 #include "LevelHelpers.h"
 #include "additionalUtility.h"
 #include <boost/shared_ptr.hpp>
-#include "KeyFrame.h"
 
 class PatchFinder
 {
