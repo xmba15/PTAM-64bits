@@ -224,7 +224,7 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 	{
 		Meas &meas = *itr;
 		Camera &cam = mvCameras[meas.c];
-		Point &point = mvPoints[meas.p];
+		BAPoint &point = mvPoints[meas.p];
 
 		// Project the point.
 		// We've done this before - results are still cached in meas.
@@ -257,7 +257,7 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 		cv::Matx<double, 2, 2> m2CamDerivs = dWeight * meas.m2CamDerivs;
 
 		const double dOneOverCameraZ = 1.0 / meas.v3Cam[2];
-		const Vec4d v4Cam = CvUtils::backproject(meas.v3Cam);
+		const cv::Vec4d v4Cam = CvUtils::backproject(meas.v3Cam);
 
 		// Calculate A: (the proj derivs WRT the camera)
 		if (cam.bFixed)
@@ -270,9 +270,9 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 				cv::Vec2d v2CamFrameMotion((v4Motion[0] - v4Cam[0] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ,
 					(v4Motion[1] - v4Cam[1] * v4Motion[2] * dOneOverCameraZ) * dOneOverCameraZ);
 				meas.m26A(0, m) = meas.dSqrtInvNoise * (m2CamDerivs(0, 0) * v2CamFrameMotion[0]
-					+ m2CamDervis(0, 1) * v2CamFrameMotion[1]);
-				meas.m26A(1, m) = meas.dSqrtInvNoise * (m2CamDervis(1, 0) * v2CamFrameMotion[0]
-					+ m2CamDervis(1, 1) * v2CamFrameMotion[1]);
+					+ m2CamDerivs(0, 1) * v2CamFrameMotion[1]);
+				meas.m26A(1, m) = meas.dSqrtInvNoise * (m2CamDerivs(1, 0) * v2CamFrameMotion[0]
+					+ m2CamDerivs(1, 1) * v2CamFrameMotion[1]);
 			}
 		}
 
@@ -280,12 +280,13 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 		for (int m = 0; m < 3; m++)
 		{
 			const cv::Matx<double, 3, 1> v3Motion = cam.se3CfW.get_rotation().get_matrix().col(m);
-			cv::Vec2d v2CamFrameMotion((v3Motion[0] - v4Cam[0] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ,
-				(v3Motion[1] - v4Cam[1] * v3Motion[2] * dOneOverCameraZ) * dOneOverCameraZ);
+
+			cv::Vec2d v2CamFrameMotion((v3Motion(0, 0) - v4Cam[0] * v3Motion(2, 0) * dOneOverCameraZ) * dOneOverCameraZ,
+				(v3Motion(1, 0) - v4Cam[1] * v3Motion(2, 0) * dOneOverCameraZ) * dOneOverCameraZ);
 			meas.m23B(0, m) = meas.dSqrtInvNoise * (m2CamDerivs(0, 0) * v2CamFrameMotion[0] +
-				m2CamDervis(0, 1) * v2CamFrameMotion[1]);
-			meas.m23B(1, m) = meas.dSqrtInvNoise * (m2CamDervis(1, 0) * v2CamFrameMotion[0] +
-				m2CamDervis(1, 1) * v2CamFrameMotion[1]);
+				m2CamDerivs(0, 1) * v2CamFrameMotion[1]);
+			meas.m23B(1, m) = meas.dSqrtInvNoise * (m2CamDerivs(1, 0) * v2CamFrameMotion[0] +
+				m2CamDerivs(1, 1) * v2CamFrameMotion[1]);
 		}
 		// Update the accumulators
 		if (!cam.bFixed)
@@ -317,7 +318,7 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 		{
 			BAPoint &point = *itr;
 			cv::Matx<double, 3, 3> m3VStar = point.m3V;
-			if (m3VStar[0][0] * m3VStar[1][1] * m3VStar[2][2] == 0)
+			if (m3VStar(0, 0) * m3VStar(1, 1) * m3VStar(2, 2) == 0)
 				point.m3VStarInv = cv::Matx<double, 3, 3>::zeros();
 			else
 			{
@@ -442,9 +443,9 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 				int _r, _c;
 				for (_r = 0; _r < 6; _r++)
 					for (_c = 0; _c < 6; _c++)
-						mS(nJRow + _r, nKRow + _c) -= m63_MIJW_x_m3VStarInv(_r, 0) * pMeasurement_Cam2->m63W(_c, 0) +
-						m63_MIJW_x_m3VStarInv(_r, 1) * pMeasurement_Cam2->m63W(_c, 1) +
-						m63_MIJW_x_m3VStarInv(_r, 2) * pMeasurement_Cam2->m63W(_c, 2);
+						mS(nJRow + _r, nKRow + _c) -= m63_MIJW_times_m3VStarInv(_r, 0) * pMeas_ik->m63W(_c, 0) +
+						m63_MIJW_times_m3VStarInv(_r, 1) * pMeas_ik->m63W(_c, 1) +
+						m63_MIJW_times_m3VStarInv(_r, 2) * pMeas_ik->m63W(_c, 2);
 
 				assert(nKRow < nJRow);
 			}
@@ -477,12 +478,12 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 					continue;
 
 				for (int _c = 0; _c < 3; _c++) {
-					v3Sum[_c] += pMea->m63W(0, _c) * vCamerasUpdate(cam.nStartRow + 0, 0) +
-						pMeas->m63W(1, _c) * mvCamerasUpdate(cam.nStartRow + 1, 0) +
-						pMeas->m63W(2, _c) * mvCamerasUpdate(cam.nStartRow + 2, 0) +
-						pMeas->m63W(3, _c) * mvCamerasUpdate(cam.nStartRow + 3, 0) +
-						pMeas->m63W(4, _c) * mvCamerasUpdate(cam.nStartRow + 4, 0) +
-						pMeas->m63W(5, _c) * mvCamerasUpdate(cam.nStartRow + 5, 0);
+					v3Sum[_c] += pMeas->m63W(0, _c) * vCamerasUpdate(cam.nStartRow + 0, 0) +
+						pMeas->m63W(1, _c) * vCamerasUpdate(cam.nStartRow + 1, 0) +
+						pMeas->m63W(2, _c) * vCamerasUpdate(cam.nStartRow + 2, 0) +
+						pMeas->m63W(3, _c) * vCamerasUpdate(cam.nStartRow + 3, 0) +
+						pMeas->m63W(4, _c) * vCamerasUpdate(cam.nStartRow + 4, 0) +
+						pMeas->m63W(5, _c) * vCamerasUpdate(cam.nStartRow + 5, 0);
 				}
 
 				cv::Vec3d v3 = mvPoints[i].v3EpsilonB - v3Sum;
@@ -503,83 +504,84 @@ bool Bundle::Do_LM_Step(bool *pbAbortSignal)
 				}
 			}
 
-		// OK, got the two update vectors.
-		// First check for convergence..
-		// (this is a very poor convergence test)
-		double dSumSquaredUpdate = cv::norm(vCamerasUpdate, cv::NORM_L2SQR) + cv::norm(vMapUpdates, cv::NORM_L2SQR);
-		if (dSumSquaredUpdate < *mgvdUpdateConvergenceLimit)
-			mbConverged = true;
+			// OK, got the two update vectors.
+			// First check for convergence..
+			// (this is a very poor convergence test)
+			double dSumSquaredUpdate = cv::norm(vCamerasUpdate, cv::NORM_L2SQR) + cv::norm(vMapUpdates, cv::NORM_L2SQR);
+			if (dSumSquaredUpdate < *mgvdUpdateConvergenceLimit)
+				mbConverged = true;
 
-		// Now re-project everything and measure the error;
-		// NB we don't keep these projections, SLOW, bit of a waste.
+			// Now re-project everything and measure the error;
+			// NB we don't keep these projections, SLOW, bit of a waste.
 
-		// Temp versions of updated pose and pos:
-		for (unsigned int j = 0; j < mvCameras.size(); j++)
+			// Temp versions of updated pose and pos:
+			for (unsigned int j = 0; j < mvCameras.size(); j++)
+			{
+				if (mvCameras[j].bFixed)
+					mvCameras[j].se3CfWNew = mvCameras[j].se3CfW;
+				else
+					mvCameras[j].se3CfWNew = RigidTransforms::SE3<>::exp(cv::Vec<double, 6>(
+						vCamerasUpdate(mvCameras[j].nStartRow + 0, 0),
+						vCamerasUpdate(mvCameras[j].nStartRow + 1, 0),
+						vCamerasUpdate(mvCameras[j].nStartRow + 2, 0),
+						vCamerasUpdate(mvCameras[j].nStartRow + 3, 0),
+						vCamerasUpdate(mvCameras[j].nStartRow + 4, 0),
+						vCamerasUpdate(mvCameras[j].nStartRow + 5, 0)))
+					* mvCameras[j].se3CfW;
+			}
+
+			for (unsigned int i = 0; i < mvPoints.size(); i++)
+				mvPoints[i].v3PosNew = cv::Vec3d(mvPoints[i].v3Pos[0] + vMapUpdates(i * 3 + 0, 0),
+					mvPoints[i].v3Pos[1] + vMapUpdates(i * 3 + 1, 0),
+					mvPoints[i].v3Pos[2] + vMapUpdates(i * 3 + 2, 0));
+
+			// Calculate new error by re-projecting, doing tukey, etc etc:
+			dNewError = FindNewError<MEstimator>();
+
+			cout << std::setprecision(1) << "L" << mdLambda << std::setprecision(3) << "\tOld " << dCurrentError << "  New " << dNewError << "  Diff " << dCurrentError - dNewError << "\t";
+
+			// Was the step good? If not, modify lambda and try again!!
+			// (if it was good, will break from this loop.)
+			if (dNewError > dCurrentError)
+			{
+				cout << " TRY AGAIN " << std::endl;
+				ModifyLambda_BadStep();
+			}
+
+			mnCounter++;
+			if (mnCounter >= *mgvnMaxIterations)
+				mbHitMaxIterations = true;
+		}   // End of while error too big loop
+
+		if (dNewError < dCurrentError) // Was the last step a good one?
 		{
-			if (mvCameras[j].bFixed)
-				mvCameras[j].se3CfWNew = mvCameras[j].se3CfW;
-			else
-				mvCameras[j].se3CfWNew = RigidTransforms::SE3<>::exp(cv::Vec<double, 6>(
-					vCamerasUpdate(mvCameras[j].nStartRow + 0, 0),
-					vCamerasUpdate(mvCameras[j].nStartRow + 1, 0),
-					vCamerasUpdate(mvCameras[j].nStartRow + 2, 0),
-					vCamerasUpdate(mvCameras[j].nStartRow + 3, 0),
-					vCamerasUpdate(mvCameras[j].nStartRow + 4, 0),
-					vCamerasUpdate(mvCameras[j].nStartRow + 5, 0)))
-				* mvCameras[j].se3CfW;
+			cout << " WINNER            ------------ " << std::endl;
+			// Woo! got somewhere. Update lambda and make changes permanent.
+			ModifyLambda_GoodStep();
+			for (unsigned int j = 0; j < mvCameras.size(); j++)
+				mvCameras[j].se3CfW = mvCameras[j].se3CfWNew;
+			for (unsigned int i = 0; i < mvPoints.size(); i++)
+				mvPoints[i].v3Pos = mvPoints[i].v3PosNew;
+			mnAccepted++;
 		}
 
-		for (unsigned int i = 0; i < mvPoints.size(); i++)
-			mvPoints[i].v3PosNew = cv::Vec3d(mvPoints[i].v3Pos[0] + vMapUpdates(i * 3 + 0, 0),
-				mvPoints[i].v3Pos[1] + vMapUpdates(i * 3 + 1, 0),
-				mvPoints[i].v3Pos[2] + vMapUpdates(i * 3 + 2, 0));
+		// Finally, ditch all the outliers.
+		std::vector<std::list<Meas>::iterator> vit;
+		for (std::list<Meas>::iterator itr = mMeasList.begin(); itr != mMeasList.end(); itr++)
+			if (itr->bBad)
+			{
+				vit.push_back(itr);
+				mvOutlierMeasurementIdx.push_back(std::make_pair(itr->p, itr->c));
+				mvPoints[itr->p].nOutliers++;
+				mvMeasLUTs[itr->c][itr->p] = NULL;
+			}
 
-		// Calculate new error by re-projecting, doing tukey, etc etc:
-		dNewError = FindNewError<MEstimator>();
+		for (unsigned int i = 0; i < vit.size(); i++)
+			mMeasList.erase(vit[i]);
 
-		cout << std::setprecision(1) << "L" << mdLambda << std::setprecision(3) << "\tOld " << dCurrentError << "  New " << dNewError << "  Diff " << dCurrentError - dNewError << "\t";
-
-		// Was the step good? If not, modify lambda and try again!!
-		// (if it was good, will break from this loop.)
-		if (dNewError > dCurrentError)
-		{
-			cout << " TRY AGAIN " << std::endl;
-			ModifyLambda_BadStep();
-		}
-
-		mnCounter++;
-		if (mnCounter >= *mgvnMaxIterations)
-			mbHitMaxIterations = true;
-	}   // End of while error too big loop
-
-	if (dNewError < dCurrentError) // Was the last step a good one?
-	{
-		cout << " WINNER            ------------ " << std::endl;
-		// Woo! got somewhere. Update lambda and make changes permanent.
-		ModifyLambda_GoodStep();
-		for (unsigned int j = 0; j < mvCameras.size(); j++)
-			mvCameras[j].se3CfW = mvCameras[j].se3CfWNew;
-		for (unsigned int i = 0; i < mvPoints.size(); i++)
-			mvPoints[i].v3Pos = mvPoints[i].v3PosNew;
-		mnAccepted++;
+		cout << "Nuked " << vit.size() << " measurements." << std::endl;
+		return true;
 	}
-
-	// Finally, ditch all the outliers.
-	std::vector<std::list<Meas>::iterator> vit;
-	for (std::list<Meas>::iterator itr = mMeasList.begin(); itr != mMeasList.end(); itr++)
-		if (itr->bBad)
-		{
-			vit.push_back(itr);
-			mvOutlierMeasurementIdx.push_back(std::make_pair(itr->p, itr->c));
-			mvPoints[itr->p].nOutliers++;
-			mvMeasLUTs[itr->c][itr->p] = NULL;
-		}
-
-	for (unsigned int i = 0; i < vit.size(); i++)
-		mMeasList.erase(vit[i]);
-
-	cout << "Nuked " << vit.size() << " measurements." << std::endl;
-	return true;
 }
 
 // Find the new total error if cameras and points used their 
