@@ -33,14 +33,16 @@ void KeyFrame::MakeKeyFrame_Lite(cv::Mat_<uchar> &im)
 	  lev.vCandidates.clear();
 	  lev.vMaxCorners.clear();
 
+	  cv::Mat matImg;
+	  lev.im.copyTo(matImg, CV_8U);
 	  if (i == 0)
-		  FAST::fast_corner_detect_plain_10(lev.im, lev.vCorners, 10);
+		  FAST::fast_corner_detect_plain_10(matImg, lev.vCorners, 10);
 	  if (i == 1)
-		  FAST::fast_corner_detect_plain_10(lev.im, lev.vCorners, 15);
+		  FAST::fast_corner_detect_plain_10(matImg, lev.vCorners, 15);
 	  if (i == 2)
-		  FAST::fast_corner_detect_plain_10(lev.im, lev.vCorners, 15);
-	  if (i == 3)
-		  FAST::fast_corner_detect_10(lev.im, lev.vCorners, 10);
+		  FAST::fast_corner_detect_plain_10(matImg, lev.vCorners, 15);
+	  if (i >= 3)
+		  FAST::fast_corner_detect_plain_10(matImg, lev.vCorners, 10);
 
 	  // Generate row look-up-table for the FAST corner points: this speeds up 
 	  // finding close-by corner points later on.
@@ -66,8 +68,10 @@ void KeyFrame::MakeKeyFrame_Rest()
 	for (int l = 0; l < LEVELS; l++)
 	{
 		Level &lev = aLevels[l];
+		cv::Mat matImg;
+		lev.im.copyTo(matImg, CV_8U);
 		// .. find those FAST corners which are maximal..
-		FAST::fast_nonmax(lev.im, lev.vCorners, 10, lev.vMaxCorners);
+		FAST::fast_nonmax(matImg, lev.vCorners, 10, lev.vMaxCorners);
 		// .. and then calculate the Shi-Tomasi scores of those, and keep the ones with
 		// a suitably high score as Candidates, i.e. points which the mapmaker will attempt
 		// to make new map points out of.

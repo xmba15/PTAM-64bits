@@ -26,6 +26,7 @@ int main()
 		std::cout << std::endl;
 		std::cout << "!! Failed to run system; got exception. " << std::endl;
 		std::cout << "   Exception was: " << std::endl;
-		std::cout << e.what << std::endl;
+		const char* err_msg = e.what();
+		std::cout << err_msg << std::endl;
 	}
 }

@@ -3147,7 +3147,7 @@ inline int fast_corner_score_10(const uchar* cache_0, const int offset[], int b)
 }
 
 //void fast_corner_score_10(const BasicImage<byte>& i, const vector<ImageRef>& corners, int b, vector<int>& scores)
-void fast_corner_score_10(const cv::Mat_<uchar> &i, const vector<cv::Point2i> &corners, int b, vector<int> &scores)
+void fast_corner_score_10(const cv::Mat &i, const vector<cv::Point> &corners, int b, vector<int> &scores)
 {
 	int stride = (int)i.step;
 	scores.resize(corners.size());

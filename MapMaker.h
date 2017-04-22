@@ -26,6 +26,7 @@
 // Each MapPoint has an associated MapMakerData class
 // Where the mapmaker can store extra information
  
+struct MapPoint;
 
 struct MapMakerData
 {
@@ -89,7 +90,7 @@ protected:
 	cv::Vec3d ReprojectPoint(RigidTransforms::SE3<> se3AfromB, const cv::Vec2d &v2A, const cv::Vec2d &v2B);
 
 	// Bundle adjustment functions:
-	void BundleAdjust(std::set<KeyFrame::Ptr>, std::set<KeyFrame::Ptr>, std::set<MapPoint::Ptr>, bool);
+	void BundleAdjust(std::set<KeyFrame::Ptr>, std::set<KeyFrame::Ptr>, std::set<boost::shared_ptr<MapPoint> >, bool);
 	void BundleAdjustAll();
 	void BundleAdjustRecent();
 
@@ -98,7 +99,9 @@ protected:
 	void ReFindFromFailureQueue();
 	void ReFindNewlyMade();
 	void ReFindAll();
-	bool ReFind_Common(KeyFrame::Ptr k, MapPoint::Ptr p);
+//	bool ReFind_Common(KeyFrame::Ptr k, boost::shared_ptr<MapPoint> p);
+	bool ReFind_Common(boost::shared_ptr<KeyFrame> k, boost::shared_ptr<MapPoint> p);
+
 	void SubPixelRefineMatches(KeyFrame::Ptr k, int nLevel);
 
 	// General Maintenance/Utility:
@@ -120,8 +123,8 @@ protected:
 
 	// Member variables:
 	std::vector<KeyFrame::Ptr> mvpKeyFrameQueue;  // Queue of keyframes from the tracker waiting to be processed
-	std::vector<std::pair<KeyFrame::Ptr, MapPoint::Ptr> > mvFailureQueue; // Queue of failed observations to re-find
-	std::queue<MapPoint::Ptr> mqNewQueue;   // Queue of newly-made map points to re-find in other KeyFrames
+	std::vector<std::pair<KeyFrame::Ptr, boost::shared_ptr<MapPoint> > > mvFailureQueue; // Queue of failed observations to re-find
+	std::queue<boost::shared_ptr<MapPoint> > mqNewQueue;   // Queue of newly-made map points to re-find in other KeyFrames
 
 	double mdWiggleScale;  // Metric distance between the first two KeyFrames (copied from GVar)
 						   // This sets the scale of the map

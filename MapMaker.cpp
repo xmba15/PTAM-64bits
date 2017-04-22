@@ -992,7 +992,8 @@ void MapMaker::BundleAdjust(std::set<KeyFrame::Ptr> sAdjustSet, std::set<KeyFram
 // was never searched for in a keyframe in the first place. This operates
 // much like the tracker! So most of the code looks just like in 
 // TrackerData.h.
-bool MapMaker::ReFind_Common(KeyFrame::Ptr k, MapPoint::Ptr p)
+//bool MapMaker::ReFind_Common(KeyFrame::Ptr k, MapPoint::Ptr p)
+bool MapMaker::ReFind_Common(boost::shared_ptr<KeyFrame> k, boost::shared_ptr<MapPoint> p)
 {
 	// abort if either a measurement is already in the map, or we've
 	// decided that this point-kf combo is beyond redemption

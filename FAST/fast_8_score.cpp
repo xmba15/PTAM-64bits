@@ -8414,8 +8414,7 @@ inline int fast_corner_score_8(const uchar* cache_0, const int offset[], int b)
 	return b-1;
 }
 
-//void fast_corner_score_8(const BasicImage<byte>& i, const vector<ImageRef>& corners, int b, vector<int>& scores)
-void fast_corner_score_8(const cv::Mat_<uchar> &i, const vector<cv::Point2i> &corners, int b, vector<int>& scores)
+void fast_corner_score_8(const cv::Mat &i, const vector<cv::Point> &corners, int b, vector<int>& scores)
 {
 	scores.resize(corners.size());
 		int pixel[16] = {
