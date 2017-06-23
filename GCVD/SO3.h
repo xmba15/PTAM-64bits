@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SO3_H
+#define SO3_H
+
 
 #include <cassert>
 
@@ -509,3 +511,8 @@ inline cv::Matx<typename MyOperatorOverloads::MultiplyType<PM, P>::type, Rows, 3
 	
   return M * so3.get_matrix();
 }
+
+
+
+
+#endif

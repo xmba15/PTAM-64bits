@@ -1,12 +1,24 @@
-#pragma once
+// George Terzakis 2016
+//
+// University of Portsmouth
+//
+// some simple additional utils that implement CVD funcationality 
+// and have to be added here...
+
+#ifndef ADDED_UTILS_H
+#define ADDED_UTILS_H
 
 #include <opencv2/opencv.hpp>
 #include "Operators.h"
 
-namespace CvUtils {
+//#include "scalar_convert.h"
 
+namespace CvUtils {
+  
+  
+/// Decimate grayscale image a la Rosten...
 template <typename T>
-void halfSample(const cv::Mat_<T> &src, cv::Mat_<T> &dest) {
+inline void halfSample(const cv::Mat_<T> &src, cv::Mat_<T> &dest) {
 
   int rows = src.rows / 2;
   int cols = src.cols / 2;
@@ -27,8 +39,11 @@ void halfSample(const cv::Mat_<T> &src, cv::Mat_<T> &dest) {
 	
 }
 
+
+// get the mean of an image/matrix
+// T better NOT be uchar 9see below for this case)
 template <typename T>
-double mavg(const cv::Mat_<T> &m) {
+inline double mavg(const cv::Mat_<T> &m) {
 
   		 
   int r, c;
@@ -48,45 +63,59 @@ double mavg(const cv::Mat_<T> &m) {
 	
 }
 
-static void pause(cv::Mat img)
+
+
+inline void pause(cv::Mat img)
 {
   cv::namedWindow("pause");
   cv::imshow("pause", img);
   cv::waitKey(-1);
 }
 
+// After I gave it some thinking, i decided to add project/unproject functions for 2D and 3D vectors
+
+// here's toon's "unproject" for 2D vectors (BUT WITHOUT the dynamic stuff - that's why i fixed the size)
+// it should be as fast as it can be...
 template<typename P>
 inline cv::Vec<P, 3> backproject(const cv::Vec<P, 2> &v) {
   
   return cv::Vec<P, 3>(v[0], v[1], 1);
 }
-
+/// Returns the normalized homogeneous vector of the 2D coordinates
 template<typename P>
 inline cv::Vec<P, 4> backproject(const cv::Vec<P, 3> &v) {
   
   return cv::Vec<P, 4>(v[0], v[1], v[2], 1);
 }
 
+/// perspective projection of the lamest form.... (NOTE: NO division by zero povisions taken...)
 template<typename P>
 inline cv::Vec<P, 2> pproject(const cv::Vec<P, 3> &v) {
   
   return cv::Vec<P, 2>(v[0] / v[2], v[1] / v[2]);
 }
 
+/// perspective projection of the lamest form.... (NOTE: NO division by zero povisions are made...)
 template<typename P>
 inline cv::Vec<P, 3> pproject(const cv::Vec<P, 4> &v) {
+  
   return cv::Vec<P, 3>(v[0] / v[3], v[1] / v[3], v[2] / v[3]);
 }
 
+
+
+/// Round image location coordinates (nearest neighbor in a sense...)
 template<typename P>
-inline cv::Point roundIL(const cv::Vec<P, 2> &v) {
-  return cv::Point((int)std::round(v[0]), std::round(v[1]) );
+inline cv::Point2i roundIL(const cv::Vec<P, 2> &v) {
+
+  return cv::Point2i((int)std::round(v[0]), std::round(v[1]) );
 }
 
+/// TRUNCATE image location coordinates
 template<typename P>
-inline cv::Point IL(const cv::Vec<P, 2> &v) {
+inline cv::Point2i IL(const cv::Vec<P, 2> &v) {
 
-  return cv::Point((int)v[0], (int)v[1] );
+  return cv::Point2i((int)v[0], (int)v[1] );
 }
 
 
@@ -97,7 +126,7 @@ inline void sample(const cv::Mat_<Tin> &im,
 		    Tout &result    // location to bestow the (potentially) multichanneled samples
 		  );
 
-inline bool in_image_with_border(cv::Point pos, cv::Mat im, cv::Size border)
+inline bool in_image_with_border(cv::Point2i pos, cv::Mat im, cv::Size2i border)
 {
   return ( pos.x - border.width >= 0 ) && 
 	 ( pos.y - border.height >= 0 ) &&
@@ -562,7 +591,7 @@ inline cv::Mat_<P> normalize(const cv::Mat_<P> &m) {
 
 // wouldn't use this unless I really needed it...
 template <typename P, int Sz1, int Sz2>
-const cv::Vec<P, Sz2>& slice(const cv::Vec<P,Sz1> &v, int offset) {
+inline const cv::Vec<P, Sz2>& slice(const cv::Vec<P,Sz1> &v, int offset) {
   cv::Vec<P, Sz2> ret;
   for (int i = 0; i < ret.rows; i++)
     ret[i] = v[i+offset];
@@ -587,7 +616,7 @@ inline cv::Vec<P, Sz>  mat2Vec(const cv::Mat_<P> &m) {
 
 // conversion from cv::Vec to cv::Mat
 template<typename P, int Sz> 
-const cv::Mat_<P> mat2Vec(const cv::Vec<P, Sz> &v) {
+inline const cv::Mat_<P> mat2Vec(const cv::Vec<P, Sz> &v) {
   cv::Mat_<P> ret(v.rows, 1);
   
   for (int i = 0; i<v.rows; i++)
@@ -596,4 +625,10 @@ const cv::Mat_<P> mat2Vec(const cv::Vec<P, Sz> &v) {
   return ret;
 }
 
+
 }
+
+
+
+
+#endif

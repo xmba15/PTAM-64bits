@@ -1,15 +1,17 @@
 #include <vector>
-#include <opencv2/core.hpp>
+//#include <cvd/image.h>
+//#include <cvd/byte.h>
+
+#include <cxcore.hpp>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui.hpp>
 
 // This is mechanically generated code. 
 
 using namespace std;
 namespace FAST
 {
-// CV_8UC1 image
-void fast_corner_detect_plain_8(const cv::Mat &i, vector<cv::Point> &corners, int b)
+//void fast_corner_detect_plain_8(const BasicImage<byte>& i, vector<ImageRef>& corners, int b)
+void fast_corner_detect_plain_8(const cv::Mat_<uchar>& i, vector<cv::Point2i>& corners, int b)
   {
 	int y, cb, c_b;
 	const uchar *line_max, *line_min;

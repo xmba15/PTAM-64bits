@@ -1,11 +1,14 @@
+// This file is based on original code by Ed. Rosten ( libCVD library)
 #include <vector>
+
 #include "prototypes.h"
+
+// This is mechanically generated code.
 
 using namespace std;
 namespace FAST
 {
-	// CV_8UC1 image
-void fast_corner_detect_plain_10(const cv::Mat &i, vector<cv::Point> &corners, int b) {
+void fast_corner_detect_plain_10(const cv::Mat_<uchar> &i, vector<cv::Point2i> &corners, int b) {
 	int y, cb, c_b;
 	const uchar *line_max, *line_min;
 	const uchar* cache_0;
@@ -34,8 +37,11 @@ void fast_corner_detect_plain_10(const cv::Mat &i, vector<cv::Point> &corners, i
 	// scanning rowwise
 	for(y = 3 ; y < i.rows - 3; y++)
 	{
+		
+		//cache_0 = &i[y][3];
 		cache_0 = i.ptr<uchar>(y, 3);
 		line_min = cache_0 - 3;
+		//line_max = &i[y][i.size().x - 3];
 		line_max = i.ptr<uchar>(y, i.cols - 3);
 		
 		for(; cache_0 < line_max;cache_0++)

@@ -1,4 +1,9 @@
-#pragma once
+
+
+
+
+#ifndef PER_DEFAULT_H
+#define PER_DEFAULT_H
 
 #include <memory> 
 #include <opencv2/opencv.hpp>
@@ -199,3 +204,5 @@ template<class C> struct ValueHolder<C, 1>
 };
 
 }
+
+#endif

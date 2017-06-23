@@ -1,7 +1,10 @@
-#pragma once
+#ifndef IMAGE_INTERPOLATE_H
+#define IMAGE_INTERPOLATE_H
 
 #include <opencv2/opencv.hpp>
+
 #include "Addedutils.h"
+
 #include <math.h>
 
 namespace CvUtils
@@ -268,3 +271,5 @@ namespace CvUtils
 	
 
 }
+
+#endif

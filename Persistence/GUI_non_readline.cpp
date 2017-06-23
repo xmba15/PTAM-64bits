@@ -87,5 +87,4 @@ namespace Persistence
 	running = 0;
       }
   }
-	
 }

@@ -1,10 +1,14 @@
 #include <vector>
 #include <climits>
+
 #include "prototypes.h"
+
+// This is mechanically generated code. 
 
 using namespace std;
 namespace FAST
 {
+
 static inline bool test_gt_set(int a, int b, int& min_diff)
 {
 	if(a > b)

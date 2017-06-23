@@ -1,10 +1,16 @@
+//#include <cvd/image_ref.h>
+//#include <cvd/nonmax_suppression.h>
 #include <vector>
 #include "nonmax_suppression.h"
+
 #include "prototypes.h"
 
 using namespace std;
+
 namespace FAST
 {
+
+
 //This function has been moved from fast_corner.cxx. Look there
 //for the old ChangeLog.
 // fast_nonmax_t is templated so you can have either of:
@@ -15,12 +21,14 @@ namespace FAST
 //  2: Strict (must be larger than the neighbours)
 //	It's internal, the user-visible functions instantiate it below..
 template<class Score, class ReturnType, class Collector, class Test>
-inline void nonmax_suppression_t(const vector<cv::Point> &corners, const vector<Score> &scores, vector<ReturnType> &nonmax_corners)
+inline void nonmax_suppression_t(const vector<cv::Point2i> &corners, const vector<Score> &scores, vector<ReturnType> &nonmax_corners)
 {
 	nonmax_corners.clear();
 	nonmax_corners.reserve(corners.size());
+	
 	if(corners.size() < 1) return;
 
+	
 	// Find where each row begins
 	// (the corners are output in raster scan order). A beginning of -1 signifies
 	// that there are no corners on that row.
@@ -35,6 +43,7 @@ inline void nonmax_suppression_t(const vector<cv::Point> &corners, const vector<
 			prev_row = corners[i].y;
 		}
 	
+	
 	//Point above points (roughly) to the pixel above the one of interest, if there
 	//is a feature there.
 	int point_above = 0;
@@ -45,16 +54,17 @@ inline void nonmax_suppression_t(const vector<cv::Point> &corners, const vector<
 	for(int i=0; i < sz; i++)
 	{
 		Score score = scores[i];
-		cv::Point pos = corners[i];
+		//ImageRef pos = corners[i];
+		cv::Point2i pos = corners[i];
 		
 		//Check left 
 		if(i > 0)
-			if(corners[i-1] == cv::Point(pos.x-1, pos.y) && Test::Compare(scores[i-1], score)) 
+			if(corners[i-1] == cv::Point2i(pos.x-1, pos.y) && Test::Compare(scores[i-1], score)) 
 			  continue;
 			
 		//Check right
 		if(i < (sz - 1))
-			if(corners[i+1] == cv::Point(pos.x+1,pos.y) && Test::Compare(scores[i+1], score)) 
+			if(corners[i+1] == cv::Point2i(pos.x+1,pos.y) && Test::Compare(scores[i+1], score)) 
 			  continue;
 			
 		//Check above (if there is a valid row above)
@@ -105,6 +115,7 @@ inline void nonmax_suppression_t(const vector<cv::Point> &corners, const vector<
 	}
 }
 	
+
 struct Greater
 {
 	static bool Compare(int a, int b)
@@ -124,34 +135,34 @@ struct GreaterEqual
 // The two collectors which either return just the ImageRef or the <ImageRef,int> pair
 struct collect_pos
 {
-	static inline cv::Point collect(const cv::Point &pos, int ){return pos;}
+	static inline cv::Point2i collect(const cv::Point2i &pos, int ){return pos;}
 };
 
 struct collect_score
 {
-	//static inline pair<cv::Point, int> collect(const cv::Point &pos, int score) {return make_pair(pos,score);}
- static inline pair<cv::Point, int> collect(const cv::Point &pos, int score) {
+	//static inline pair<cv::Point2i, int> collect(const cv::Point2i &pos, int score) {return make_pair(pos,score);}
+ static inline pair<cv::Point2i, int> collect(const cv::Point2i &pos, int score) {
    //return make_pair(pos,score);
-   pair<cv::Point, int> mpair(pos, score);
+   pair<cv::Point2i, int> mpair(pos, score);
    return mpair;
 }
   
 };
 
 // The callable functions
-void nonmax_suppression_strict(const vector<cv::Point> &corners, const vector<int>& scores, vector<cv::Point> &nonmax_corners)
+void nonmax_suppression_strict(const vector<cv::Point2i> &corners, const vector<int>& scores, vector<cv::Point2i> &nonmax_corners)
 {
-	nonmax_suppression_t<int, cv::Point, collect_pos, GreaterEqual>(corners, scores, nonmax_corners);
+	nonmax_suppression_t<int, cv::Point2i, collect_pos, GreaterEqual>(corners, scores, nonmax_corners);
 }
 
-void nonmax_suppression(const vector<cv::Point> &corners, const vector<int> &scores, vector<cv::Point> &nonmax_corners)
+void nonmax_suppression(const vector<cv::Point2i> &corners, const vector<int> &scores, vector<cv::Point2i> &nonmax_corners)
 {
-	nonmax_suppression_t<int, cv::Point, collect_pos, Greater>(corners, scores, nonmax_corners);
+	nonmax_suppression_t<int, cv::Point2i, collect_pos, Greater>(corners, scores, nonmax_corners);
 }
 
-void nonmax_suppression_with_scores(const vector<cv::Point> &corners, const vector<int> &scores, vector<pair<cv::Point,int> > &nonmax_corners)
+void nonmax_suppression_with_scores(const vector<cv::Point2i> &corners, const vector<int> &scores, vector<pair<cv::Point2i,int> > &nonmax_corners)
 {
-	nonmax_suppression_t<int, pair<cv::Point,int> , collect_score, Greater>(corners, scores, nonmax_corners);
+	nonmax_suppression_t<int, pair<cv::Point2i,int> , collect_score, Greater>(corners, scores, nonmax_corners);
 }
 
 }

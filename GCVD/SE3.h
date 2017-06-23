@@ -4,14 +4,13 @@
 // Class SE3 corresponds to a 3D rigid transformation. 
 // Code adapted from Ed. Rosten's original briliant implementation
 
-#pragma once
+#ifndef SE3_H
+#define SE3_H
 
 #include "SO3.h"
 #include "Operators.h"
 
-
 #include <opencv2/opencv.hpp>
-
 
 
 namespace RigidTransforms {
@@ -650,3 +649,5 @@ inline RigidTransforms::SE3<Precision> operator *(const RigidTransforms::SO3<Pre
 
 
 //} // close rigidTransforms
+
+#endif

@@ -9,10 +9,13 @@
 // *				WLS constructs and solves a Weighted LS non-liear system using the Fisher parametrization 
 // *                                                       (see GraphSLAM by Thrun)
 
-#pragma once
+#ifndef GRAPHSLAM_H
+#define GRAPHSLAM_H
+
 
 #include "Operators.h"
 #include <opencv2/opencv.hpp>
+
 #include <cmath>
 
 using namespace cv;
@@ -240,3 +243,5 @@ public:
 };
 
 }
+
+#endif

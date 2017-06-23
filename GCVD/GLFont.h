@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GLFONT_H
+#define GLFONT_H
 
 #include <map>
 
@@ -27,6 +28,8 @@
 
 namespace GLXInterface {
 
+ 
+
 struct FontData {
 
     typedef map<string,Font *> FontMap;
@@ -47,4 +50,9 @@ struct FontData {
 };
 
 static struct FontData data;
-}
+
+
+} // end namespace GLXInterface
+
+
+#endif

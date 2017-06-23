@@ -1,5 +1,6 @@
-#pragma once
 
+#ifndef PER_PVARS_H
+#define PER_PVARS_H
 #include <map>
 #include <set>
 #include <string>
@@ -632,3 +633,4 @@ class GVars2
 */
 
 }
+#endif

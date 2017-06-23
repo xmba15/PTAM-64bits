@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __FONT_STRUCTS_H
+#define __FONT_STRUCTS_H
 
 #ifdef _LINUX
 #include <GL/gl.h>
@@ -82,3 +83,5 @@ struct Font {
 };
 
 }
+
+#endif

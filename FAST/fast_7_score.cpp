@@ -1,6 +1,9 @@
 #include <vector>
 #include <climits>
+//#include <cvd/image.h>
+//#include <cvd/byte.h>
 #include "prototypes.h"
+// This is mechanically generated code. 
 
 using namespace std;
 namespace FAST
