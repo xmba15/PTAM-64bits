@@ -37,7 +37,7 @@ set(camCalib
    GLWindowMenu.h
    GLWindow2.h
    additionalUtility.h
-   VideoSourceOpenCV.h  
+   VideoSource.h  
    ATANCamera.h
    CalibCornerPatch.h
    CalibImage.h
@@ -47,7 +47,7 @@ set(camCalib
    GLWindowMenu.cpp
    GLWindow2.cpp
    additionalUtility.cpp
-   VideoSourceOpenCV.cpp
+   VideoSource.cpp
    ATANCamera.cpp
    CalibCornerPatch.cpp
    CalibImage.cpp

@@ -1,5 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
-#include "VideoSourceOpenCV.h"
+#include "VideoSource.h"
 
 #ifdef _WIN32
 #include <windows.h>

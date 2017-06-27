@@ -3,7 +3,7 @@
 #define NOMINMAX
 
 #include "CalibImage.h"
-#include "VideoSourceOpenCV.h"
+#include "VideoSource.h"
 #include "Persistence/PVars.h"
 #include <vector>
 #include "GLWindow2.h"
