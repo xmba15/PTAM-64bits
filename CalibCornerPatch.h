@@ -1,39 +1,43 @@
 #pragma once
 
-#include <vector>
 #include "additionalUtility.h"
-
 using namespace additionalUtility;
+
+#include <vector>
+#include <cxcore.hpp>
+
+#include "GCVD/Addedutils.h"
 
 class CalibCornerPatch
 {
 public:
-  struct Params
-  {
-    Params();
-	cv::Matx<double, 2, 2> m2Warp();
-    cv::Vec2d v2Pos;
-    cv::Vec2d v2Angles;
-    double dMean;
-    double dGain;
-  };
+	struct Params
+	{
+		Params();
+		cv::Mat_<float> m2Warp(); // 2x2!!!
+		cv::Vec2f v2Pos;
+		cv::Vec2f v2Angles;
+		float dMean;
+		float dGain;
+	};
 
-  CalibCornerPatch(int nSideSize = 8);
-  bool IterateOnImage(Params &params, cv::Mat_<uchar> &im);
-  bool IterateOnImageWithDrawing(Params &params, cv::Mat_<uchar> &im);
+	CalibCornerPatch(int nSideSize = 8);
+	//bool IterateOnImage(Params &params, CVD::Image<CVD::byte> &im);
+	bool IterateOnImage(Params &params, cv::Mat_<uchar> &im);
+	//bool IterateOnImageWithDrawing(Params &params, CVD::Image<CVD::byte> &im);
+	bool IterateOnImageWithDrawing(Params &params, cv::Mat_<uchar> &im);
 
- protected:
+protected:
+	void MakeTemplateWithCurrentParams();
+	void FillTemplate(cv::Mat_<float> &im, Params params);
+	float Iterate(cv::Mat_<uchar> &im);
+	Params mParams;
+	cv::Mat_<float> mimTemplate;
+	cv::Mat_<cv::Vec2f > mimGradients;
+	cv::Mat_<cv::Vec2f > mimAngleJacs;
 
-  void MakeTemplateWithCurrentParams();
-  void FillTemplate(cv::Mat_<double> &im, Params params);
-  double Iterate(cv::Mat_<uchar> &im);
+	void MakeSharedTemplate();
+	static cv::Mat_<float> mimSharedSourceTemplate;
 
-  Params mParams;
-  cv::Mat_<double> mimTemplate;
-  cv::Mat_<cv::Vec2d> mimGradients;
-  cv::Mat_<cv::Vec2d> mimAngleJacs;
-
-  void MakeSharedTemplate();
-  static cv::Mat_<double> mimSharedSourceTemplate;
-  double mdLastError;
+	float mdLastError;
 };
