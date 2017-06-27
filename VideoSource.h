@@ -1,12 +1,10 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <stdlib.h>
 #include "additionalUtility.h"
 
 using namespace additionalUtility;
+using namespace cv;
 
 struct VideoSourceData;
 
@@ -14,12 +12,14 @@ class VideoSource
 {
 public:
 	VideoSource();
-	//~VideoSource();
-	void GetAndFillFrameBWandRGB(cv::Mat &imBW, cv::Mat &imRGB);
-	cv::Size imgSize();
+	~VideoSource() {
+		std::cout << "terminate video source" << std::endl;
+	}
+
+	void GetAndFillFrameBWandRGB(cv::Mat_<uchar> &imBW, cv::Mat &imRGB);
+	cv::Size2i getSize();
 
 private:
-	unsigned char *m_buffer;
-	cv::VideoCapture *cap;
-	cv::Size size;
+	cv::VideoCapture *pcap;
+	cv::Size2i mirSize;
 };

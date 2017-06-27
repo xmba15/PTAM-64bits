@@ -1,42 +1,46 @@
 #pragma once
 
-#define NOMINMAX
+#include "additionalUtility.h"
+using namespace additionalUtility;
 
 #include "CalibImage.h"
 #include "VideoSource.h"
-#include "Persistence/PVars.h"
+
 #include <vector>
 #include "GLWindow2.h"
-#include "additionalUtility.h"
+#include "ATANCamera.h"
 
-using namespace additionalUtility;
 
 class CameraCalibrator
 {
 public:
-  CameraCalibrator();
-  void Run();
-  
+
+	CameraCalibrator();
+	void Run();
+
 protected:
-  void Reset();
-  void HandleFrame(cv::Mat imFrame);
-  static void MainLoopCallback(void* pvUserData);
-  void MainLoopStep();
-  VideoSource mVideoSource;
-  
-  GLWindow2 mGLWindow;
-  ATANCamera mCamera;
-  bool mbDone;
 
-  std::vector<CalibImage> mvCalibImgs;
-  void OptimizeOneStep();
-  
-  bool mbGrabNextFrame;
-  Persistence::pvar3<int> mgvnOptimizing;
-  Persistence::pvar3<int> mgvnShowImage;
-  Persistence::pvar3<int> mgvnDisableDistortion;
-  double mdMeanPixelError;
+	void Reset();
+	void HandleFrame(cv::Mat_<uchar> imFrame);
+	static void MainLoopCallback(void* pvUserData);
+	void MainLoopStep();
+	VideoSource mVideoSource;
 
-  void GUICommandHandler(std::string sCommand, std::string sParams);
-  static void GUICommandCallBack(void* ptr, std::string sCommand, std::string sParams);
+	GLWindow2 mGLWindow;
+	ATANCamera mCamera;
+	bool mbDone;
+
+	std::vector<CalibImage> mvCalibImgs;
+	void OptimizeOneStep();
+
+	bool mbGrabNextFrame;
+	Persistence::pvar3<int> mpvnOptimizing;
+	Persistence::pvar3<int> mpvnShowImage;
+	Persistence::pvar3<int> mpvnDisableDistortion;
+	double mdMeanPixelError;
+
+	void GUICommandHandler(std::string sCommand, std::string sParams);
+
+	static void GUICommandCallBack(void* ptr, std::string sCommand, std::string sParams);
+
 };
