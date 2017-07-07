@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(CameraCalibrator C)
+project(PTAM CXX)
 
 set(CMAKE_BUILD_TYPE RELEASE)
 
@@ -54,10 +54,67 @@ set(camCalib
    CameraCalibrator.cpp
 )
 
+# source code
+set(ptamLib
+   OpenGL.h
+   OpenCV.h
+   GLWindowMenu.h
+   GLWindow2.h
+   additionalUtility.h
+   VideoSource.h  
+   ATANCamera.h
+   ARDriver.h
+   System.h
+   KeyFrame.h
+   MapPoint.h
+   Map.h
+   MapViewer.h
+   PatchFinder.h
+   MapMaker.h
+   LevelHelpers.h
+   Tracker.h
+   TrackerData.h
+   Relocaliser.h
+   HomographyInit.h
+   Bundle.h
+   MiniPatch.h
+   ShiTomasi.h
+   SmallBlurryImage.h
+   EyeGame.h
+   MEstimator.h
+
+   additionalUtility.cpp
+   GLWindowMenu.cpp
+   GLWindow2.cpp
+   additionalUtility.cpp
+   VideoSource.cpp
+   ATANCamera.cpp
+   main.cpp
+   ARDriver.cpp
+   System.cpp
+   KeyFrame.cpp
+   MapPoint.cpp
+   Map.cpp
+   MapViewer.cpp
+   PatchFinder.cpp
+   MapMaker.cpp
+   Tracker.cpp
+   Relocaliser.cpp
+   HomographyInit.cpp
+   Bundle.cpp
+   MiniPatch.cpp
+   ShiTomasi.cpp
+   SmallBlurryImage.cpp
+   EyeGame.cpp	
+)
+
 add_subdirectory(FAST)
 add_subdirectory(GCVD)
 add_subdirectory(Persistence)
 
 # message(${CMAKE_BINARY_DIR})
-add_executable(${PROJECT_NAME} ${camCalib})
-target_link_libraries(CameraCalibrator ${OpenCV_LIBS} ${3rdparty} FAST GCVD Persistence)
+add_executable(CameraCalibration ${camCalib})
+target_link_libraries(CameraCalibration ${OpenCV_LIBS} ${3rdparty} FAST GCVD Persistence)
+
+add_executable(PTAM ${ptamLib})
+target_link_libraries(PTAM ${OpenCV_LIBS} ${3rdparty} FAST GCVD Persistence)

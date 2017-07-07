@@ -256,8 +256,8 @@ void CameraCalibrator::GUICommandHandler(string sCommand, string sParams)  // Ca
 	if (sCommand == "CameraCalibrator.SaveCalib")
 	{
 		cout << "  Camera calib is " << PV3::get_var("Camera.Parameters") << endl;
-		cout << "  Saving camera calib to camera.cfg..." << endl;
-		ofstream ofs("camera.cfg");
+		cout << "  Saving camera calib to settings.cfg..." << endl;
+		ofstream ofs("settings.cfg");
 		if (ofs.good())
 		{
 
