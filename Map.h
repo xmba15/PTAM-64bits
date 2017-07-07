@@ -1,6 +1,3 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
-//
 // This header declares the Map class.
 // This is pretty light-weight: All it contains is
 // a vector of MapPoints and a vector of KeyFrames.
@@ -12,33 +9,38 @@
 // old pointers which other threads are using are not 
 // invalidated!
 
-#ifndef __MAP_H
-#define __MAP_H
+#pragma once
+#include "additionalUtility.h"
+using namespace additionalUtility;
+
 #include <vector>
-#include <TooN/se3.h>
-#include <cvd/image.h>
+#include "GCVD/SE3.h"
+
+#include <memory>
 
 struct MapPoint;
 struct KeyFrame;
 
 struct Map
 {
-  Map();
-  inline bool IsGood() {return bGood;}
-  void Reset();
-  
-  void MoveBadPointsToTrash();
-  void EmptyTrash();
-  
-  std::vector<MapPoint*> vpPoints;
-  std::vector<MapPoint*> vpPointsTrash;
-  std::vector<KeyFrame*> vpKeyFrames;
+	Map();
+	inline bool IsGood() { return bGood; }
+	void Reset();
 
-  bool bGood;
+	void deleteBadPoints();
+	void EmptyTrash();
+
+	/// List of so-far good mappoints
+	std::vector<std::shared_ptr<MapPoint> > vpPoints;
+
+	// This is a list of points that were excluded from the map
+	std::vector<std::shared_ptr<MapPoint> > vpPointsTrash;
+
+	// list of keyframes
+	std::vector<std::shared_ptr<KeyFrame> > vpKeyFrames;
+
+
+
+	bool bGood;
 };
-
-
-
-
-#endif
 

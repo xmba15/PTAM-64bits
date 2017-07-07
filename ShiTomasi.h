@@ -1,14 +1,8 @@
-// Copyright 2008 Isis Innovation Limited
-#ifndef __SHI_TOMASI__H
-#define __SHI_TOMASI__H
+#pragma once
 
-#include <cvd/image.h>
-#include <cvd/byte.h>
+#include "additionalUtility.h"
+using namespace additionalUtility;
 
-
-double FindShiTomasiScoreAtPoint(CVD::BasicImage<CVD::byte> &image,
-				 int nHalfBoxSize,
-				 CVD::ImageRef irCenter);
-
-
-#endif
+double FindShiTomasiScoreAtPoint(cv::Mat_<uchar> &image,
+	int nHalfBoxSize,
+	cv::Point2i irCenter);

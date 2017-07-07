@@ -1,71 +1,70 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
+#pragma once
 
-#ifndef __CALIB_IMAGE_H
-#define __CALIB_IMAGE_H
+#include "additionalUtility.h"
+using namespace additionalUtility;
+
 #include "ATANCamera.h"
 #include "CalibCornerPatch.h"
 #include <vector>
-#include <TooN/se3.h>
+#include "GCVD/SE3.h"
+#include "GCVD/Addedutils.h"
 
-const int N_NOT_TRIED=-1;
-const int N_FAILED=-2;
+const int N_NOT_TRIED = -1;
+const int N_FAILED = -2;
 
 struct CalibGridCorner
 {
-  struct NeighborState
-  {
-    NeighborState() {val = N_NOT_TRIED;}
-    int val;
-  };
-  
-  CalibCornerPatch::Params Params;
-  CVD::ImageRef irGridPos;
-  NeighborState aNeighborStates[4];
-  
-  Matrix<2> GetSteps(std::vector<CalibGridCorner> &vgc); 
-  Matrix<2> mInheritedSteps;
-  
-  void Draw();
-  
-  double ExpansionPotential();
+	struct NeighborState
+	{
+		NeighborState() { val = N_NOT_TRIED; }
+		int val;
+	};
+
+	CalibCornerPatch::Params Params;
+	cv::Point2i irGridPos;
+	NeighborState aNeighborStates[4];
+
+	cv::Mat_<float> GetSteps(std::vector<CalibGridCorner> &vgc); //2x2 matrix
+	cv::Mat_<float> mInheritedSteps;
+
+	void Draw();
+
+	double ExpansionPotential();
 };
 
 class CalibImage
 {
 public:
 
-  bool MakeFromImage(CVD::Image<CVD::byte> &im);
-  SE3<> mse3CamFromWorld;
-  void DrawImageGrid();
-  void Draw3DGrid(ATANCamera &Camera, bool bDrawErrors);
-  void GuessInitialPose(ATANCamera &Camera);
+	bool MakeFromImage(cv::Mat_<uchar> &im, cv::Mat &cim);
+	RigidTransforms::SE3<> mse3CamFromWorld;
+	void DrawImageGrid();
+	void Draw3DGrid(ATANCamera &Camera, bool bDrawErrors);
+	void GuessInitialPose(ATANCamera &Camera);
 
-  struct ErrorAndJacobians
-  {
-    Vector<2> v2Error;
-    Matrix<2,6> m26PoseJac;
-    Matrix<2,NUMTRACKERCAMPARAMETERS> m2NCameraJac;
-  };
+	struct ErrorAndJacobians
+	{
+		cv::Vec2f v2Error;
+		cv::Matx<double, 2, 6> m26PoseJac; // 2x6 Jacobian!
+		cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS> m2NCameraJac; // 2 x NUMTRACKERCAMPARAMETERS !
 
-  std::vector<ErrorAndJacobians> Project(ATANCamera &Camera);
+																   // EAJ definitely needs a constructor now...
+		ErrorAndJacobians() : m26PoseJac(cv::Matx<double, 2, 6>()), m2NCameraJac(cv::Matx<double, 2, NUMTRACKERCAMPARAMETERS>()) {}
+	};
 
-  CVD::Image<CVD::byte> mim;
-  
+	std::vector<ErrorAndJacobians> Project(ATANCamera &Camera);
+
+	cv::Mat_<uchar> mim;  // grayscale
+	cv::Mat rgbmim;       // BGR
+
 protected:
-  std::vector<CVD::ImageRef> mvCorners;
-  std::vector<CalibGridCorner> mvGridCorners;
-  
-  
-  bool ExpandByAngle(int nSrc, int nDirn);
-  int NextToExpand();
-  void ExpandByStep(int n);
-  CVD::ImageRef IR_from_dirn(int nDirn);
- 
+	std::vector<cv::Point2i> mvCorners;
+	std::vector<CalibGridCorner> mvGridCorners;
+
+
+	bool ExpandByAngle(int nSrc, int nDirn);
+	int NextToExpand();
+	void ExpandByStep(int n);
+	cv::Point2i IR_from_dirn(int nDirn);
+
 };
-
-
-
-
-#endif
-

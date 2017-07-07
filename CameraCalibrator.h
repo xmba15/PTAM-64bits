@@ -1,42 +1,46 @@
-// -*- c++ -*-
-// Copyright 2008 Isis Innovation Limited
+#pragma once
 
-#ifndef __CAMERACALIBRATOR_H
-#define __CAMERACALIBRATOR_H
+#include "additionalUtility.h"
+using namespace additionalUtility;
+
 #include "CalibImage.h"
 #include "VideoSource.h"
-#include <gvars3/gvars3.h>
+
 #include <vector>
 #include "GLWindow2.h"
+#include "ATANCamera.h"
+
 
 class CameraCalibrator
 {
 public:
-  CameraCalibrator();
-  void Run();
-  
+
+	CameraCalibrator();
+	void Run();
+
 protected:
-  void Reset();
-  void HandleFrame(CVD::Image<CVD::byte> imFrame);
-  static void MainLoopCallback(void* pvUserData);
-  void MainLoopStep();
-  VideoSource mVideoSource;
-  
-  GLWindow2 mGLWindow;
-  ATANCamera mCamera;
-  bool mbDone;
 
-  std::vector<CalibImage> mvCalibImgs;
-  void OptimizeOneStep();
-  
-  bool mbGrabNextFrame;
-  GVars3::gvar3<int> mgvnOptimizing;
-  GVars3::gvar3<int> mgvnShowImage;
-  GVars3::gvar3<int> mgvnDisableDistortion;
-  double mdMeanPixelError;
+	void Reset();
+	void HandleFrame(cv::Mat_<uchar> imFrame);
+	static void MainLoopCallback(void* pvUserData);
+	void MainLoopStep();
+	VideoSource mVideoSource;
 
-  void GUICommandHandler(std::string sCommand, std::string sParams);
-  static void GUICommandCallBack(void* ptr, std::string sCommand, std::string sParams);
+	GLWindow2 mGLWindow;
+	ATANCamera mCamera;
+	bool mbDone;
+
+	std::vector<CalibImage> mvCalibImgs;
+	void OptimizeOneStep();
+
+	bool mbGrabNextFrame;
+	Persistence::pvar3<int> mpvnOptimizing;
+	Persistence::pvar3<int> mpvnShowImage;
+	Persistence::pvar3<int> mpvnDisableDistortion;
+	double mdMeanPixelError;
+
+	void GUICommandHandler(std::string sCommand, std::string sParams);
+
+	static void GUICommandCallBack(void* ptr, std::string sCommand, std::string sParams);
+
 };
-
-#endif
