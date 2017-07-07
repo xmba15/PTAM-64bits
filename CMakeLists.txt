@@ -30,7 +30,7 @@ set(3rdparty ${3rdparty} opengl32.lib)
 
 message(${3rdparty})
 
-# source code
+# source code for calibration part
 set(camCalib
    OpenGL.h
    OpenCV.h
@@ -54,7 +54,7 @@ set(camCalib
    CameraCalibrator.cpp
 )
 
-# source code
+# source code for ptam program
 set(ptamLib
    OpenGL.h
    OpenCV.h
