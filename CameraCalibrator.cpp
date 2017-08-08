@@ -34,7 +34,7 @@ int main()
 	cout << endl;
 	cout << "  Parsing calibrator_settings.cfg ...." << endl;
 
-	GUI.LoadFile("calibrator_settings.cfg");
+	GUI.LoadFile("../../Documents/calibrator_settings.cfg");
 
 	GUI.StartParserThread();
 	atexit(GUI.StopParserThread); // Clean up readline when program quits
